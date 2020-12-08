@@ -1,1 +1,1 @@
-g++ -Wall -Wextra -I/fs/cbsubscb09/storage/yilei/tools/lib/eigen-3.3.7/ -lz -O3 -o DRUID *.cpp
+g++ -Wall -Wextra -I/fs/cbsubscb09/storage/yilei/tools/lib/eigen-3.3.7/ -I/fs/cbsubscb09/storage/yilei/tools/lib/boost_1_66_0 -lz -O3 -o DRUID *.cpp

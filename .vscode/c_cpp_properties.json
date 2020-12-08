@@ -4,7 +4,8 @@
             "name": "Linux",
             "includePath": [
                 "/fs/cbsubscb09/storage/yilei/tools/lib/eigen-3.3.7/**",
-                "/fs/cbsubscb09/storage/yilei/tools/lib/eigen-3.3.7"
+                "/fs/cbsubscb09/storage/yilei/tools/lib/eigen-3.3.7",
+                "/fs/cbsubscb09/storage/yilei/tools/lib/boost_1_66_0/"
             ],
             "defines": [],
             "compilerPath": "/usr/local/gcc-7.3.0/bin/gcc",

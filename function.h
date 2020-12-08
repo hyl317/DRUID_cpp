@@ -1,13 +1,30 @@
-#ifndef TOOLS_H
-#define TOOLS_H
+#ifndef FUNCTION_H
+#define FUNCTION_H
 
 #include <algorithm>
+#include <string>
 #include <math.h>
+#include <boost/graph/adjacency_list.hpp>
+
 
 int getRelfromK(double ibd1, double ibd2, double bkg, double tot_genome, int maxDeg);
 
+struct sample{
+    std::string id;
+    // could add something else, like age, sex if available
+};
 
+enum close_relationship {PC, FS, GP, AV};
+struct relationship{
+    close_relationship rel;
+    // could add something else later
+};
 
-
+// use std::list to store the list of vertices for fast add and removal of vertices
+// use std::vector to store the out-going edge for each vertex for fast traversal and small memory overhead
+// bidirectionalS makes the graph to have both in_edges() and out_edges() functions, not sure this is useful or not yet
+using Pedigree = boost::adjacency_list<
+    boost::listS, boost::vecS, boost::bidirectionalS,
+    sample, relationship>;
 
 #endif

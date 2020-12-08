@@ -1,5 +1,6 @@
 #include <string>
 #include "tools.h"
+#include "function.h"
 
 int main(int argc, char **argv){
     if (argc <= 1){
@@ -46,7 +47,7 @@ int main(int argc, char **argv){
     logFile.printf("Maximum Relatedness Reported: degree %d\n", maxDeg);
     logFile.printf("Identifying clusters of close relatives...\n");
     // Identify close relatives to build connected components
-
+    Pedigree pedigree = Pedigree(numSample);
 
 
 

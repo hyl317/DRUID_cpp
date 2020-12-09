@@ -5,6 +5,7 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <set>
 #include "Eigen/Dense"
 #include "zlib.h"
 
@@ -68,8 +69,9 @@ void parse_command_line(int argc, char **argv, std::string &ibdFile, std::string
 Eigen::VectorXd readBimFile(const std::string &bimFile, 
   std::map<std::string, std::map<int, double>*> &snpmap, FileOrGZ<FILE *> &logFile);
 
-int readIBDFile(const std::string &ibdFile, 
-  std::map<std::pair<std::string, std::string>, Pair*> &allsegs, FileOrGZ<FILE *> &logFile);
+void readIBDFile(const std::string &ibdFile, 
+  std::map<std::pair<std::string, std::string>, Pair*> &allsegs, 
+  std::set<std::string> &inds, FileOrGZ<FILE *> &logFile);
 
 double calc_bkg_sharing(const std::string &NeFile, const Eigen::VectorXd &chrLens, const double &minIBD);
 void cumsum_eigen_colvector(const Eigen::VectorXd &source, Eigen::VectorXd &dest);

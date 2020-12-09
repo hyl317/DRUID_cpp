@@ -5,7 +5,7 @@
 #include <string>
 #include <math.h>
 #include <boost/graph/adjacency_list.hpp>
-
+#include "tools.h"
 
 int getRelfromK(double ibd1, double ibd2, double bkg, double tot_genome, int maxDeg);
 
@@ -26,5 +26,9 @@ struct relationship{
 using Pedigree = boost::adjacency_list<
     boost::listS, boost::vecS, boost::bidirectionalS,
     sample, relationship>;
+
+void build_graph(Pedigree &pedigree, 
+    const std::map<std::pair<std::string, std::string>, Pair*> &allsegs,
+    double tot_genome, double bkg_sharing, int maxDeg);
 
 #endif

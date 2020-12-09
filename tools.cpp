@@ -1,5 +1,4 @@
 #include <string.h>
-#include <set>
 #include "tools.h"
 #include "assert.h"
 #include "stdarg.h"
@@ -80,8 +79,9 @@ Eigen::VectorXd readBimFile(const std::string &bimFile,
   return chrLens;
 }
 
-int readIBDFile(const std::string &ibdFile, 
-  std::map<std::pair<std::string, std::string>, Pair*> &allsegs, FileOrGZ<FILE *> &logFile){
+void readIBDFile(const std::string &ibdFile, 
+  std::map<std::pair<std::string, std::string>, Pair*> &allsegs, 
+  std::set<std::string> &inds, FileOrGZ<FILE *> &logFile){
 
   FileOrGZ<gzFile> in;
   bool ret = in.open(ibdFile.c_str(), "r");
@@ -90,7 +90,6 @@ int readIBDFile(const std::string &ibdFile,
     exit(1);
   }
 
-  std::set<std::string> inds;
   while(in.getline() >= 0){
     char id1_[50];
     char id2_[50];
@@ -130,8 +129,6 @@ int readIBDFile(const std::string &ibdFile,
     }
   }
 
-  logFile.printf("\tFinished reading segments for %d samples\n", inds.size());
-  return inds.size();
 }
 
 double calc_bkg_sharing(const std::string &NeFile, const Eigen::VectorXd &chrLens, const double &minIBD){

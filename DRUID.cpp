@@ -29,7 +29,10 @@ int main(int argc, char **argv){
 
     logFile.printf("Reading IBD segment file: %s\n", ibdFile.c_str());
     auto allsegs = std::map<std::pair<std::string, std::string>, Pair*>();
-    int numSample = readIBDFile(ibdFile, allsegs, logFile);
+    std::set<std::string> inds;
+    readIBDFile(ibdFile, allsegs, inds, logFile);
+    int numSample = inds.size();
+    logFile.printf("\tFinished reading segments for %d samples\n", numSample);
 
     double bkg_sharing = 0.0;
     if (NeFile.length() > 0){
@@ -46,9 +49,20 @@ int main(int argc, char **argv){
 
     logFile.printf("Maximum Relatedness Reported: degree %d\n", maxDeg);
     logFile.printf("Identifying clusters of close relatives...\n");
-    // Identify close relatives to build connected components
+    // make a graph and add vertices properties to it
     Pedigree pedigree = Pedigree(numSample);
-
+    auto pair = boost::vertices(pedigree);
+    Pedigree::vertex_descriptor v_head = *(pair.first);
+    Pedigree::vertex_descriptor v_tail = *(pair.second);
+    auto it2 = inds.begin();
+    for(auto it = v_head; it != v_tail; it++){
+        assert(it2 != inds.end());
+        pedigree[it].id = *it2;
+        it2++;
+    }
+    assert(it2 == inds.end());
+    // add edges between close relatives
+    build_graph(pedigree, allsegs, chrLens.sum(), bkg_sharing, maxDeg);
 
 
 

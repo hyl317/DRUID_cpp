@@ -82,5 +82,7 @@ inline double logaddexp(double d1, double d2){
     else{return d2 + log1p(exp(d1-d2));}
 }
 
+void write_output(const std::map<std::pair<std::string, std::string>, int> &results, const std::string &prefix);
+
 
 #endif

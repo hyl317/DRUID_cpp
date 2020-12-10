@@ -137,7 +137,7 @@ double calc_bkg_sharing(const std::string &NeFile, const Eigen::VectorXd &chrLen
   // open Ne file:
   FILE *in = fopen(NeFile.c_str(), "r");
   if (!in) {
-    printf("ERROR: could not open def file %s!\n", NeFile.c_str());
+    printf("ERROR: could not open Ne file %s!\n", NeFile.c_str());
     exit(1);
   }
 
@@ -228,6 +228,22 @@ double log_expectedIBD_beyond_maxGen_given_Ne(const Eigen::VectorXd &Ne,
 
 }
 
+void write_output(const std::map<std::pair<std::string, std::string>, int> &results, const std::string &prefix)
+{
+  std::string outFileName = prefix + ".DRUID";
+    FileOrGZ<FILE *> outFile;
+    bool ret = outFile.open(outFileName.c_str(), "w");
+    if(!ret){
+        fprintf(stderr, "cannot open %s for writing output\n", outFileName.c_str());
+        exit(1);
+    }
+  
+  for(auto it = results.begin(); it != results.end(); it++){
+    std::pair<std::string, std::string> p = it->first;
+    outFile.printf("%s\t%s\t%d\n", p.first.c_str(), p.second.c_str(), it->second);
+  }
+  outFile.close();
+}
 
 // specialization for FILE I/O wrapper
 // open <filename> using standard FILE *

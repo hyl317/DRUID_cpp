@@ -62,12 +62,15 @@ int main(int argc, char **argv){
     }
     assert(it2 == inds.end());
     // add edges between close relatives
-    build_graph(pedigree, allsegs, chrLens.sum(), bkg_sharing, maxDeg);
+    std::map<std::pair<std::string, std::string>, int> results;
+    build_graph(pedigree, allsegs, results, chrLens.sum(), bkg_sharing, maxDeg);
 
 
 
 
-
+    // writing output, finishing up
+    logFile.printf("Writitng to output file: %s\n", std::string(prefix + ".DRUID").c_str());
+    write_output(results, prefix);
     logFile.close();
 
     // clean up

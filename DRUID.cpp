@@ -63,7 +63,7 @@ int main(int argc, char **argv){
     assert(it2 == inds.end());
     // add edges between close relatives
     std::map<std::pair<std::string, std::string>, int> results;
-    build_graph(pedigree, allsegs, results, chrLens.sum(), bkg_sharing, maxDeg);
+    build_graph(pedigree, allsegs, snpmap, results, chrLens.sum(), bkg_sharing, maxDeg);
 
 
 

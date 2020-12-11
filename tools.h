@@ -52,7 +52,8 @@ template<> int FileOrGZ<gzFile>::printf(const char *format, ...);
 template<> int FileOrGZ<FILE *>::close();
 template<> int FileOrGZ<gzFile>::close();
 
-using ibdMapType = std::map<std::string, std::vector<std::pair<double, double>>*>;
+using ibdSegments = std::vector<std::pair<double, double>>;
+using ibdMapType = std::map<std::string, ibdSegments*>;
 struct Pair{
   double ibd1_tot;
   double ibd2_tot;
@@ -82,7 +83,23 @@ inline double logaddexp(double d1, double d2){
     else{return d2 + log1p(exp(d1-d2));}
 }
 
+inline std::pair<std::string, std::string> make_pair
+(const std::string &s1, const std::string &s2){
+  return s1 < s2? std::make_pair(s1, s2) : std::make_pair(s2, s1);
+}
+
 void write_output(const std::map<std::pair<std::string, std::string>, int> &results, const std::string &prefix);
 
+// this function finds the intersection of intervls in set1 and set2
+// and push_back the intersection in set3
+void interval_intersection(const ibdSegments &set1, const ibdSegments &set2, ibdSegments &set3);
+
+// this function finds the union of intervals in set1 and set2
+// and push back the union in set3
+void interval_union(const ibdSegments &set1, const ibdSegments &set2, ibdSegments &set3);
+
+// this function finds complement of intervals in set1
+// and push back the complement in set2
+void interval_complement(const ibdSegments &set1, ibdSegments &set2, double boundary_start, double boundary_end);
 
 #endif

@@ -1,4 +1,5 @@
 #include <string.h>
+#include <algorithm>
 #include "tools.h"
 #include "assert.h"
 #include "stdarg.h"
@@ -103,9 +104,7 @@ void readIBDFile(const std::string &ibdFile,
     std::string chr = chr_;
     std::string ibd12 = ibd12_;
     double segLen = end - start;
-    std::pair<std::string, std::string> pair;
-    if (id1 < id2){pair = std::make_pair(id1, id2);}
-    else{pair = std::make_pair(id2, id1);}
+    std::pair<std::string, std::string> pair = make_pair(id1, id2);
     inds.insert(id1);
     inds.insert(id2);
     if (allsegs.find(pair) == allsegs.end()){
@@ -244,6 +243,110 @@ void write_output(const std::map<std::pair<std::string, std::string>, int> &resu
   }
   outFile.close();
 }
+
+void interval_intersection(const ibdSegments &set1, const ibdSegments &set2, ibdSegments &set3)
+{
+  if (set1.size() == 0 || set2.size() == 0){return;}
+  // sort set1 and set2
+  auto sortLambda = [](const std::pair<double, double> &interval1, 
+                      const std::pair<double, double> &interval2)
+                      {return interval1.first < interval2.first;};
+  ibdSegments set1_sorted = set1; // make a copy
+  std::sort(set1_sorted.begin(), set1_sorted.end(), sortLambda);
+  ibdSegments set2_sorted = set2;
+  std::sort(set2_sorted.begin(), set2_sorted.end(), sortLambda);
+
+  auto it2 = set2_sorted.begin();
+  for(auto it1 = set1_sorted.begin(); it1 != set1_sorted.end(); it1++){
+    double curr_start = (*it1).first;
+    double curr_end = (*it1).second;
+    while (it2 != set2_sorted.end() && (*it2).second <= curr_start){it2++;}
+    if (it2 == set2_sorted.end()){return;}
+    while ( it2 != set2_sorted.end() && (*it2).second > curr_start && (*it2).first < curr_end){
+      set3.push_back(std::make_pair(std::max(curr_start, (*it2).first), 
+            std::min(curr_end, (*it2).second)));
+      it2++;
+    }
+    if (it2 == set2_sorted.end()){return;}
+  }
+}
+
+void interval_union(const ibdSegments &set1, const ibdSegments &set2, ibdSegments &set3)
+{
+  if (set1.size() == 0 && set2.size() != 0){
+    copy(set2.begin(), set2.end(), std::back_inserter(set3)); 
+    return;
+  }
+  if (set1.size() != 0 && set2.size() == 0){
+    copy(set1.begin(), set1.end(), std::back_inserter(set3));
+    return;
+  }
+  if (set1.size() == 0 && set2.size() == 0){return;}
+  // sort set1 and set2
+  auto sortLambda = [](const std::pair<double, double> &interval1, 
+                      const std::pair<double, double> &interval2)
+                      {return interval1.first < interval2.first;};
+  ibdSegments set1_sorted = set1; // make a copy
+  std::sort(set1_sorted.begin(), set1_sorted.end(), sortLambda);
+  ibdSegments set2_sorted = set2;
+  std::sort(set2_sorted.begin(), set2_sorted.end(), sortLambda);
+
+  auto it2 = set2_sorted.begin();
+  for(auto it1 = set1_sorted.begin(); it1 != set1_sorted.end(); it1++){
+    double start1 = (*it1).first;
+    double end1 = (*it1).second;
+    while (it2 != set2_sorted.end() && (*it2).second < start1){
+      set3.push_back(std::make_pair((*it2).first, (*it2).second));
+    }
+    if (it2 == set2_sorted.end()){
+      // push back set1's remaining segments
+      for(; it1 != set1_sorted.end(); it1++){
+        set3.push_back(std::make_pair((*it1).first, (*it2).second));}
+      return;
+    }
+
+    double start2 = (*it2).first;
+    double end2 = (*it2).second;
+    while ( it2 != set2_sorted.end() && (*it2).first <= end1){
+      end2 = (*it2).second;
+      it2++;
+    }
+    set3.push_back(std::make_pair(std::min(start1, start2), std::max(end1, end2)));
+    if (it2 == set2_sorted.end()){
+      // push back set1's remaining segments
+      for(; it1 != set1_sorted.end(); it1++){
+        set3.push_back(std::make_pair((*it1).first, (*it2).second));}
+      return;
+    }
+  }
+
+}
+
+void interval_complement(const ibdSegments &set1, ibdSegments &set2, 
+    double boundary_start, double boundary_end)
+{
+  if (set1.size() == 0){
+    set2.push_back(std::make_pair(boundary_start, boundary_end));
+    return;
+  }
+  // sort set1
+  auto sortLambda = [](const std::pair<double, double> &interval1, 
+                      const std::pair<double, double> &interval2)
+                      {return interval1.first < interval2.first;};
+  ibdSegments set1_sorted = set1; // make a copy
+  std::sort(set1_sorted.begin(), set1_sorted.end(), sortLambda);
+
+  double prev_start = boundary_start;
+  for(auto it = set1_sorted.begin(); it != set1_sorted.end(); it++){
+    double curr_start = (*it).first;
+    double curr_end = (*it).second;
+    if (curr_start > prev_start){set2.push_back(std::make_pair(prev_start, curr_start));}
+    prev_start = curr_end;
+  }
+  if (prev_start < boundary_end){set2.push_back(std::make_pair(prev_start, boundary_end));}
+}
+
+
 
 // specialization for FILE I/O wrapper
 // open <filename> using standard FILE *

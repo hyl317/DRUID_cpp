@@ -29,8 +29,12 @@ using Pedigree = boost::adjacency_list<
 
 void build_graph(Pedigree &pedigree, 
     const std::map<std::pair<std::string, std::string>, Pair*> &allsegs,
+    const std::map<std::string, std::map<int, double>*> &snpmap,
     std::map<std::pair<std::string, std::string>, int> &results,
     double tot_genome, double bkg_sharing, int maxDeg);
+
+bool is_avunc(const std::string &fs1, const std::string &fs2, const std::string &p_avunc, 
+        const std::map<std::pair<std::string, std::string>, Pair*> &allsegs);
 
 
 #endif

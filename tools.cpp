@@ -257,17 +257,26 @@ void interval_intersection(const ibdSegments &set1, const ibdSegments &set2, ibd
   std::sort(set2_sorted.begin(), set2_sorted.end(), sortLambda);
 
   auto it2 = set2_sorted.begin();
+  double prev_start2 = -1;
+  double prev_end2 = -1;
   for(auto it1 = set1_sorted.begin(); it1 != set1_sorted.end(); it1++){
-    double curr_start = (*it1).first;
-    double curr_end = (*it1).second;
-    while (it2 != set2_sorted.end() && (*it2).second <= curr_start){it2++;}
+    double start1 = (*it1).first;
+    double end1 = (*it1).second;
+    if (prev_end2 > start1){
+      set3.push_back(std::make_pair(start1, std::min(prev_end2, end1)));
+    }
+    while (it2 != set2_sorted.end() && (*it2).second <= start1){it2++;}
     if (it2 == set2_sorted.end()){return;}
-    while ( it2 != set2_sorted.end() && (*it2).second > curr_start && (*it2).first < curr_end){
-      set3.push_back(std::make_pair(std::max(curr_start, (*it2).first), 
-            std::min(curr_end, (*it2).second)));
+    while ( it2 != set2_sorted.end() && (*it2).second > start1 && (*it2).first < end1){
+      double curr_start2 = (*it2).first;
+      double curr_end2 = (*it2).second;
+      set3.push_back(std::make_pair(std::max(start1, curr_start2), 
+            std::min(end1, curr_end2)));
+      prev_start2 = curr_start2;
+      prev_end2 = curr_end2;
       it2++;
     }
-    if (it2 == set2_sorted.end()){return;}
+    //if (it2 == set2_sorted.end()){return;}
   }
 }
 
@@ -291,35 +300,54 @@ void interval_union(const ibdSegments &set1, const ibdSegments &set2, ibdSegment
   ibdSegments set2_sorted = set2;
   std::sort(set2_sorted.begin(), set2_sorted.end(), sortLambda);
 
+  ibdSegments tmp;
   auto it2 = set2_sorted.begin();
   for(auto it1 = set1_sorted.begin(); it1 != set1_sorted.end(); it1++){
     double start1 = (*it1).first;
     double end1 = (*it1).second;
     while (it2 != set2_sorted.end() && (*it2).second < start1){
-      set3.push_back(std::make_pair((*it2).first, (*it2).second));
+      tmp.push_back(std::make_pair((*it2).first, (*it2).second));
+      it2++;
     }
     if (it2 == set2_sorted.end()){
       // push back set1's remaining segments
       for(; it1 != set1_sorted.end(); it1++){
-        set3.push_back(std::make_pair((*it1).first, (*it2).second));}
-      return;
+        tmp.push_back(std::make_pair((*it1).first, (*it1).second));
+      }
+      break;
     }
 
     double start2 = (*it2).first;
     double end2 = (*it2).second;
-    while ( it2 != set2_sorted.end() && (*it2).first <= end1){
-      end2 = (*it2).second;
-      it2++;
-    }
-    set3.push_back(std::make_pair(std::min(start1, start2), std::max(end1, end2)));
-    if (it2 == set2_sorted.end()){
-      // push back set1's remaining segments
-      for(; it1 != set1_sorted.end(); it1++){
-        set3.push_back(std::make_pair((*it1).first, (*it2).second));}
-      return;
+    if (start2 <= end1){
+      while ( it2 != set2_sorted.end() && (*it2).first <= end1){
+        end2 = (*it2).second;
+        it2++;
+      }
+      tmp.push_back(std::make_pair(std::min(start1, start2), std::max(end1, end2)));
+    }else{
+      // no segments from set2 overlap this segment in set1
+      tmp.push_back(std::make_pair(start1, end1));
     }
   }
 
+  // concatenate neighboring regions
+  bool first = true;
+  double prev_start, prev_end;
+  for(auto seg : tmp){
+    if (first){
+      prev_start = seg.first;
+      prev_end = seg.second;
+      first = false;
+    }else if(seg.first > prev_end){
+      set3.push_back(std::make_pair(prev_start, prev_end));
+      prev_start = seg.first;
+      prev_end = seg.second;
+    }else if (seg.first == prev_end){
+      prev_end = seg.second;
+    }
+  }
+  set3.push_back(std::make_pair(prev_start, prev_end));
 }
 
 void interval_complement(const ibdSegments &set1, ibdSegments &set2, 

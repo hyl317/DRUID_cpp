@@ -3,9 +3,9 @@
         {
             "name": "Linux",
             "includePath": [
-                "./*",
-                "C:/eigen-3.3.9/eigen-3.3.9/*",
-                "C:/boost_1_75_0/boost_1_75_0/*"
+                "C:\\eigen-3.3.9\\eigen-3.3.9\\*",
+                "C:\\boost_1_75_0\\boost_1_75_0\\*",
+                "${workspaceFolder}\\**"
             ],
             "defines": [],
             "cStandard": "gnu11",

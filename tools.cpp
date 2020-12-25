@@ -82,7 +82,7 @@ Eigen::VectorXd readBimFile(const std::string &bimFile,
 
 void readIBDFile(const std::string &ibdFile, 
   std::map<std::pair<std::string, std::string>, Pair*> &allsegs, 
-  std::set<std::string> &inds, FileOrGZ<FILE *> &logFile){
+  std::set<std::string> &inds){
 
   FileOrGZ<gzFile> in;
   bool ret = in.open(ibdFile.c_str(), "r");

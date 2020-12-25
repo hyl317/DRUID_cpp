@@ -17,6 +17,7 @@ struct sample{
 enum close_relationship {PC, FS, GP, AV};
 struct relationship{
     close_relationship rel;
+    Vertex older = NULL;
     // could add something else later
 };
 
@@ -24,8 +25,10 @@ struct relationship{
 // use std::vector to store the out-going edge for each vertex for fast traversal and small memory overhead
 // bidirectionalS makes the graph to have both in_edges() and out_edges() functions, not sure this is useful or not yet
 using Pedigree = boost::adjacency_list<
-    boost::listS, boost::vecS, boost::bidirectionalS,
+    boost::listS, boost::vecS, boost::undirectedS,
     sample, relationship>;
+using Vertex = boost::graph_traits<Pedigree>::vertex_descriptor;
+using Edge = boost::graph_traits<Pedigree>::edge_descriptor;
 
 void build_graph(Pedigree &pedigree, 
     const std::map<std::pair<std::string, std::string>, Pair*> &allsegs,

@@ -21,9 +21,9 @@ void build_graph(Pedigree &pedigree,
     auto vertex_property_map = boost::get(&sample::id, pedigree);
     boost::graph_traits<Pedigree>::vertex_iterator vi1, vi_end1;
     boost::graph_traits<Pedigree>::vertex_iterator vi2, vi_end2;
-    using Vertex = boost::graph_traits<Pedigree>::vertex_descriptor;
     std::vector<std::pair<Vertex, Vertex>> twins;
-    std::map<Vertex, std::unique_ptr<std::vector<Vertex>>> first_degs;
+    std::vector<std::pair<Vertex, Vertex>> pcs;
+    std::map<Vertex, std::unique_ptr<std::vector<Vertex>>> fs_degs;
     std::map<Vertex, std::unique_ptr<std::vector<Vertex>>> second_degs;
     for(boost::tie(vi1, vi_end1) = boost::vertices(pedigree); vi1 != vi_end1; vi1++){
         std::string id1 = vertex_property_map[*vi1];
@@ -39,18 +39,32 @@ void build_graph(Pedigree &pedigree,
             double K = std::max((ibd1/4.0 + ibd2/2.0 - bkg_sharing/4.0)/tot_genome, 0.0);
             int deg = getRelfromK(K, maxDeg);
             results.insert(std::make_pair(std::make_pair(id1, id2), deg));
-            //std::cout << id1 << "\t" << id2 << "\t" << deg << std::endl;
             // store first and second degree pairs' sample names for later use
             if (deg == 1 || deg == 2){
-                auto &map = deg == 1? first_degs : second_degs;
-                if(map.find(*vi1) == map.end()){
-                    map[*vi1] = std::unique_ptr<std::vector<Vertex>>(new std::vector<Vertex>());
+                bool isFS = TRUE;
+                if (deg == 1){
+                    boost::add_edge(*v1, *v2, pedigree);
+                    Edge e = boost::edge(*v1, *v2, pedigree);
+                    if (ibd2 >= FULL_SIB_MIN_IBD2){pedigree[e].rel = FS;}
+                    else{
+                        pedigree[e].rel = PC; 
+                        isFS = False;
+                        pcs.push_back(std::make_pair(*v1, *v2));
+                    }
                 }
-                map[*vi1]->push_back(*vi2);
-                //if(map.find(id2) == map.end()){
-                //    map[id2] = std::unique_ptr<std::vector<std::string>>(new std::vector<std::string>());
-                //}
-                //map[id2]->push_back(id1);
+
+                auto &map = deg == 1? fs_degs : second_degs;
+                if (isFS || deg == 2){
+                    if(map.find(*vi1) == map.end()){
+                        map[*vi1] = std::unique_ptr<std::vector<Vertex>>(new std::vector<Vertex>());
+                    }
+                    map[*vi1]->push_back(*vi2);
+                    if(map.find(*ivi2) == map.end()){
+                        map[*vi2] = std::unique_ptr<std::vector<Vertex>(new std::vector<Vertex>());
+                    }
+                    map[*vi2]->push_back(*vi1);
+                }
+                
             }else if (deg == 0){
                 twins.push_back(std::make_pair(*vi1, *vi2));
             }
@@ -58,20 +72,22 @@ void build_graph(Pedigree &pedigree,
     }
 
     // remove one of the twins
-    std::cout << "number of vertex: " << boost::num_vertices(pedigree) << std::endl;
     for(auto twin : twins){boost::remove_vertex(twin.second, pedigree);}
-    std::cout << "number of vertex: " << boost::num_vertices(pedigree) << std::endl;
 
-    // identify full-sib and parent-offspring relationship and add edges to the graph
-    // test if our map is correct
-    // for(auto it = first_degs.begin(); it != first_degs.end(); it++){
-    //     Vertex u = it->first;
-    //     for(Vertex v : *(it->second)){
-    //         std::string id1 = vertex_property_map[u];
-    //         std::string id2 = vertex_property_map[v];
-    //         std::cout << id1 << "\t" << id2 << std::endl;
-    //     }
-    // }
+    // polarize Parent-child relationship when we can
+    for(auto pc : pcs){
+        Vertex v1 = pc.first;
+        Vertex v2 = pc.second;
+        // if neither v1 nor v2 has any full-sibs, we can't do anything
+        if (fs_degs.find(v1) == fs_degs.end() && fs_degs.find(v2) == fs_degs.end(){continue;}
+        if (fs_degs.find(v1) != fs_degs.end()){
+            // iterate over v1's full-sib pair to check if they form a parent-child pair with v2
+            // if so, then v2 must be the parent
+            for(auto fs : *fs_degs[v1]){
+                auto e = boost::edge(fs, v2, pedigree).second;
+            }
+        }
+    }
 
 }
 
@@ -90,7 +106,6 @@ bool is_avunc(const std::string &fs1, const std::string &fs2, const std::string 
     Pair &sib2_avunc_pair = *(fa_p2->second);
 
     double ibd011_tot = 0.0;
-    double ibd0_tot = 0.0;
     // iterate over chromosomes for which sib1 share ibds with the putative avunc
     for(auto it = sib1_avunc_pair.ibd1_map->begin(); it != sib1_avunc_pair.ibd1_map->end(); it++){
         std::string chr_name = it->first;
@@ -132,6 +147,5 @@ bool is_avunc(const std::string &fs1, const std::string &fs2, const std::string 
             ibd011_tot += std::accumulate(segLengths.begin(), segLengths.end(), decltype(segLengths)::value_type(0));
         }
     }
-    fprintf(stdout, "ibd011 region: %lf\n", ibd011_tot);
     return ibd011_tot >= AVUNC_011;
 }

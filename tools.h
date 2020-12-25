@@ -72,7 +72,7 @@ Eigen::VectorXd readBimFile(const std::string &bimFile,
 
 void readIBDFile(const std::string &ibdFile, 
   std::map<std::pair<std::string, std::string>, Pair*> &allsegs, 
-  std::set<std::string> &inds, FileOrGZ<FILE *> &logFile);
+  std::set<std::string> &inds);
 
 double calc_bkg_sharing(const std::string &NeFile, const Eigen::VectorXd &chrLens, const double &minIBD);
 void cumsum_eigen_colvector(const Eigen::VectorXd &source, Eigen::VectorXd &dest);

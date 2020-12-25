@@ -30,7 +30,7 @@ int main(int argc, char **argv){
     logFile.printf("Reading IBD segment file: %s\n", ibdFile.c_str());
     auto allsegs = std::map<std::pair<std::string, std::string>, Pair*>();
     std::set<std::string> inds;
-    readIBDFile(ibdFile, allsegs, inds, logFile);
+    readIBDFile(ibdFile, allsegs, inds);
     int numSample = inds.size();
     logFile.printf("\tFinished reading segments for %d samples\n", numSample);
 

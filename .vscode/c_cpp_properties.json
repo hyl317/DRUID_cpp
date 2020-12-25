@@ -3,11 +3,11 @@
         {
             "name": "Linux",
             "includePath": [
+                "./*",
                 "C:/eigen-3.3.9/eigen-3.3.9/*",
                 "C:/boost_1_75_0/boost_1_75_0/*"
             ],
             "defines": [],
-            //"compilerPath": "C:\MinGW\bin\gcc.exe",
             "cStandard": "gnu11",
             "cppStandard": "gnu++14",
             "intelliSenseMode": "gcc-x64"

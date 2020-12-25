@@ -22,6 +22,7 @@ void build_graph(Pedigree &pedigree,
     boost::graph_traits<Pedigree>::vertex_iterator vi1, vi_end1;
     boost::graph_traits<Pedigree>::vertex_iterator vi2, vi_end2;
     using Vertex = boost::graph_traits<Pedigree>::vertex_descriptor;
+    std::vector<std::pair<Vertex, Vertex>> twins;
     std::map<Vertex, std::unique_ptr<std::vector<Vertex>>> first_degs;
     std::map<Vertex, std::unique_ptr<std::vector<Vertex>>> second_degs;
     for(boost::tie(vi1, vi_end1) = boost::vertices(pedigree); vi1 != vi_end1; vi1++){
@@ -50,9 +51,16 @@ void build_graph(Pedigree &pedigree,
                 //    map[id2] = std::unique_ptr<std::vector<std::string>>(new std::vector<std::string>());
                 //}
                 //map[id2]->push_back(id1);
+            }else if (deg == 0){
+                twins.push_back(std::make_pair(*vi1, *vi2));
             }
         }
     }
+
+    // remove one of the twins
+    std::cout << "number of vertex: " << boost::num_vertices(pedigree) << std::endl;
+    for(auto twin : twins){boost::remove_vertex(twin.second, pedigree);}
+    std::cout << "number of vertex: " << boost::num_vertices(pedigree) << std::endl;
 
     // identify full-sib and parent-offspring relationship and add edges to the graph
     // test if our map is correct

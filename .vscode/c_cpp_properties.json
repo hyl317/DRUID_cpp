@@ -3,12 +3,11 @@
         {
             "name": "Linux",
             "includePath": [
-                "/fs/cbsubscb09/storage/yilei/tools/lib/eigen-3.3.7/**",
-                "/fs/cbsubscb09/storage/yilei/tools/lib/eigen-3.3.7",
-                "/fs/cbsubscb09/storage/yilei/tools/lib/boost_1_66_0/"
+                "C:/eigen-3.3.9/eigen-3.3.9/*",
+                "C:/boost_1_75_0/boost_1_75_0/*"
             ],
             "defines": [],
-            "compilerPath": "/usr/local/gcc-7.3.0/bin/gcc",
+            //"compilerPath": "C:\MinGW\bin\gcc.exe",
             "cStandard": "gnu11",
             "cppStandard": "gnu++14",
             "intelliSenseMode": "gcc-x64"

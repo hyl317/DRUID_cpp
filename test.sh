@@ -19,4 +19,4 @@ fi
 
 # command to run test on SAMFAS dataset
 prefix="/fs/cbsubscb09/storage/yilei/simulate/SAMAFS"
-./DRUID -i $prefix/safs.hapibd.seg --bim $prefix/safs.bim --Ne $prefix/safs.ibdne-ped2.ne -o safs --max 10 
+./DRUID -i $prefix/safs.seg --bim $prefix/safs.bim --Ne $prefix/safs.ibdne-ped2.ne -o safs --max 10 

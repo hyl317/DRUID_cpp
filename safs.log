@@ -2,7 +2,7 @@ Running DRUID...
 Reading bimFile: /fs/cbsubscb09/storage/yilei/simulate/SAMAFS/safs.bim
 	Number of chromosomes: 22
 	total genome length: 3535.218240cM
-Reading IBD segment file: /fs/cbsubscb09/storage/yilei/simulate/SAMAFS/safs.hapibd.seg
+Reading IBD segment file: /fs/cbsubscb09/storage/yilei/simulate/SAMAFS/safs.seg
 	Finished reading segments for 2475 samples
 Correcting for recent demography...
 	Reading Ne File: /fs/cbsubscb09/storage/yilei/simulate/SAMAFS/safs.ibdne-ped2.ne

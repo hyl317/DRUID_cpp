@@ -66,20 +66,20 @@ int main(int argc, char **argv){
     build_graph(pedigree, allsegs, snpmap, results, chrLens.sum(), bkg_sharing, maxDeg);
 
     // for testing purpose
-    is_avunc("801120", "801121", "801113", allsegs, snpmap);
-    is_avunc("801120", "801121", "801114", allsegs, snpmap);
-    is_avunc("801120", "801121", "801115", allsegs, snpmap);
-    is_avunc("801120", "801121", "801118", allsegs, snpmap);
+    // is_avunc("801120", "801121", "801113", allsegs, snpmap);
+    // is_avunc("801120", "801121", "801114", allsegs, snpmap);
+    // is_avunc("801120", "801121", "801115", allsegs, snpmap);
+    // is_avunc("801120", "801121", "801118", allsegs, snpmap);
 
-    is_avunc("801120", "801122", "801113", allsegs, snpmap);
-    is_avunc("801120", "801122", "801114", allsegs, snpmap);
-    is_avunc("801120", "801122", "801115", allsegs, snpmap);
-    is_avunc("801120", "801122", "801118", allsegs, snpmap);
+    // is_avunc("801120", "801122", "801113", allsegs, snpmap);
+    // is_avunc("801120", "801122", "801114", allsegs, snpmap);
+    // is_avunc("801120", "801122", "801115", allsegs, snpmap);
+    // is_avunc("801120", "801122", "801118", allsegs, snpmap);
 
-    is_avunc("801121", "801122", "801113", allsegs, snpmap);
-    is_avunc("801121", "801122", "801114", allsegs, snpmap);
-    is_avunc("801121", "801122", "801115", allsegs, snpmap);
-    is_avunc("801121", "801122", "801118", allsegs, snpmap);
+    // is_avunc("801121", "801122", "801113", allsegs, snpmap);
+    // is_avunc("801121", "801122", "801114", allsegs, snpmap);
+    // is_avunc("801121", "801122", "801115", allsegs, snpmap);
+    // is_avunc("801121", "801122", "801118", allsegs, snpmap);
     // end of test
 
     // writing output, finishing up

@@ -3,6 +3,8 @@
 #include <numeric>
 #include "function.h"
 #include "constants.h"
+#include <boost/graph/connected_components.hpp>
+
 
 int getRelfromK(double K, int maxDeg){
     //double K = std::max((ibd1/4.0 + ibd2/2.0 - bkg/4.0)/tot_genome, 0.0); 
@@ -23,8 +25,8 @@ void build_graph(Pedigree &pedigree,
     boost::graph_traits<Pedigree>::vertex_iterator vi2, vi_end2;
     std::vector<std::pair<Vertex, Vertex>> twins;
     std::vector<std::pair<Vertex, Vertex>> pcs;
-    std::map<Vertex, std::unique_ptr<std::vector<Vertex>>> fs_degs;
-    std::map<Vertex, std::unique_ptr<std::vector<Vertex>>> second_degs;
+    std::map<Vertex, std::shared_ptr<std::unordered_set<Vertex>>> fs_degs;
+    std::map<Vertex, std::shared_ptr<std::unordered_set<Vertex>>> second_degs;
     for(boost::tie(vi1, vi_end1) = boost::vertices(pedigree); vi1 != vi_end1; vi1++){
         std::string id1 = vertex_property_map[*vi1];
         for(boost::tie(vi2, vi_end2) = boost::vertices(pedigree); vi2 != vi_end2; vi2++){
@@ -38,56 +40,217 @@ void build_graph(Pedigree &pedigree,
             double ibd2 = p.ibd2_tot;
             double K = std::max((ibd1/4.0 + ibd2/2.0 - bkg_sharing/4.0)/tot_genome, 0.0);
             int deg = getRelfromK(K, maxDeg);
+            //std::cout << id1 << "\t" << id2 << "\t" << deg << std::endl;
             results.insert(std::make_pair(std::make_pair(id1, id2), deg));
             // store first and second degree pairs' sample names for later use
             if (deg == 1 || deg == 2){
-                bool isFS = TRUE;
+                bool isFS = true;
                 if (deg == 1){
-                    boost::add_edge(*v1, *v2, pedigree);
-                    Edge e = boost::edge(*v1, *v2, pedigree);
-                    if (ibd2 >= FULL_SIB_MIN_IBD2){pedigree[e].rel = FS;}
-                    else{
-                        pedigree[e].rel = PC; 
-                        isFS = False;
-                        pcs.push_back(std::make_pair(*v1, *v2));
+                    if (ibd2/tot_genome >= FULL_SIB_MIN_IBD2){
+                        boost::add_edge(*vi1, *vi2, pedigree);
+                        pedigree[boost::edge(*vi1, *vi2, pedigree).first].rel = FS;
+                    }else{
+                        isFS = false;
+                        pcs.push_back(std::make_pair(*vi1, *vi2));
+                        //std::cout << id1 << "and " << id2 << " is pushed to pcs" << std::endl;
                     }
                 }
 
                 auto &map = deg == 1? fs_degs : second_degs;
                 if (isFS || deg == 2){
                     if(map.find(*vi1) == map.end()){
-                        map[*vi1] = std::unique_ptr<std::vector<Vertex>>(new std::vector<Vertex>());
+                        map[*vi1] = std::unique_ptr<std::unordered_set<Vertex>>(new std::unordered_set<Vertex>());
                     }
-                    map[*vi1]->push_back(*vi2);
-                    if(map.find(*ivi2) == map.end()){
-                        map[*vi2] = std::unique_ptr<std::vector<Vertex>(new std::vector<Vertex>());
+                    map[*vi1]->insert(*vi2);
+                    if(map.find(*vi2) == map.end()){
+                        map[*vi2] = std::unique_ptr<std::unordered_set<Vertex>>(new std::unordered_set<Vertex>());
                     }
-                    map[*vi2]->push_back(*vi1);
+                    map[*vi2]->insert(*vi1);
                 }
                 
             }else if (deg == 0){
                 twins.push_back(std::make_pair(*vi1, *vi2));
+		        //std::cout << "twins: " << id1 << "\t" << id2 << std::endl;
             }
         }
     }
 
-    // remove one of the twins
-    for(auto twin : twins){boost::remove_vertex(twin.second, pedigree);}
+    // add missing full-sib edges (and break incorrect ones)
+    std::vector<int> components(boost::num_vertices(pedigree));
+    int num_components = boost::connected_components(pedigree, &components[0]);
+    std::map<int, std::shared_ptr<std::vector<Vertex>>> connected_comp_map;
+    boost::graph_traits<Pedigree>::vertex_iterator vi, vi_end;
+    for(boost::tie(vi, vi_end) = boost::vertices(pedigree); vi != vi_end; vi++){
+        int comp_index = components[*vi];
+        if (connected_comp_map.find(comp_index) == connected_comp_map.end()){
+            connected_comp_map.insert(std::make_pair(comp_index, std::shared_ptr<std::vector<Vertex>>(new std::vector<Vertex>())));
+        }
+        connected_comp_map[comp_index]->push_back(*vi);
+    }
+
+    for(auto it = connected_comp_map.begin(); it != connected_comp_map.end(); it++){
+        int size = it->second->size();
+        if(size == 1){continue;}
+        std::vector<Vertex> &sibs = *(it->second);
+        std::map<Vertex, int> conn_map;
+        for(Vertex u : sibs){
+            int counter = 0;
+            for(Vertex v : sibs){
+                if (u == v){continue;}
+                if (boost::edge(u, v, pedigree).second){counter++;}
+            }
+            conn_map.insert(std::make_pair(u, counter));
+        }
+            
+        for(Vertex u : sibs){
+            if (conn_map[u] >= (size-1)/2.0){
+                for(Vertex v : sibs){
+                    if (u == v){continue;}
+                    else if (!boost::edge(u, v, pedigree).second){
+                        boost::add_edge(u, v, pedigree);
+                        pedigree[boost::edge(u, v, pedigree).first].rel = FS;
+                        fs_degs[u]->insert(v);
+                        fs_degs[v]->insert(u);
+                        // since we haave promoted (u,v) as FS, remove this pair from second_deg if they were such inferred previously
+                        if (second_degs.find(u) != second_degs.end()){second_degs[u]->erase(v);}
+                        if (second_degs.find(v) != second_degs.end()){second_degs[v]->erase(u);}
+                        //std::cout << vertex_property_map[u] << " and " << vertex_property_map[v] << " is now a FS pair" << std::endl;
+                        // let's update the results map when we actually write the output
+                    }
+                }
+            }else{
+                for(Vertex v : sibs){
+                    if (u == v){continue;}
+                    else if(boost::edge(u, v, pedigree).second){
+                        boost::remove_edge(u, v, pedigree);
+                        fs_degs[u]->erase(v);
+                        fs_degs[v]->erase(u);
+                        //std::cout << vertex_property_map[u] << " and " << vertex_property_map[v] << " is no longer a FS pair" << std::endl;
+                    }
+                }
+            }
+        }
+    }
+
+
+    // add PC edges
+    for(auto pc: pcs){
+        boost::add_edge(pc.first, pc.second, pedigree);
+        pedigree[boost::edge(pc.first, pc.second, pedigree).first].rel = PC;
+    }
 
     // polarize Parent-child relationship when we can
     for(auto pc : pcs){
         Vertex v1 = pc.first;
         Vertex v2 = pc.second;
         // if neither v1 nor v2 has any full-sibs, we can't do anything
-        if (fs_degs.find(v1) == fs_degs.end() && fs_degs.find(v2) == fs_degs.end(){continue;}
+        if (fs_degs.find(v1) == fs_degs.end() && fs_degs.find(v2) == fs_degs.end()){continue;}
+        bool v2IsParent = false;
+        bool v1IsParent = false;
         if (fs_degs.find(v1) != fs_degs.end()){
             // iterate over v1's full-sib pair to check if they form a parent-child pair with v2
             // if so, then v2 must be the parent
             for(auto fs : *fs_degs[v1]){
-                auto e = boost::edge(fs, v2, pedigree).second;
+                bool isConnected = boost::edge(fs, v2, pedigree).second;
+                //std::cout << "check v1's full-sib: " << vertex_property_map[fs] << " is connected? "<< isConnected << std::endl;
+                if (isConnected){
+                    Edge e = boost::edge(fs, v2, pedigree).first;
+                    //std::cout << pedigree[e].rel << std::endl;
+                    if (pedigree[e].rel == PC){v2IsParent=true;}
+                }
+            }
+
+            // now assign v2 as the parent of all full-sibs of v1
+            if (v2IsParent){
+                pedigree[boost::edge(v1, v2, pedigree).first].older = v2;
+                pedigree[boost::edge(v1, v2, pedigree).first].polarized = true;
+                for (auto fs : *fs_degs[v1]){
+                    // don't want to add an edge twice becuase I used std::Vector to represent edge list
+                    if (!boost::edge(fs, v2, pedigree).second){boost::add_edge(fs, v2, pedigree);}
+                    pedigree[boost::edge(fs, v2, pedigree).first].rel = PC;
+                    pedigree[boost::edge(fs, v2, pedigree).first].older = v2;
+                    pedigree[boost::edge(fs, v2, pedigree).first].polarized = true;
+                }
             }
         }
+
+        if (fs_degs.find(v2) != fs_degs.end()){
+            // iterate over v2's full-sib pair to check if they form a parent-child pair with v1
+            // if so, then v1 must be the parent
+            for(auto fs : *fs_degs[v2]){
+                bool isConnected = boost::edge(fs, v1, pedigree).second;
+                //std::cout << "check v2's full-sib: " << vertex_property_map[fs] << " is connected? "<< isConnected << std::endl;
+                if (isConnected){
+                    Edge e = boost::edge(fs, v1, pedigree).first;
+                    //std::cout << pedigree[e].rel << std::endl;
+                    if (pedigree[e].rel == PC){v1IsParent=true;}
+                }
+            }
+
+            // now assign v1 as the parent of all full-sibs of v2
+            if (v1IsParent){
+                pedigree[boost::edge(v1, v2, pedigree).first].older = v1;
+                pedigree[boost::edge(v1, v2, pedigree).first].polarized = true;
+                for (auto fs : *fs_degs[v2]){
+                    // don't want to add an edge twice becuase I used std::Vector to represent edge list
+                    if (!boost::edge(fs, v1, pedigree).second){boost::add_edge(fs, v1, pedigree);}
+                    pedigree[boost::edge(fs, v1, pedigree).first].rel = PC;
+                    pedigree[boost::edge(fs, v1, pedigree).first].older = v1;
+                    pedigree[boost::edge(fs, v1, pedigree).first].polarized = true;
+                }
+            }
+        }
+        assert(!(v1IsParent && v2IsParent));
     }
+
+    // test first-degree edges
+    boost::graph_traits<Pedigree>::edge_iterator ei, ei_end;
+    for (boost::tie(ei, ei_end) = boost::edges(pedigree); ei != ei_end; ++ei){
+        Edge e = *ei;
+        std::cout << vertex_property_map[boost::source(e, pedigree)] << "\t" << vertex_property_map[boost::target(e, pedigree)] << "\t" << pedigree[e].rel << std::endl;
+    }
+    // end of test for first degree edges
+
+
+    // construct second-degree edges
+    std::unordered_set<Vertex> checked_sibs;
+    for(auto it = second_degs.begin(); it != second_degs.end(); it++){
+        // here we assume that it->first is the younger generation and test if it forms AV relationship with its putative sescond relaatives
+        // actually the younger generation could also be it->second
+        // but this is not a problem here because
+        // every sample in it->second also has a entry in the second_degs map where they are it->first
+        Vertex focal_ind = it->first;
+        if (checked_sibs.find(focal_ind) != checked_sibs.end()){continue;}
+        const std::unordered_set<Vertex> &second_deg_relatives = *(it->second);
+        if (fs_degs.find(focal_ind) == fs_degs.end()){
+            // no full-siblings to this focal individual, no way to determine if the second is avuncular or not
+            continue;
+        }
+        const std::unordered_set<Vertex> &fs_to_focal_ind = *(fs_degs[focal_ind]);
+        for(Vertex avunc_candidate : second_deg_relatives){
+            std::string avunc_candidate_id = vertex_property_map[avunc_candidate];
+            // consider all pairs of full-siblings of the focal individual
+            std::unordered_set<Vertex> full_sib_vertex_set = fs_to_focal_ind; // copy
+            full_sib_vertex_set.insert(focal_ind);
+            std::vector<std::string> full_sib_id_set(full_sib_vertex_set.size());
+            std::transform(full_sib_vertex_set.begin(), full_sib_vertex_set.end(),
+                full_sib_id_set.begin(), [&](Vertex v){return vertex_property_map[v];});
+            if (checkAvunc(full_sib_id_set, avunc_candidate_id, allsegs, snpmap)){
+                // add second-deg edges to the graph
+                for(Vertex v : full_sib_vertex_set){
+                    boost::add_edge(v, avunc_candidate, pedigree);
+                    pedigree[boost::edge(v, avunc_candidate, pedigree).first].older = avunc_candidate;
+                    pedigree[boost::edge(v, avunc_candidate, pedigree).first].polarized = true;
+                    checked_sibs.insert(v);
+                }
+            }
+
+       }
+
+    }
+
+    // remove one of the twins
+    for(auto twin : twins){boost::remove_vertex(twin.second, pedigree);}
 
 }
 
@@ -148,4 +311,18 @@ bool is_avunc(const std::string &fs1, const std::string &fs2, const std::string 
         }
     }
     return ibd011_tot >= AVUNC_011;
+}
+
+bool checkAvunc(const std::vector<std::string> &full_sibs, const std::string &avunc, 
+    const std::map<std::pair<std::string, std::string>, Pair*> &allsegs,
+    const std::map<std::string, std::map<int, double>*> &snpmap)
+{
+    // check if avunc is the avunc of the given set of full_sibs
+    int num_sibs = full_sibs.size();
+    for(int i = 0; i < num_sibs; i++){
+        for(int j = i+1; j < num_sibs; j++){
+            if(is_avunc(full_sibs[i], full_sibs[j], avunc, allsegs, snpmap)){return true;}
+        }
+    }
+    return false;
 }

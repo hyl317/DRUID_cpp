@@ -84,7 +84,7 @@ int main(int argc, char **argv){
 
     // writing output, finishing up
     logFile.printf("Writitng to output file: %s\n", std::string(prefix + ".DRUID").c_str());
-    write_output(results, prefix);
+    write_output(results, prefix, pedigree);
     logFile.close();
 
     // clean up

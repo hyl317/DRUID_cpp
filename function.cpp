@@ -114,8 +114,9 @@ void build_graph(Pedigree &pedigree,
                         // since we haave promoted (u,v) as FS, remove this pair from second_deg if they were such inferred previously
                         if (second_degs.find(u) != second_degs.end()){second_degs[u]->erase(v);}
                         if (second_degs.find(v) != second_degs.end()){second_degs[v]->erase(u);}
+                        // let's update the results map when we actually write the output, or shall we?
+                        results[make_pair(vertex_property_map[u], vertex_property_map[v])] = 1;
                         //std::cout << vertex_property_map[u] << " and " << vertex_property_map[v] << " is now a FS pair" << std::endl;
-                        // let's update the results map when we actually write the output
                     }
                 }
             }else{
@@ -125,6 +126,8 @@ void build_graph(Pedigree &pedigree,
                         boost::remove_edge(u, v, pedigree);
                         fs_degs[u]->erase(v);
                         fs_degs[v]->erase(u);
+                        // I assume they should be considered 2nd if not full-sib? Or could they be PO? And should we consider the possibility of AV?
+                        results[make_pair(vertex_property_map[u], vertex_property_map[v])] = 2;
                         //std::cout << vertex_property_map[u] << " and " << vertex_property_map[v] << " is no longer a FS pair" << std::endl;
                     }
                 }
@@ -239,6 +242,7 @@ void build_graph(Pedigree &pedigree,
                 // add second-deg edges to the graph
                 for(Vertex v : full_sib_vertex_set){
                     boost::add_edge(v, avunc_candidate, pedigree);
+                    pedigree[boost::edge(v, avunc_candidate, pedigree).first].rel = AV;
                     pedigree[boost::edge(v, avunc_candidate, pedigree).first].older = avunc_candidate;
                     pedigree[boost::edge(v, avunc_candidate, pedigree).first].polarized = true;
                     checked_sibs.insert(v);
@@ -325,4 +329,41 @@ bool checkAvunc(const std::vector<std::string> &full_sibs, const std::string &av
         }
     }
     return false;
+}
+
+void write_output(const std::map<std::pair<std::string, std::string>, int> &results, 
+    const std::string &prefix, const Pedigree &pedigree)
+{
+  std::string outFileName = prefix + ".DRUID";
+    FileOrGZ<FILE *> outFile;
+    bool ret = outFile.open(outFileName.c_str(), "w");
+    if(!ret){
+        fprintf(stderr, "cannot open %s for writing output\n", outFileName.c_str());
+        exit(1);
+    }
+  
+    std::set<std::pair<std::string, std::string>> in_pedigree;
+    auto vertex_property_map = boost::get(&sample::id, pedigree);
+    boost::graph_traits<Pedigree>::edge_iterator ei, ei_end;
+    std::map<int, std::string> rel2string = {
+        {0, "PC"},
+        {1, "FS"},
+        {2, "GP"},
+        {3, "AV"}
+    };
+
+    for (boost::tie(ei, ei_end) = boost::edges(pedigree); ei != ei_end; ++ei){
+        Edge e = *ei;
+        std::string id1 = vertex_property_map[boost::source(e, pedigree)];
+        std::string id2 = vertex_property_map[boost::target(e, pedigree)];
+        outFile.printf("%s\t%s\t%s\n", id1.c_str(), id2.c_str(), rel2string[pedigree[e].rel].c_str());
+        in_pedigree.insert(make_pair(id1, id2));
+    }
+
+  for(auto it = results.begin(); it != results.end(); it++){
+    std::pair<std::string, std::string> p = it->first;
+    if (in_pedigree.find(p) != in_pedigree.end()){continue;}
+    outFile.printf("%s\t%s\t%d\n", p.first.c_str(), p.second.c_str(), it->second);
+  }
+  outFile.close();
 }

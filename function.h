@@ -7,12 +7,14 @@
 #include <boost/graph/adjacency_list.hpp>
 #include "tools.h"
 
+
+enum close_relationship {PC, FS, GP, AV};
+
 struct sample{
     std::string id;
     // could add something else, like age, sex if available
 };
 
-enum close_relationship {PC, FS, GP, AV};
 struct relationship{
     close_relationship rel;
     std::size_t older;
@@ -45,5 +47,7 @@ bool checkAvunc(const std::vector<std::string> &full_sibs, const std::string &av
     const std::map<std::pair<std::string, std::string>, Pair*> &allsegs,
     const std::map<std::string, std::map<int, double>*> &snpmap);
 
+void write_output(const std::map<std::pair<std::string, std::string>, int> &results, 
+    const std::string &prefix, const Pedigree &pedigree);
 
 #endif

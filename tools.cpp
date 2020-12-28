@@ -227,23 +227,6 @@ double log_expectedIBD_beyond_maxGen_given_Ne(const Eigen::VectorXd &Ne,
 
 }
 
-void write_output(const std::map<std::pair<std::string, std::string>, int> &results, const std::string &prefix)
-{
-  std::string outFileName = prefix + ".DRUID";
-    FileOrGZ<FILE *> outFile;
-    bool ret = outFile.open(outFileName.c_str(), "w");
-    if(!ret){
-        fprintf(stderr, "cannot open %s for writing output\n", outFileName.c_str());
-        exit(1);
-    }
-  
-  for(auto it = results.begin(); it != results.end(); it++){
-    std::pair<std::string, std::string> p = it->first;
-    outFile.printf("%s\t%s\t%d\n", p.first.c_str(), p.second.c_str(), it->second);
-  }
-  outFile.close();
-}
-
 void interval_intersection(const ibdSegments &set1, const ibdSegments &set2, ibdSegments &set3)
 {
   if (set1.size() == 0 || set2.size() == 0){return;}

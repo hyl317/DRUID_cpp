@@ -88,8 +88,6 @@ inline std::pair<std::string, std::string> make_pair
   return s1 < s2? std::make_pair(s1, s2) : std::make_pair(s2, s1);
 }
 
-void write_output(const std::map<std::pair<std::string, std::string>, int> &results, const std::string &prefix);
-
 // this function finds the intersection of intervls in set1 and set2
 // and push_back the intersection in set3
 void interval_intersection(const ibdSegments &set1, const ibdSegments &set2, ibdSegments &set3);

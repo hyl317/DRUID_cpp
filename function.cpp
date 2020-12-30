@@ -24,11 +24,12 @@ void build_graph(Pedigree &pedigree,
     boost::graph_traits<Pedigree>::vertex_iterator vi1, vi_end1;
     boost::graph_traits<Pedigree>::vertex_iterator vi2, vi_end2;
     std::vector<std::pair<Vertex, Vertex>> twins;
-    std::vector<std::pair<Vertex, Vertex>> pcs;
+    std::set<std::pair<Vertex, Vertex>> pcs;
     std::map<Vertex, std::shared_ptr<std::unordered_set<Vertex>>> fs_degs;
     std::map<Vertex, std::shared_ptr<std::unordered_set<Vertex>>> second_degs;
     for(boost::tie(vi1, vi_end1) = boost::vertices(pedigree); vi1 != vi_end1; vi1++){
         std::string id1 = vertex_property_map[*vi1];
+        std::cout << id1 << "\t" << *vi1 << std::endl;
         for(boost::tie(vi2, vi_end2) = boost::vertices(pedigree); vi2 != vi_end2; vi2++){
             std::string id2 = vertex_property_map[*vi2];
             if (id1 >= id2){continue;} // avoid analyzing pairs twice
@@ -40,7 +41,7 @@ void build_graph(Pedigree &pedigree,
             double ibd2 = p.ibd2_tot;
             double K = std::max((ibd1/4.0 + ibd2/2.0 - bkg_sharing/4.0)/tot_genome, 0.0);
             int deg = getRelfromK(K, maxDeg);
-            //std::cout << id1 << "\t" << id2 << "\t" << deg << std::endl;
+            //std::cout << id1 << "\t" << id2 << "\t" << K << "\t" << deg << std::endl;
             results.insert(std::make_pair(std::make_pair(id1, id2), deg));
             // store first and second degree pairs' sample names for later use
             if (deg == 1 || deg == 2){
@@ -49,10 +50,10 @@ void build_graph(Pedigree &pedigree,
                     if (ibd2/tot_genome >= FULL_SIB_MIN_IBD2){
                         boost::add_edge(*vi1, *vi2, pedigree);
                         pedigree[boost::edge(*vi1, *vi2, pedigree).first].rel = FS;
+                        std::cout << id1 << " and " << id2  << " is inferred to be FS" << std::endl;
                     }else{
                         isFS = false;
-                        pcs.push_back(std::make_pair(*vi1, *vi2));
-                        //std::cout << id1 << "and " << id2 << " is pushed to pcs" << std::endl;
+                        pcs.insert(std::make_pair(*vi1, *vi2));
                     }
                 }
 
@@ -111,12 +112,14 @@ void build_graph(Pedigree &pedigree,
                         pedigree[boost::edge(u, v, pedigree).first].rel = FS;
                         fs_degs[u]->insert(v);
                         fs_degs[v]->insert(u);
-                        // since we haave promoted (u,v) as FS, remove this pair from second_deg if they were such inferred previously
+                        // since we have promoted (u,v) as FS, remove this pair from second_deg/pc pair if they were such inferred previously
                         if (second_degs.find(u) != second_degs.end()){second_degs[u]->erase(v);}
                         if (second_degs.find(v) != second_degs.end()){second_degs[v]->erase(u);}
+                        if (pcs.find(std::make_pair(u, v)) != pcs.end()){pcs.erase(std::make_pair(u,v));}
+                        if (pcs.find(std::make_pair(v, u)) != pcs.end()){pcs.erase(std::make_pair(v,u));}
                         // let's update the results map when we actually write the output, or shall we?
-                        results[make_pair(vertex_property_map[u], vertex_property_map[v])] = 1;
-                        //std::cout << vertex_property_map[u] << " and " << vertex_property_map[v] << " is now a FS pair" << std::endl;
+                        results[make_pair_c(vertex_property_map[u], vertex_property_map[v])] = 1;
+                        std::cout << vertex_property_map[u] << " and " << vertex_property_map[v] << " is now a FS pair" << std::endl;
                     }
                 }
             }else{
@@ -127,8 +130,8 @@ void build_graph(Pedigree &pedigree,
                         fs_degs[u]->erase(v);
                         fs_degs[v]->erase(u);
                         // I assume they should be considered 2nd if not full-sib? Or could they be PO? And should we consider the possibility of AV?
-                        results[make_pair(vertex_property_map[u], vertex_property_map[v])] = 2;
-                        //std::cout << vertex_property_map[u] << " and " << vertex_property_map[v] << " is no longer a FS pair" << std::endl;
+                        results[make_pair_c(vertex_property_map[u], vertex_property_map[v])] = 2;
+                        std::cout << vertex_property_map[u] << " and " << vertex_property_map[v] << " is no longer a FS pair" << std::endl;
                     }
                 }
             }
@@ -140,6 +143,7 @@ void build_graph(Pedigree &pedigree,
     for(auto pc: pcs){
         boost::add_edge(pc.first, pc.second, pedigree);
         pedigree[boost::edge(pc.first, pc.second, pedigree).first].rel = PC;
+        std::cout << "add a PC edge between " << vertex_property_map[pc.first] << " and " << vertex_property_map[pc.second] << std::endl;
     }
 
     // polarize Parent-child relationship when we can
@@ -169,7 +173,10 @@ void build_graph(Pedigree &pedigree,
                 pedigree[boost::edge(v1, v2, pedigree).first].polarized = true;
                 for (auto fs : *fs_degs[v1]){
                     // don't want to add an edge twice becuase I used std::Vector to represent edge list
-                    if (!boost::edge(fs, v2, pedigree).second){boost::add_edge(fs, v2, pedigree);}
+                    if (!boost::edge(fs, v2, pedigree).second){
+                        boost::add_edge(fs, v2, pedigree);
+                        std::cout << "add a missed PC edge between " << vertex_property_map[fs] << " and " << vertex_property_map[v2] << std::endl;
+                    }
                     pedigree[boost::edge(fs, v2, pedigree).first].rel = PC;
                     pedigree[boost::edge(fs, v2, pedigree).first].older = v2;
                     pedigree[boost::edge(fs, v2, pedigree).first].polarized = true;
@@ -196,7 +203,10 @@ void build_graph(Pedigree &pedigree,
                 pedigree[boost::edge(v1, v2, pedigree).first].polarized = true;
                 for (auto fs : *fs_degs[v2]){
                     // don't want to add an edge twice becuase I used std::Vector to represent edge list
-                    if (!boost::edge(fs, v1, pedigree).second){boost::add_edge(fs, v1, pedigree);}
+                    if (!boost::edge(fs, v1, pedigree).second){
+                        boost::add_edge(fs, v1, pedigree);
+                        std::cout << "add a missed PC edge between " << vertex_property_map[fs] << " and " << vertex_property_map[v1] << std::endl;
+                    }
                     pedigree[boost::edge(fs, v1, pedigree).first].rel = PC;
                     pedigree[boost::edge(fs, v1, pedigree).first].older = v1;
                     pedigree[boost::edge(fs, v1, pedigree).first].polarized = true;
@@ -205,15 +215,6 @@ void build_graph(Pedigree &pedigree,
         }
         assert(!(v1IsParent && v2IsParent));
     }
-
-    // test first-degree edges
-    boost::graph_traits<Pedigree>::edge_iterator ei, ei_end;
-    for (boost::tie(ei, ei_end) = boost::edges(pedigree); ei != ei_end; ++ei){
-        Edge e = *ei;
-        std::cout << vertex_property_map[boost::source(e, pedigree)] << "\t" << vertex_property_map[boost::target(e, pedigree)] << "\t" << pedigree[e].rel << std::endl;
-    }
-    // end of test for first degree edges
-
 
     // construct second-degree edges
     std::unordered_set<Vertex> checked_sibs;
@@ -240,21 +241,33 @@ void build_graph(Pedigree &pedigree,
                 full_sib_id_set.begin(), [&](Vertex v){return vertex_property_map[v];});
             if (checkAvunc(full_sib_id_set, avunc_candidate_id, allsegs, snpmap)){
                 // add second-deg edges to the graph
+                // what should we do if there is already an edge in between? Let's for now overwrite the previously edge
                 for(Vertex v : full_sib_vertex_set){
-                    boost::add_edge(v, avunc_candidate, pedigree);
+                    if (!boost::edge(v, avunc_candidate, pedigree).second) {boost::add_edge(v, avunc_candidate, pedigree);}
+                    std::cout << vertex_property_map[v] << " and " << vertex_property_map[avunc_candidate] << " is now a AV pair" << std::endl;
                     pedigree[boost::edge(v, avunc_candidate, pedigree).first].rel = AV;
                     pedigree[boost::edge(v, avunc_candidate, pedigree).first].older = avunc_candidate;
                     pedigree[boost::edge(v, avunc_candidate, pedigree).first].polarized = true;
                     checked_sibs.insert(v);
                 }
             }
-
-       }
+        }
 
     }
 
+    // // test first&second-degree edges
+    // boost::graph_traits<Pedigree>::edge_iterator ei, ei_end;
+    // for (boost::tie(ei, ei_end) = boost::edges(pedigree); ei != ei_end; ++ei){
+    //     Edge e = *ei;
+    //     std::cout << vertex_property_map[boost::source(e, pedigree)] << "\t" << vertex_property_map[boost::target(e, pedigree)] << "\t" << pedigree[e].rel << std::endl;
+    // }
+    // // end of test for first&second degree edges
+
+
+
+
     // remove one of the twins
-    for(auto twin : twins){boost::remove_vertex(twin.second, pedigree);}
+    //for(auto twin : twins){boost::remove_vertex(twin.second, pedigree);}
 
 }
 
@@ -262,13 +275,13 @@ bool is_avunc(const std::string &fs1, const std::string &fs2, const std::string 
         const std::map<std::pair<std::string, std::string>, Pair*> &allsegs, 
         const std::map<std::string, std::map<int, double>*> &snpmap)
 {
-    auto fs_p = allsegs.find(make_pair(fs1, fs2));
+    auto fs_p = allsegs.find(make_pair_c(fs1, fs2));
     assert(fs_p != allsegs.end());
     Pair &full_sib_pair = *(fs_p->second);
-    auto fa_p1 = allsegs.find(make_pair(fs1, avunc));
+    auto fa_p1 = allsegs.find(make_pair_c(fs1, avunc));
     assert(fa_p1 != allsegs.end());
     Pair &sib1_avunc_pair = *(fa_p1->second);
-    auto fa_p2 = allsegs.find(make_pair(fs2, avunc));
+    auto fa_p2 = allsegs.find(make_pair_c(fs2, avunc));
     assert(fa_p2 != allsegs.end());
     Pair &sib2_avunc_pair = *(fa_p2->second);
 
@@ -341,10 +354,8 @@ void write_output(const std::map<std::pair<std::string, std::string>, int> &resu
         fprintf(stderr, "cannot open %s for writing output\n", outFileName.c_str());
         exit(1);
     }
-  
-    std::set<std::pair<std::string, std::string>> in_pedigree;
+
     auto vertex_property_map = boost::get(&sample::id, pedigree);
-    boost::graph_traits<Pedigree>::edge_iterator ei, ei_end;
     std::map<int, std::string> rel2string = {
         {0, "PC"},
         {1, "FS"},
@@ -352,18 +363,22 @@ void write_output(const std::map<std::pair<std::string, std::string>, int> &resu
         {3, "AV"}
     };
 
-    for (boost::tie(ei, ei_end) = boost::edges(pedigree); ei != ei_end; ++ei){
-        Edge e = *ei;
-        std::string id1 = vertex_property_map[boost::source(e, pedigree)];
-        std::string id2 = vertex_property_map[boost::target(e, pedigree)];
-        outFile.printf("%s\t%s\t%s\n", id1.c_str(), id2.c_str(), rel2string[pedigree[e].rel].c_str());
-        in_pedigree.insert(make_pair(id1, id2));
+    boost::graph_traits<Pedigree>::vertex_iterator vi1, vi_end1;
+    boost::graph_traits<Pedigree>::vertex_iterator vi2, vi_end2;
+    for(boost::tie(vi1, vi_end1) = boost::vertices(pedigree); vi1 != vi_end1; vi1++){
+        std::string id1 = vertex_property_map[*vi1];
+        for(boost::tie(vi2, vi_end2) = boost::vertices(pedigree); vi2 != vi_end2; vi2++){
+            std::string id2 = vertex_property_map[*vi2];
+            if (id1 >= id2){continue;} // avoid reporting pairs twice
+            else if (boost::edge(*vi1, *vi2, pedigree).second){
+                outFile.printf("%s\t%s\t%s\n", id1.c_str(), id2.c_str(), rel2string[pedigree[boost::edge(*vi1, *vi2, pedigree).first].rel].c_str());
+            }else{
+                auto p = results.find(std::make_pair(id1, id2));
+                // pairs that don't have segments shared is not stored in the results map, so need to check this
+                int deg = p == results.end()? -1 : p->second;
+                outFile.printf("%s\t%s\t%d\n", id1.c_str(), id2.c_str(), deg);
+            }
+        }
     }
-
-  for(auto it = results.begin(); it != results.end(); it++){
-    std::pair<std::string, std::string> p = it->first;
-    if (in_pedigree.find(p) != in_pedigree.end()){continue;}
-    outFile.printf("%s\t%s\t%d\n", p.first.c_str(), p.second.c_str(), it->second);
-  }
-  outFile.close();
+    outFile.close();
 }

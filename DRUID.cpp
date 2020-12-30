@@ -84,6 +84,7 @@ int main(int argc, char **argv){
 
     // writing output, finishing up
     logFile.printf("Writitng to output file: %s\n", std::string(prefix + ".DRUID").c_str());
+    logFile.printf("\tNumber of edges: %d\n", boost::num_edges(pedigree));
     write_output(results, prefix, pedigree);
     logFile.close();
 

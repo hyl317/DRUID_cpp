@@ -3,5 +3,6 @@
 
 double FULL_SIB_MIN_IBD2 = 0.14; 
 double AVUNC_011 = 50.0;
+double DC_MIN_IBD2 = 0.0442;
 
 #endif

@@ -55,6 +55,10 @@ void build_graph(Pedigree &pedigree,
                         isFS = false;
                         pcs.insert(std::make_pair(*vi1, *vi2));
                     }
+                }else if(deg == 2){
+                    // check for possibility of DC, if so, no need to consider this pair for AV
+                    // therefore no need to add them to second_deg
+                    if (ibd2/tot_genome >= DC_MIN_IBD2){continue;}
                 }
 
                 auto &map = deg == 1? fs_degs : second_degs;

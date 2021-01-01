@@ -33,7 +33,7 @@ void build_graph(Pedigree &pedigree,
         for(boost::tie(vi2, vi_end2) = boost::vertices(pedigree); vi2 != vi_end2; vi2++){
             std::string id2 = vertex_property_map[*vi2];
             if (*vi1 >= *vi2){continue;} // avoid analyzing pairs twice
-            auto it = allsegs.find(std::make_pair(id1, id2)); 
+            auto it = allsegs.find(make_pair_str(id1, id2)); 
             // some pairs may not have ibd segments, so need to check here
             if(it == allsegs.end()){continue;};
             Pair p = *(it->second);
@@ -146,7 +146,7 @@ void build_graph(Pedigree &pedigree,
     for(auto pc: pcs){
         boost::add_edge(pc.first, pc.second, pedigree);
         pedigree[boost::edge(pc.first, pc.second, pedigree).first].rel = PC;
-        std::cout << "add a PC edge between " << vertex_property_map[pc.first] << " and " << vertex_property_map[pc.second] << std::endl;
+        //std::cout << "add a PC edge between " << vertex_property_map[pc.first] << " and " << vertex_property_map[pc.second] << std::endl;
     }
 
     // polarize Parent-child relationship when we can
@@ -228,21 +228,36 @@ void build_graph(Pedigree &pedigree,
         // every sample in it->second also has a entry in the second_degs map where they are it->first
         Vertex focal_ind = it->first;
         if (checked_sibs.find(focal_ind) != checked_sibs.end()){continue;}
-        const std::unordered_set<Vertex> &second_deg_relatives = *(it->second);
         if (fs_degs.find(focal_ind) == fs_degs.end()){
             // no full-siblings to this focal individual, no way to determine if the second is avuncular or not
             continue;
         }
+        
         const std::unordered_set<Vertex> &fs_to_focal_ind = *(fs_degs[focal_ind]);
+        // consider all pairs of full-siblings of the focal individual
+        std::unordered_set<Vertex> full_sib_vertex_set = fs_to_focal_ind; // copy
+        full_sib_vertex_set.insert(focal_ind);
+        std::vector<std::string> full_sib_id_set(full_sib_vertex_set.size());
+        std::transform(full_sib_vertex_set.begin(), full_sib_vertex_set.end(),
+            full_sib_id_set.begin(), [&](Vertex v){return vertex_property_map[v];});
+
+        // take the union of second_deg of all the first-sibs
+        // I did this because sometimes a person's AV might be classified as 3rd by kinship coefficient
+        // this way we can potentially recover such AV pair if it is 2nd to that focal ind's full-sibs
+        std::unordered_set<Vertex> second_deg_relatives;
+        for(auto fs : full_sib_vertex_set){
+            if (second_degs.find(fs) != second_degs.end()){
+                for(auto sec : *second_degs[fs]){
+                    second_deg_relatives.insert(sec);
+                }
+            }
+        }
+
         for(Vertex avunc_candidate : second_deg_relatives){
             std::string avunc_candidate_id = vertex_property_map[avunc_candidate];
-            // consider all pairs of full-siblings of the focal individual
-            std::unordered_set<Vertex> full_sib_vertex_set = fs_to_focal_ind; // copy
-            full_sib_vertex_set.insert(focal_ind);
-            std::vector<std::string> full_sib_id_set(full_sib_vertex_set.size());
-            std::transform(full_sib_vertex_set.begin(), full_sib_vertex_set.end(),
-                full_sib_id_set.begin(), [&](Vertex v){return vertex_property_map[v];});
+            std::cout << "checking " << avunc_candidate_id << std::endl;
             if (checkAvunc(full_sib_id_set, avunc_candidate_id, allsegs, snpmap)){
+                std::cout << avunc_candidate_id << " is a AV!" << std::endl;
                 // add second-deg edges to the graph
                 // what should we do if there is already an edge in between? Let's for now overwrite the previously edge
                 for(Vertex v : full_sib_vertex_set){

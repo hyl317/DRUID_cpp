@@ -31,12 +31,18 @@ using Pedigree = boost::adjacency_list<
 using Vertex = boost::graph_traits<Pedigree>::vertex_descriptor;
 using Edge = boost::graph_traits<Pedigree>::edge_descriptor;
 
+inline std::pair<Vertex, Vertex> make_pair_v
+(Vertex u, Vertex v){
+  return u < v? std::make_pair(u, v) : std::make_pair(v, u);
+}
+
 int getRelfromK(double ibd1, double ibd2, double bkg, double tot_genome, int maxDeg);
 
 void build_graph(Pedigree &pedigree, 
     const std::map<std::pair<std::string, std::string>, Pair*> &allsegs,
     const std::map<std::string, std::map<int, double>*> &snpmap,
-    std::map<std::pair<std::string, std::string>, int> &results,
+    std::map<std::pair<Vertex, Vertex>, int> &results,
+    std::map<Vertex, Vertex> &twins,
     double tot_genome, double bkg_sharing, int maxDeg);
 
 bool is_avunc(const std::string &fs1, const std::string &fs2, const std::string &avunc, 
@@ -47,7 +53,7 @@ bool checkAvunc(const std::vector<std::string> &full_sibs, const std::string &av
     const std::map<std::pair<std::string, std::string>, Pair*> &allsegs,
     const std::map<std::string, std::map<int, double>*> &snpmap);
 
-void write_output(const std::map<std::pair<std::string, std::string>, int> &results, 
-    const std::string &prefix, const Pedigree &pedigree);
+void write_output(const std::map<std::pair<Vertex, Vertex>, int> &results, 
+    const std::string &prefix, const Pedigree &pedigree, const std::map<Vertex, Vertex> &twins);
 
 #endif

@@ -83,7 +83,7 @@ inline double logaddexp(double d1, double d2){
     else{return d2 + log1p(exp(d1-d2));}
 }
 
-inline std::pair<std::string, std::string> make_pair_c
+inline std::pair<std::string, std::string> make_pair_str
 (const std::string &s1, const std::string &s2){
   return s1 < s2? std::make_pair(s1, s2) : std::make_pair(s2, s1);
 }

@@ -104,7 +104,7 @@ void readIBDFile(const std::string &ibdFile,
     std::string chr = chr_;
     std::string ibd12 = ibd12_;
     double segLen = end - start;
-    std::pair<std::string, std::string> pair = make_pair_c(id1, id2);
+    std::pair<std::string, std::string> pair = make_pair_str(id1, id2);
     inds.insert(id1);
     inds.insert(id2);
     if (allsegs.find(pair) == allsegs.end()){

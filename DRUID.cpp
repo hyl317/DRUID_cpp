@@ -62,8 +62,9 @@ int main(int argc, char **argv){
     }
     assert(it2 == inds.end());
     // add edges between close relatives
-    std::map<std::pair<std::string, std::string>, int> results;
-    build_graph(pedigree, allsegs, snpmap, results, chrLens.sum(), bkg_sharing, maxDeg);
+    std::map<std::pair<Vertex, Vertex>, int> results;
+    std::map<Vertex, Vertex> twins;
+    build_graph(pedigree, allsegs, snpmap, results, twins, chrLens.sum(), bkg_sharing, maxDeg);
 
     // for testing purpose
     // is_avunc("801120", "801121", "801113", allsegs, snpmap);
@@ -85,7 +86,7 @@ int main(int argc, char **argv){
     // writing output, finishing up
     logFile.printf("Writitng to output file: %s\n", std::string(prefix + ".DRUID").c_str());
     logFile.printf("\tNumber of edges: %d\n", boost::num_edges(pedigree));
-    write_output(results, prefix, pedigree);
+    write_output(results, prefix, pedigree, twins);
     logFile.close();
 
     // clean up

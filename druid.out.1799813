@@ -1,0 +1,1635 @@
+On host cbsubscb15
+Sun Jan  3 15:22:10 EST 2021
+component: 0, size: 19, oldest generation size: 10
+checking 801101
+801101: AV
+checking 801113
+801113: AV
+checking 801114
+801114: AV
+checking 801115
+801115: AV
+checking 801118
+801118: AV
+checking 801123
+801123: P
+checking 801129
+checking 801131
+checking 801137
+801137: P
+checking 801142
+801142: P
+
+
+component: 1, size: 2, oldest generation size: 2
+checking 801151
+checking 801152
+
+
+component: 2, size: 29, oldest generation size: 11
+checking 802102
+checking 802108
+checking 802110
+checking 802117
+checking 802129
+802129: GP
+checking 802138
+checking 802139
+checking 802142
+checking 802157
+802157: P
+checking 802227
+checking 802228
+
+
+component: 3, size: 15, oldest generation size: 4
+checking 803101
+803101: AV
+checking 803121
+803121: AV
+checking 803132
+803132: P
+checking 803140
+
+
+component: 4, size: 3, oldest generation size: 3
+checking 803225
+checking 803227
+checking 803228
+
+
+component: 5, size: 8, oldest generation size: 4
+checking 804101
+804101: GP
+checking 804115
+checking 804121
+804121: GP
+checking 804300
+
+
+component: 6, size: 11, oldest generation size: 3
+checking 805101
+805101: AV
+checking 805115
+805115: AV
+checking 805151
+
+
+component: 7, size: 2, oldest generation size: 2
+checking 806101
+checking 806118
+
+
+component: 11, size: 17, oldest generation size: 7
+checking 807102
+807102: GP
+checking 807109
+807109: GP
+checking 807120
+checking 807132
+807132: P
+checking 807138
+checking 807141
+checking 807146
+
+
+component: 12, size: 45, oldest generation size: 8
+checking 808108
+808108: GP
+checking 808133
+808133: P
+checking 808160
+808160: P
+checking 808162
+808162: P
+checking 808300
+checking 808302
+808302: P
+checking 808308
+checking 808309
+
+
+component: 13, size: 2, oldest generation size: 2
+checking 808127
+checking 808152
+
+
+component: 16, size: 2, oldest generation size: 2
+checking 808178
+808178: FS
+checking A28250
+A28250: FS
+
+
+component: 17, size: 20, oldest generation size: 6
+checking 809102
+809102: GP
+checking 809108
+809108: GP
+checking 809143
+checking 809145
+checking 809160
+checking 809163
+
+
+component: 19, size: 23, oldest generation size: 5
+checking 810102
+810102: GP
+checking 810109
+checking 810128
+810128: P
+checking 810162
+checking 810197
+
+
+component: 20, size: 2, oldest generation size: 2
+checking 810120
+checking 810402
+
+
+component: 23, size: 5, oldest generation size: 2
+checking 810206
+810206: P
+checking 810211
+810211: P
+
+
+component: 25, size: 2, oldest generation size: 2
+checking 811101
+checking 811102
+
+
+component: 27, size: 15, oldest generation size: 6
+checking 812101
+812101: AV
+checking 812112
+812112: AV
+checking 812128
+checking 812135
+checking 812145
+checking 812183
+
+
+component: 28, size: 28, oldest generation size: 11
+checking 813101
+813101: AV
+checking 813112
+813112: GP
+checking 813114
+813114: AV
+checking 813115
+813115: AV
+checking 813131
+813131: P
+checking 813141
+813141: GP
+checking 813142
+813142: P
+checking 813147
+checking 813148
+checking 813149
+checking 813167
+
+
+component: 31, size: 31, oldest generation size: 9
+checking 814101
+814101: GP
+checking 814109
+814109: GP
+checking 814110
+checking 814123
+814123: GP
+checking 814130
+checking 814134
+814134: P
+checking 814135
+814135: P
+checking 814150
+checking 814222
+814222: P
+
+
+component: 34, size: 46, oldest generation size: 11
+checking 815105
+checking 815122
+815122: P
+checking 815127
+815127: P
+checking 815134
+815134: P
+checking 815142
+checking 815143
+815143: GP
+checking 815158
+815158: P
+checking 815196
+815196: P
+checking 815198
+checking 815227
+815227: P
+checking 815279
+
+
+component: 35, size: 22, oldest generation size: 15
+checking 816101
+816101: AV
+checking 816110
+816110: AV
+checking 816111
+816111: AV
+checking 816113
+checking 816124
+checking 816125
+checking 816132
+checking 816147
+checking 816189
+checking 816191
+checking 816208
+checking 816224
+checking 816231
+checking 816260
+checking 816303
+
+
+component: 38, size: 9, oldest generation size: 6
+checking 817114
+817114: AV
+checking 817115
+817115: P
+checking 817120
+817120: AV
+checking 817162
+checking 817165
+checking 817192
+817192: AV
+
+
+component: 39, size: 36, oldest generation size: 13
+checking 818106
+818106: AV
+checking 818107
+818107: AV
+checking 818109
+818109: AV
+checking 818111
+818111: P
+checking 818112
+818112: GP
+checking 818113
+818113: GP
+checking 818203
+818203: P
+checking 818212
+checking 818213
+checking 818215
+checking 818226
+checking 818229
+checking 818235
+
+
+component: 41, size: 14, oldest generation size: 4
+checking 819109
+819109: P
+checking 819128
+819128: P
+checking 819145
+checking 819146
+
+
+component: 42, size: 4, oldest generation size: 2
+checking 820101
+820101: P
+checking 820128
+820128: P
+
+
+component: 43, size: 14, oldest generation size: 6
+checking 821102
+checking 821112
+checking 821126
+checking 821128
+checking 821135
+checking 821136
+
+
+component: 45, size: 71, oldest generation size: 21
+checking 822126
+822126: P
+checking A32008
+checking A32012
+A32012: GP
+checking A32067
+A32067: P
+checking A32090
+checking A32097
+checking A32098
+checking A32099
+A32099: GP
+checking A32102
+A32102: P
+checking A32106
+checking A32114
+checking A32154
+A32154: P
+checking A32195
+checking A32199
+checking A32200
+checking A32204
+checking A32210
+checking A34001
+A34001: P
+checking A34005
+A34005: AV
+checking A34179
+checking A34180
+
+
+component: 47, size: 15, oldest generation size: 5
+checking 823103
+823103: GP
+checking 823123
+823123: P
+checking 823128
+checking 823137
+checking 823139
+
+
+component: 50, size: 13, oldest generation size: 5
+checking 824101
+824101: AV
+checking 824104
+824104: AV
+checking 824123
+checking 824161
+checking 824178
+
+
+component: 53, size: 60, oldest generation size: 15
+checking 825108
+825108: GP
+checking 825109
+checking 825115
+825115: P
+checking 825134
+checking 825135
+825135: GP
+checking 825139
+825139: P
+checking 825141
+checking 825152
+825152: P
+checking 825168
+825168: P
+checking 825170
+825170: GP
+checking 825207
+checking 825212
+825212: P
+checking 825255
+checking 825261
+825261: P
+checking 825306
+825306: P
+
+
+component: 57, size: 56, oldest generation size: 21
+checking 826101
+826101: AV
+checking 826107
+826107: P
+checking 826108
+826108: P
+checking 826109
+checking 826130
+826130: GP
+checking 826131
+826131: GP
+checking 826132
+826132: AV
+checking 826138
+826138: AV
+checking 826140
+826140: AV
+checking 826144
+826144: P
+checking 826155
+826155: GP
+checking 826156
+826156: GP
+checking 826191
+826191: P
+checking 826234
+checking 826244
+checking 826246
+checking 826254
+checking 826263
+826263: P
+checking 826290
+checking 826328
+826328: P
+checking 826364
+826364: P
+
+
+component: 58, size: 4, oldest generation size: 2
+checking 826135
+checking 826136
+826136: P
+
+
+component: 62, size: 10, oldest generation size: 6
+checking 827101
+827101: AV
+checking 827120
+827120: AV
+checking 827122
+827122: AV
+checking 827123
+827123: AV
+checking 827132
+checking 827140
+827140: P
+
+
+component: 63, size: 3, oldest generation size: 3
+checking 827112
+checking 827124
+checking 827130
+
+
+component: 66, size: 55, oldest generation size: 24
+checking 829105
+829105: AV
+checking 829106
+829106: GP
+checking 829107
+829107: AV
+checking 829108
+829108: AV
+checking 829111
+829111: AV
+checking 829114
+829114: GP
+checking 829117
+829117: AV
+checking 829128
+829128: P
+checking 829129
+checking 829130
+checking 829141
+checking 829159
+checking 829161
+829161: P
+checking 829178
+checking 829181
+checking 829194
+checking 829210
+829210: P
+checking 829234
+829234: P
+checking 829255
+checking 829294
+checking 829296
+checking 829305
+checking 829306
+checking 829319
+
+
+component: 75, size: 6, oldest generation size: 2
+checking 830101
+830101: P
+checking 830126
+830126: P
+
+
+component: 77, size: 17, oldest generation size: 7
+checking 831102
+831102: GP
+checking 831111
+checking 831120
+checking 831142
+checking 831153
+831153: P
+checking 831171
+checking 831179
+
+
+component: 81, size: 27, oldest generation size: 9
+checking 832108
+832108: GP
+checking 832113
+checking 832115
+checking 832122
+832122: P
+checking 832133
+checking 832159
+checking 832168
+checking 832284
+checking 832286
+
+
+component: 85, size: 14, oldest generation size: 7
+checking 833101
+checking 833105
+checking 833106
+833106: GP
+checking 833107
+checking 833130
+833130: P
+checking 833149
+checking 833177
+
+
+component: 87, size: 2, oldest generation size: 2
+checking 833190
+checking 833193
+
+
+component: 88, size: 10, oldest generation size: 3
+checking 834103
+checking 834117
+834117: P
+checking 834122
+
+
+component: 89, size: 11, oldest generation size: 5
+checking 835101
+835101: GP
+checking 835102
+835102: GP
+checking 835105
+835105: P
+checking 835107
+835107: AV
+checking 835108
+835108: AV
+
+
+component: 90, size: 8, oldest generation size: 5
+checking 836102
+checking 836103
+checking 836105
+checking 836117
+836117: AV
+checking 836122
+
+
+component: 92, size: 10, oldest generation size: 5
+checking 837101
+837101: AV
+checking 837102
+837102: P
+checking 837106
+checking 837116
+checking 837139
+837139: AV
+
+
+component: 95, size: 9, oldest generation size: 4
+checking 838102
+838102: GP
+checking 838110
+838110: P
+checking 838111
+checking 838113
+
+
+component: 96, size: 4, oldest generation size: 2
+checking 839101
+839101: AV
+checking 839102
+
+
+component: 97, size: 2, oldest generation size: 2
+checking 839109
+checking 839115
+
+
+component: 98, size: 46, oldest generation size: 20
+checking 840132
+checking 840146
+checking A01689
+A01689: AV
+checking A01690
+A01690: P
+checking A01721
+A01721: AV
+checking A01727
+A01727: AV
+checking A02195
+A02195: AV
+checking A03026
+checking A03335
+A03335: P
+checking A03381
+checking A13027
+checking A13062
+A13062: GP
+checking A13091
+checking A13098
+A13098: AV
+checking A13117
+checking A13153
+checking A13160
+checking A13186
+checking A13187
+checking A13400
+
+
+component: 99, size: 15, oldest generation size: 9
+checking A00001
+A00001: P
+checking A00012
+A00012: AV
+checking A25023
+A25023: AV
+checking A25027
+A25027: AV
+checking A25042
+A25042: AV
+checking A25069
+A25069: AV
+checking A25091
+A25091: P
+checking A25110
+A25110: AV
+checking A25123
+
+
+component: 100, size: 64, oldest generation size: 28
+checking A00124
+checking A00144
+A00144: AV
+checking A00145
+A00145: P
+checking A00148
+A00148: GP
+checking A00149
+A00149: GP
+checking A00518
+checking A00792
+checking A00797
+A00797: P
+checking A00870
+A00870: AV
+checking A00890
+A00890: P
+checking A00899
+A00899: P
+checking A00990
+checking A09910
+checking A26048
+checking A26098
+checking A26103
+checking A26104
+checking A26122
+A26122: GP
+checking A26143
+checking A26147
+checking A26153
+checking A26156
+checking A26161
+checking A26170
+A26170: GP
+checking A26178
+checking A26188
+checking A26212
+checking A26258
+A26258: FS
+
+
+component: 101, size: 64, oldest generation size: 30
+checking A00165
+A00165: AV
+checking A00166
+A00166: AV
+checking A00181
+A00181: AV
+checking A00182
+A00182: AV
+checking A00184
+A00184: AV
+checking A00201
+A00201: GP
+checking A00530
+A00530: P
+checking A00532
+checking A00548
+checking A00639
+checking A00641
+checking A00648
+A00648: GP
+checking A00675
+A00675: P
+checking A00676
+checking A27010
+checking A27012
+checking A27069
+checking A27072
+checking A27102
+checking A27107
+checking A27110
+A27110: GP
+checking A27118
+checking A27122
+checking A27141
+checking A27149
+checking A27155
+A27155: AV
+checking A27164
+A27164: GP
+checking A27216
+checking A27229
+checking A27239
+
+
+component: 102, size: 46, oldest generation size: 19
+checking A00217
+A00217: GP
+checking A00311
+checking A00366
+A00366: GP
+checking A00686
+checking A00712
+checking A00714
+checking A01044
+A01044: P
+checking A01937
+checking A01939
+checking A01982
+checking A04044
+checking A04064
+A04064: GP
+checking A04113
+checking A04119
+checking A04136
+checking A04138
+checking A04170
+checking A04191
+A04191: GP
+checking A04210
+A04210: P
+
+
+component: 103, size: 33, oldest generation size: 10
+checking A00226
+A00226: AV
+checking A00227
+A00227: GP
+checking A00228
+A00228: AV
+checking A00395
+A00395: P
+checking A00682
+checking A04040
+A04040: GP
+checking A04042
+checking A04193
+checking A04195
+checking A04253
+
+
+component: 104, size: 21, oldest generation size: 10
+checking A00245
+checking A00255
+A00255: AV
+checking A00261
+A00261: P
+checking A00565
+A00565: P
+checking A01212
+checking A02770
+checking A05006
+A05006: P
+checking A05007
+A05007: GP
+checking A05013
+A05013: AV
+checking A05040
+
+
+component: 105, size: 44, oldest generation size: 20
+checking A00275
+A00275: GP
+checking A00287
+checking A00291
+A00291: GP
+checking A00292
+A00292: GP
+checking A00294
+A00294: P
+checking A00295
+A00295: AV
+checking A00300
+A00300: P
+checking A00581
+checking A00583
+checking A00585
+A00585: P
+checking A00591
+A00591: P
+checking A00595
+checking A06024
+checking A06039
+checking A06050
+checking A06104
+checking A06139
+checking A06145
+checking A06191
+checking A06206
+
+
+component: 106, size: 37, oldest generation size: 13
+checking A00316
+A00316: AV
+checking A00464
+A00464: P
+checking A00499
+A00499: GP
+checking A01636
+checking A07006
+A07006: AV
+checking A07009
+A07009: GP
+checking A07056
+checking A07058
+A07058: AV
+checking A07075
+A07075: P
+checking A09002
+A09002: GP
+checking A09048
+A09048: AV
+checking A09178
+A09178: GP
+checking A09212
+
+
+component: 108, size: 33, oldest generation size: 11
+checking A00414
+A00414: P
+checking A00428
+checking A00430
+checking A00462
+A00462: AV
+checking A00809
+checking A00814
+A00814: GP
+checking A00840
+checking A00841
+A00841: P
+checking A00842
+A00842: P
+checking A08076
+checking A08112
+
+
+component: 109, size: 15, oldest generation size: 5
+checking A00479
+checking A01034
+checking A01036
+checking A09013
+checking A09138
+A09138: GP
+
+
+component: 115, size: 4, oldest generation size: 2
+checking A00734
+A00734: P
+checking A00735
+A00735: P
+
+
+component: 116, size: 6, oldest generation size: 2
+checking A00759
+A00759: P
+checking A04149
+
+
+component: 126, size: 2, oldest generation size: 2
+checking A00944
+A00944: FS
+checking A00947
+A00947: FS
+
+
+component: 130, size: 4, oldest generation size: 4
+checking A01242
+checking A01911
+checking A04133
+checking A04276
+
+
+component: 134, size: 13, oldest generation size: 3
+checking A01490
+A01490: GP
+checking A01499
+checking A01517
+A01517: P
+
+
+component: 135, size: 166, oldest generation size: 61
+checking A01471
+A01471: GP
+checking A01484
+checking A01485
+A01485: AV
+checking A01549
+checking A01576
+A01576: P
+checking A11080
+checking A11105
+A11105: P
+checking A11110
+checking A11113
+checking A11114
+checking A11118
+checking A11119
+checking A11121
+checking A11123
+A11123: GP
+checking A11126
+checking A11132
+checking A11136
+checking A11175
+checking A11177
+checking A11188
+A11188: AV
+checking A11190
+A11190: P
+checking A11221
+checking A11222
+checking A44002
+checking A44004
+A44004: GP
+checking A44007
+checking A44018
+A44018: GP
+checking A44019
+A44019: GP
+checking A44021
+A44021: GP
+checking A44035
+A44035: P
+checking A44038
+A44038: AV
+checking A44044
+checking A44056
+checking A44083
+checking A44086
+checking A44087
+A44087: GP
+checking A44094
+A44094: P
+checking A44123
+A44123: P
+checking A44127
+checking A44132
+checking A44148
+checking A44153
+checking A44157
+checking A44162
+A44162: AV
+checking A44163
+A44163: AV
+checking A44164
+A44164: AV
+checking A44187
+A44187: P
+checking A44196
+checking A44197
+checking A44202
+A44202: GP
+checking A44208
+checking A44216
+checking A44218
+checking A44224
+checking A44299
+checking A44304
+checking A44305
+checking A44320
+checking A44334
+checking A44339
+checking A44423
+A44423: P
+
+
+component: 137, size: 35, oldest generation size: 18
+checking A01667
+A01667: AV
+checking A01668
+A01668: AV
+checking A01669
+A01669: AV
+checking A01670
+A01670: AV
+checking A01672
+A01672: AV
+checking A01673
+A01673: GP
+checking A01674
+A01674: AV
+checking A01675
+A01675: AV
+checking A01828
+checking A01833
+checking A02339
+checking A02775
+A02775: AV
+checking A14036
+checking A14116
+checking A14133
+A14133: P
+checking A14138
+checking A14203
+checking A14248
+
+
+component: 138, size: 22, oldest generation size: 9
+checking A01663
+checking A01751
+checking A14020
+checking A14045
+A14045: P
+checking A14076
+checking A14139
+A14139: P
+checking A14149
+checking A14169
+checking A14207
+
+
+component: 140, size: 2, oldest generation size: 2
+checking A02006
+checking A14242
+
+
+component: 142, size: 68, oldest generation size: 22
+checking A02102
+A02102: GP
+checking A16005
+A16005: AV
+checking A16007
+A16007: AV
+checking A16013
+A16013: AV
+checking A16023
+A16023: GP
+checking A16032
+A16032: P
+checking A16037
+checking A16040
+A16040: P
+checking A16049
+A16049: P
+checking A16064
+checking A16075
+checking A16078
+checking A16086
+A16086: P
+checking A16143
+checking A16144
+A16144: P
+checking A16174
+checking A16193
+checking A16194
+checking A16195
+checking A16300
+checking A16326
+checking A16327
+
+
+component: 144, size: 37, oldest generation size: 16
+checking A02132
+A02132: GP
+checking A02156
+checking A02157
+A02157: P
+checking A02340
+checking A02417
+A02417: GP
+checking A02737
+checking A02740
+checking A02845
+A02845: GP
+checking A02889
+checking A02891
+checking A17024
+checking A17034
+checking A17052
+checking A17060
+checking A17079
+checking A17081
+
+
+component: 145, size: 10, oldest generation size: 6
+checking A02158
+A02158: P
+checking A02159
+A02159: P
+checking A02177
+A02177: AV
+checking A02178
+checking A02406
+checking A18011
+A18011: P
+
+
+component: 148, size: 32, oldest generation size: 11
+checking A02199
+checking A02231
+checking A19009
+A19009: GP
+checking A19038
+A19038: AV
+checking A19207
+checking A19208
+checking A19217
+checking A19219
+checking A19220
+checking A19250
+checking A19251
+A19251: P
+
+
+component: 149, size: 5, oldest generation size: 3
+checking A02211
+A02211: P
+checking A02215
+A02215: P
+checking A19032
+A19032: AV
+
+
+component: 150, size: 55, oldest generation size: 8
+checking A02271
+A02271: P
+checking A02272
+A02272: P
+checking A02415
+checking A02901
+checking A20003
+A20003: GP
+checking A20022
+checking A20062
+checking A20073
+A20073: P
+
+
+component: 151, size: 43, oldest generation size: 13
+checking A02287
+A02287: GP
+checking A02304
+A02304: GP
+checking A21056
+checking A21077
+checking A21104
+checking A21112
+checking A21113
+checking A21115
+checking A21118
+checking A21125
+A21125: P
+checking A21157
+A21157: P
+checking A21188
+checking A21193
+
+
+component: 159, size: 58, oldest generation size: 22
+checking A03077
+A03077: AV
+checking A03099
+A03099: AV
+checking A03110
+A03110: GP
+checking A03115
+A03115: AV
+checking A22011
+A22011: AV
+checking A22013
+A22013: AV
+checking A22015
+A22015: AV
+checking A22021
+A22021: AV
+checking A22044
+A22044: GP
+checking A22062
+A22062: AV
+checking A22066
+A22066: AV
+checking A22128
+checking A22130
+checking A22132
+checking A22133
+A22133: P
+checking A22136
+checking A22138
+checking A22161
+checking A22162
+checking A22185
+checking A22247
+checking A22249
+
+
+component: 163, size: 2, oldest generation size: 2
+checking A03175
+checking A20100
+
+
+component: 164, size: 9, oldest generation size: 2
+checking A03520
+A03520: P
+checking A23018
+
+
+component: 165, size: 66, oldest generation size: 19
+checking A03237
+A03237: AV
+checking A03374
+checking A03378
+A03378: P
+checking A24015
+checking A24019
+A24019: P
+checking A24055
+checking A24065
+checking A24067
+checking A24093
+A24093: P
+checking A24103
+A24103: P
+checking A24104
+checking A24105
+A24105: AV
+checking A24147
+A24147: P
+checking A24150
+A24150: GP
+checking A24171
+checking A24187
+checking A24188
+checking A24213
+A24213: P
+checking A24228
+
+
+component: 180, size: 4, oldest generation size: 1
+checking A09161
+A09161: P
+
+
+component: 188, size: 2, oldest generation size: 2
+checking A14027
+checking A14040
+
+
+component: 191, size: 24, oldest generation size: 4
+checking A18040
+A18040: GP
+checking A18061
+A18061: GP
+checking A18080
+A18080: P
+checking A18085
+A18085: P
+
+
+component: 192, size: 3, oldest generation size: 1
+checking A19058
+A19058: P
+
+
+component: 213, size: 11, oldest generation size: 6
+checking A23002
+A23002: AV
+checking A23006
+checking A23030
+checking A23142
+checking A23164
+checking A23167
+
+
+component: 214, size: 11, oldest generation size: 4
+checking A23003
+A23003: P
+checking A23190
+A23190: P
+checking A23196
+checking A23200
+A23200: AV
+
+
+component: 215, size: 2, oldest generation size: 2
+checking A23078
+checking A23134
+
+
+component: 219, size: 2, oldest generation size: 2
+checking A24026
+A24026: FS
+checking A24264
+A24264: FS
+
+
+component: 225, size: 9, oldest generation size: 1
+checking A24285
+A24285: P
+
+
+component: 234, size: 10, oldest generation size: 6
+checking A28101
+A28101: AV
+checking A28125
+A28125: AV
+checking A28131
+checking A28133
+A28133: AV
+checking A28134
+A28134: P
+checking A28161
+A28161: AV
+
+
+component: 238, size: 3, oldest generation size: 1
+checking A28159
+A28159: P
+
+
+component: 241, size: 26, oldest generation size: 12
+checking A29002
+A29002: P
+checking A29007
+A29007: GP
+checking A29008
+A29008: AV
+checking A29009
+checking A29014
+A29014: AV
+checking A29015
+A29015: GP
+checking A29038
+checking A29047
+checking A29119
+checking A29129
+checking A29130
+checking A29153
+
+
+component: 247, size: 32, oldest generation size: 13
+checking A30001
+A30001: P
+checking A30002
+A30002: AV
+checking A30004
+checking A30006
+checking A30018
+checking A30029
+A30029: GP
+checking A30036
+A30036: AV
+checking A30047
+A30047: GP
+checking A30048
+A30048: P
+checking A30079
+A30079: P
+checking A30103
+A30103: P
+checking A30109
+checking A30127
+A30127: P
+
+
+component: 250, size: 2, oldest generation size: 2
+checking A30104
+checking A30105
+
+
+component: 252, size: 2, oldest generation size: 2
+checking A30134
+checking A30152
+
+
+component: 254, size: 8, oldest generation size: 6
+checking A31001
+checking A31006
+A31006: P
+checking A31010
+checking A31011
+A31011: FS
+checking A31051
+checking A31053
+
+
+component: 255, size: 4, oldest generation size: 4
+checking A31067
+A31067: FS
+checking A31068
+A31068: FS
+checking A31069
+A31069: FS
+checking A31070
+A31070: FS
+
+
+component: 257, size: 11, oldest generation size: 4
+checking A32056
+A32056: AV
+checking A32059
+A32059: AV
+checking A32085
+A32085: AV
+checking A32136
+
+
+component: 258, size: 5, oldest generation size: 3
+checking A32086
+checking A32087
+A32087: P
+checking A32132
+A32132: P
+
+
+component: 261, size: 8, oldest generation size: 6
+checking A33001
+A33001: AV
+checking A33012
+A33012: P
+checking A33016
+A33016: AV
+checking A33017
+checking A33023
+checking A33110
+A33110: P
+
+
+component: 263, size: 8, oldest generation size: 1
+checking A36001
+A36001: AV
+
+
+component: 264, size: 12, oldest generation size: 4
+checking A36023
+checking A36041
+A36041: P
+checking A36049
+A36049: P
+checking A36055
+
+
+component: 265, size: 2, oldest generation size: 2
+checking A36122
+A36122: FS
+checking A36123
+A36123: FS
+
+
+component: 266, size: 8, oldest generation size: 4
+checking A37001
+A37001: AV
+checking A37002
+checking A37007
+checking A37009
+A37009: P
+
+
+component: 267, size: 8, oldest generation size: 1
+checking A37034
+A37034: AV
+
+
+component: 268, size: 25, oldest generation size: 9
+checking A38002
+checking A38037
+checking A38038
+checking A38045
+A38045: FS
+checking A38056
+A38056: P
+checking A38064
+checking A38111
+A38111: AV
+checking A38147
+A38147: P
+checking A38188
+
+
+component: 269, size: 10, oldest generation size: 2
+checking A38051
+A38051: P
+checking A38052
+A38052: P
+
+
+component: 272, size: 33, oldest generation size: 12
+checking A39001
+A39001: GP
+checking A39002
+A39002: GP
+checking A39006
+checking A39008
+checking A39013
+checking A39026
+checking A39038
+checking A39047
+checking A39067
+A39067: P
+checking A39095
+checking A39103
+checking A39113
+
+
+component: 273, size: 11, oldest generation size: 4
+checking A40001
+A40001: GP
+checking A40002
+A40002: GP
+checking A40009
+checking A40022
+A40022: P
+
+
+component: 275, size: 2, oldest generation size: 2
+checking A40097
+checking A40120
+
+
+component: 277, size: 9, oldest generation size: 5
+checking A41002
+checking A41003
+A41003: P
+checking A41005
+checking A41023
+checking A41024
+
+
+component: 278, size: 18, oldest generation size: 14
+checking A42001
+A42001: AV
+checking A42002
+A42002: P
+checking A42010
+checking A42016
+checking A42027
+A42027: AV
+checking A42028
+A42028: AV
+checking A42029
+A42029: AV
+checking A42030
+A42030: AV
+checking A42035
+checking A42046
+checking A42057
+checking A42061
+checking A42082
+checking A42083
+
+
+component: 280, size: 3, oldest generation size: 3
+checking A43001
+checking A43002
+checking A43004
+
+
+component: 281, size: 5, oldest generation size: 3
+checking A43045
+checking A43058
+checking A43069
+
+
+component: 287, size: 4, oldest generation size: 1
+checking A44199
+A44199: P
+
+
+component: 288, size: 4, oldest generation size: 2
+checking A44223
+A44223: P
+checking A44343
+
+
+component: 292, size: 3, oldest generation size: 1
+checking A44439
+A44439: P
+
+
+component: 295, size: 28, oldest generation size: 10
+checking A45001
+A45001: AV
+checking A45013
+A45013: GP
+checking A45020
+A45020: AV
+checking A45021
+A45021: AV
+checking A45022
+A45022: AV
+checking A45025
+A45025: AV
+checking A45042
+checking A45061
+checking A45063
+A45063: /var/spool/slurmd/job1799813/slurm_script: line 22: 33408 Segmentation fault      (core dumped) ./DRUID -i $prefix/safs.seg --bim $prefix/safs.bim --Ne $prefix/safs.ibdne-ped2.ne -o safs --max 10

@@ -36,10 +36,11 @@ void build_graph(Pedigree &pedigree,
             auto it = allsegs.find(make_pair_str(id1, id2)); 
             // some pairs may not have ibd segments, so need to check here
             if(it == allsegs.end()){continue;};
-            Pair p = *(it->second);
+            Pair &p = *(it->second);
             double ibd1 = p.ibd1_tot;
             double ibd2 = p.ibd2_tot;
             double K = std::max((ibd1/4.0 + ibd2/2.0 - bkg_sharing/4.0)/tot_genome, 0.0);
+            p.kin = K;
             int deg = getRelfromK(K, maxDeg);
             //std::cout << id1 << "\t" << id2 << "\t" << K << "\t" << deg << std::endl;
             results.insert(std::make_pair(std::make_pair(*vi1, *vi2), deg));
@@ -255,9 +256,9 @@ void build_graph(Pedigree &pedigree,
 
         for(Vertex avunc_candidate : second_deg_relatives){
             std::string avunc_candidate_id = vertex_property_map[avunc_candidate];
-            std::cout << "checking " << avunc_candidate_id << std::endl;
+            //std::cout << "checking " << avunc_candidate_id << std::endl;
             if (checkAvunc(full_sib_id_set, avunc_candidate_id, allsegs, snpmap)){
-                std::cout << avunc_candidate_id << " is a AV!" << std::endl;
+                //std::cout << avunc_candidate_id << " is a AV!" << std::endl;
                 // add second-deg edges to the graph
                 // what should we do if there is already an edge in between? Let's for now overwrite the previously edge
                 for(Vertex v : full_sib_vertex_set){
@@ -273,14 +274,6 @@ void build_graph(Pedigree &pedigree,
 
     }
 
-    // // test first&second-degree edges
-    // boost::graph_traits<Pedigree>::edge_iterator ei, ei_end;
-    // for (boost::tie(ei, ei_end) = boost::edges(pedigree); ei != ei_end; ++ei){
-    //     Edge e = *ei;
-    //     std::cout << vertex_property_map[boost::source(e, pedigree)] << "\t" << vertex_property_map[boost::target(e, pedigree)] << "\t" << pedigree[e].rel << std::endl;
-    // }
-    // // end of test for first&second degree edges
-
     // remove all edges coming out of one of the twins
     // don't want to remove its vertex cuz otherwise it would mess up with vertex index of all others
     for(auto twin : twins){
@@ -288,7 +281,7 @@ void build_graph(Pedigree &pedigree,
         auto out_edge_iter_pair = boost::out_edges(twin.first, pedigree);
         for(auto it = out_edge_iter_pair.first; it != out_edge_iter_pair.second; it++){
             Vertex u = boost::source(*it, pedigree);
-            Vertex v = boost::source(*it, pedigree);
+            Vertex v = boost::target(*it, pedigree);
             Vertex toRemove = u == twin.first? v : u;
             remove.push_back(toRemove);
         }
@@ -370,6 +363,148 @@ bool checkAvunc(const std::vector<std::string> &full_sibs, const std::string &av
         }
     }
     return false;
+}
+
+void run_druid(Pedigree &pedigree, 
+    const std::map<std::pair<std::string, std::string>, Pair*> &allsegs,
+    const std::map<std::string, std::map<int, double>*> &snpmap,
+    std::map<std::pair<Vertex, Vertex>, int> &results,
+    FileOrGZ<FILE *> &logFile,
+    double tot_genome, double bkg_sharing, int maxDeg)
+{   
+    logFile.printf("Start the primary DRUID algorithm...\n");
+    std::vector<int> components(boost::num_vertices(pedigree));
+    int num_components = boost::connected_components(pedigree, &components[0]);
+    logFile.printf("\tnumber of connected components: %d\n", num_components);
+
+    std::map<int, int> comp_size_map;
+    std::map<int, std::shared_ptr<std::vector<Vertex>>> comp_map;
+    boost::graph_traits<Pedigree>::vertex_iterator vi, vi_end;
+    for(boost::tie(vi, vi_end) = boost::vertices(pedigree); vi != vi_end; vi++){
+        int comp_index = components[*vi];
+        if (comp_size_map.find(comp_index) == comp_size_map.end()){
+            comp_size_map.insert(std::make_pair(comp_index, 0));
+            comp_map.insert(std::make_pair(comp_index, std::shared_ptr<std::vector<Vertex>>(new std::vector<Vertex>())));
+        }
+        comp_size_map[comp_index]++;
+        comp_map[comp_index]->push_back(*vi);
+    }
+
+    std::map<int, ConnInfo> connInfoMap;
+    for(auto it = comp_map.begin(); it != comp_map.end(); it++){
+        if (comp_size_map[it->first] == 1){continue;}
+        else{
+            // first, find the oldest generation in this connected component
+            // the oldest generation is defined to be the set of individuals
+            // who are always the older individual for all polarized edges incidenct upon it
+            // or individuals all of whose edges are unpolarized (in this case, we only have a set of full-sibs)
+            std::vector<Vertex> oldest;
+            for(Vertex u : *(it->second)){
+                auto out_edge_iter_pair = boost::out_edges(u, pedigree);
+                bool isOlder = true;
+                for(auto it2 = out_edge_iter_pair.first; it2 != out_edge_iter_pair.second; it2++){
+                    if(pedigree[*it2].polarized && pedigree[*it2].older != u){isOlder = false;}
+                }
+                if(isOlder){oldest.push_back(u);}
+            }
+
+            ConnInfo conninfo;
+            // now we examine relationship between the oldest guys and their descendants
+            fprintf(stdout, "component: %d, size: %d, oldest generation size: %d\n", it->first, comp_size_map[it->first], oldest.size());
+            auto vertex_property_map = boost::get(&sample::id, pedigree);
+            for(Vertex u : oldest){
+                fprintf(stdout, "checking %s\n", vertex_property_map[u].c_str());
+                bool GP = false;
+                bool AV = false;
+                bool P = false;
+                bool FS = false;
+                if(isGP(u, pedigree)){
+                    conninfo.gp.push_back(u);
+                    GP = true;
+                    fprintf(stdout, "%s: GP\n", vertex_property_map[u].c_str());
+                }
+                else if(isAV(u, pedigree)){
+                    conninfo.av.push_back(u);
+                    AV = true;
+                    fprintf(stdout, "%s: AV\n", vertex_property_map[u].c_str());
+                }
+                else if(isP(u, pedigree)){
+                    conninfo.p.push_back(u);
+                    P = true;
+                    fprintf(stdout, "%s: P\n", vertex_property_map[u].c_str());
+                }
+                else if(isFS(u, pedigree)){
+                    conninfo.fs.push_back(u);
+                    FS = true;
+                    fprintf(stdout, "%s: FS\n", vertex_property_map[u].c_str());
+                }
+            }
+            fprintf(stdout, "\n\n");
+        }
+    }
+
+    return;
+}
+
+
+bool isFS(Vertex u, const Pedigree &pedigree)
+{
+    // either u has no polarized edges, or in polarized edges it is the younger generation
+    // actually this is problematic if the pedigree spans more than three generations
+    // TODO: HANDLE PEDIGREES SPANNING MORE THAN THREE GENERATIONS
+    auto out_edge_iter_pair = boost::out_edges(u, pedigree);
+    for(auto it = out_edge_iter_pair.first; it != out_edge_iter_pair.second; it++){
+        if (pedigree[*it].polarized){
+            if(pedigree[*it].older == u){return false;}
+        }
+        else if (pedigree[*it].rel != FS){return false;}
+    }
+    return true;
+}
+
+bool isAV(Vertex u, const Pedigree &pedigree){
+    // u must have full-sibs as its younger generation
+    bool foundFS = false;
+    auto out_edge_iter_pair = boost::out_edges(u, pedigree);
+    for(auto it = out_edge_iter_pair.first; it != out_edge_iter_pair.second; it++){
+        if (pedigree[*it].rel == AV && pedigree[*it].older == u){
+            Vertex s = boost::source(*it, pedigree);
+            Vertex t = boost::target(*it, pedigree);
+            Vertex v = s == u? t:s;
+            if (isFS(v, pedigree)){foundFS = true;}
+        }
+    }
+    return foundFS;
+}
+
+bool isP(Vertex u, const Pedigree &pedigree){
+    bool foundFS = false;
+    auto out_edge_iter_pair = boost::out_edges(u, pedigree);
+    for(auto it = out_edge_iter_pair.first; it != out_edge_iter_pair.second; it++){
+        if (pedigree[*it].rel == PC && pedigree[*it].polarized && pedigree[*it].older == u){
+            Vertex s = boost::source(*it, pedigree);
+            Vertex t = boost::target(*it, pedigree);
+            Vertex v = s == u? t:s;
+            if (!isFS(v, pedigree)){return false;}
+            else{foundFS = true;}
+        }
+    }
+    return foundFS;
+}
+
+bool isGP(Vertex u, const Pedigree &pedigree){
+    bool foundAVorP = false;
+    auto out_edge_iter_pair = boost::out_edges(u, pedigree);
+    for(auto it = out_edge_iter_pair.first; it != out_edge_iter_pair.second; it++){
+        if (pedigree[*it].rel == PC && pedigree[*it].polarized && pedigree[*it].older == u){
+            Vertex s = boost::source(*it, pedigree);
+            Vertex t = boost::target(*it, pedigree);
+            Vertex v = s == u? t:s;
+            if (isP(v, pedigree) || isAV(v, pedigree)){foundAVorP = true;}
+            else{return false;}
+        }
+    }
+    return foundAVorP;
 }
 
 void write_output(const std::map<std::pair<Vertex, Vertex>, int> &results, 

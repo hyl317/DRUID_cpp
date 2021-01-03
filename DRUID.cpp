@@ -65,6 +65,7 @@ int main(int argc, char **argv){
     std::map<std::pair<Vertex, Vertex>, int> results;
     std::map<Vertex, Vertex> twins;
     build_graph(pedigree, allsegs, snpmap, results, twins, chrLens.sum(), bkg_sharing, maxDeg);
+    run_druid(pedigree, allsegs, snpmap, results, logFile, chrLens.sum(), bkg_sharing, maxDeg);
 
     // for testing purpose
     // is_avunc("801120", "801121", "801113", allsegs, snpmap);

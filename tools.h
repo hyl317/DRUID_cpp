@@ -57,6 +57,7 @@ using ibdMapType = std::map<std::string, ibdSegments*>;
 struct Pair{
   double ibd1_tot;
   double ibd2_tot;
+  double kin;
   ibdMapType *ibd1_map = new ibdMapType();
   ibdMapType *ibd2_map = new ibdMapType();
 };

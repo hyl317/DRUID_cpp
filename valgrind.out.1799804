@@ -1,0 +1,809 @@
+On host cbsubscb13.biohpc.cornell.edu
+Sun Jan  3 06:51:44 EST 2021
+==64125== Memcheck, a memory error detector
+==64125== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==64125== Using Valgrind-3.13.0 and LibVEX; rerun with -h for copyright info
+==64125== Command: ./DRUID -i /fs/cbsubscb09/storage/yilei/simulate/SAMAFS/safs.seg --bim /fs/cbsubscb09/storage/yilei/simulate/SAMAFS/safs.bim --Ne /fs/cbsubscb09/storage/yilei/simulate/SAMAFS/safs.ibdne-ped2.ne -o safs --max 10
+==64125== 
+component: 0, size: 19, oldest generation size: 10
+801101: AV
+801113: AV
+801114: AV
+801115: AV
+801118: AV
+801123: P
+801137: P
+801142: P
+
+
+component: 1, size: 2, oldest generation size: 2
+
+
+component: 2, size: 29, oldest generation size: 11
+802129: GP
+802157: P
+
+
+component: 3, size: 15, oldest generation size: 4
+803101: AV
+803121: AV
+803132: P
+
+
+component: 4, size: 3, oldest generation size: 3
+
+
+component: 5, size: 8, oldest generation size: 4
+804101: GP
+804121: GP
+
+
+component: 6, size: 11, oldest generation size: 3
+805101: AV
+805115: AV
+
+
+component: 7, size: 2, oldest generation size: 2
+
+
+component: 11, size: 17, oldest generation size: 7
+807102: GP
+807109: GP
+807132: P
+
+
+component: 12, size: 45, oldest generation size: 8
+808108: GP
+808133: P
+808160: P
+808162: P
+808302: P
+
+
+component: 13, size: 2, oldest generation size: 2
+
+
+component: 16, size: 2, oldest generation size: 2
+808178: FS
+A28250: FS
+
+
+component: 17, size: 20, oldest generation size: 6
+809102: GP
+809108: GP
+
+
+component: 19, size: 23, oldest generation size: 5
+810102: GP
+810128: P
+
+
+component: 20, size: 2, oldest generation size: 2
+
+
+component: 23, size: 5, oldest generation size: 2
+810206: P
+810211: P
+
+
+component: 25, size: 2, oldest generation size: 2
+
+
+component: 27, size: 15, oldest generation size: 6
+812101: AV
+812112: AV
+
+
+component: 28, size: 28, oldest generation size: 11
+813101: AV
+813112: GP
+813114: AV
+813115: AV
+813131: P
+813141: GP
+813142: P
+
+
+component: 31, size: 31, oldest generation size: 9
+814101: GP
+814109: GP
+814123: GP
+814134: P
+814135: P
+814222: P
+
+
+component: 34, size: 46, oldest generation size: 11
+815122: P
+815127: P
+815134: P
+815143: GP
+815158: P
+815196: P
+815227: P
+
+
+component: 35, size: 22, oldest generation size: 15
+816101: AV
+816110: AV
+816111: AV
+
+
+component: 38, size: 9, oldest generation size: 6
+817114: AV
+817115: P
+817120: AV
+817192: AV
+
+
+component: 39, size: 36, oldest generation size: 13
+818106: AV
+818107: AV
+818109: AV
+818111: P
+818112: GP
+818113: GP
+818203: P
+
+
+component: 41, size: 14, oldest generation size: 4
+819109: P
+819128: P
+
+
+component: 42, size: 4, oldest generation size: 2
+820101: P
+820128: P
+
+
+component: 43, size: 14, oldest generation size: 6
+
+
+component: 45, size: 71, oldest generation size: 21
+822126: P
+A32012: GP
+A32067: P
+A32099: GP
+A32102: P
+A32154: P
+A34001: P
+A34005: AV
+
+
+component: 47, size: 15, oldest generation size: 5
+823103: GP
+823123: P
+
+
+component: 50, size: 13, oldest generation size: 5
+824101: AV
+824104: AV
+
+
+component: 53, size: 60, oldest generation size: 15
+825108: GP
+825115: P
+825135: GP
+825139: P
+825152: P
+825168: P
+825170: GP
+825212: P
+825261: P
+825306: P
+
+
+component: 57, size: 56, oldest generation size: 21
+826101: AV
+826107: P
+826108: P
+826130: GP
+826131: GP
+826132: AV
+826138: AV
+826140: AV
+826144: P
+826155: GP
+826156: GP
+826191: P
+826263: P
+826328: P
+826364: P
+
+
+component: 58, size: 4, oldest generation size: 2
+826136: P
+
+
+component: 62, size: 10, oldest generation size: 6
+827101: AV
+827120: AV
+827122: AV
+827123: AV
+827140: P
+
+
+component: 63, size: 3, oldest generation size: 3
+
+
+component: 66, size: 55, oldest generation size: 24
+829105: AV
+829106: GP
+829107: AV
+829108: AV
+829111: AV
+829114: GP
+829117: AV
+829128: P
+829161: P
+829210: P
+829234: P
+
+
+component: 75, size: 6, oldest generation size: 2
+830101: P
+830126: P
+
+
+component: 77, size: 17, oldest generation size: 7
+831102: GP
+831153: P
+
+
+component: 81, size: 27, oldest generation size: 9
+832108: GP
+832122: P
+
+
+component: 85, size: 14, oldest generation size: 7
+833106: GP
+833130: P
+
+
+component: 87, size: 2, oldest generation size: 2
+
+
+component: 88, size: 10, oldest generation size: 3
+834117: P
+
+
+component: 89, size: 11, oldest generation size: 5
+835101: GP
+835102: GP
+835105: P
+835107: AV
+835108: AV
+
+
+component: 90, size: 8, oldest generation size: 5
+836117: AV
+
+
+component: 92, size: 10, oldest generation size: 5
+837101: AV
+837102: P
+837139: AV
+
+
+component: 95, size: 9, oldest generation size: 4
+838102: GP
+838110: P
+
+
+component: 96, size: 4, oldest generation size: 2
+839101: AV
+
+
+component: 97, size: 2, oldest generation size: 2
+
+
+component: 98, size: 46, oldest generation size: 20
+A01689: AV
+A01690: P
+A01721: AV
+A01727: AV
+A02195: AV
+A03335: P
+A13062: GP
+A13098: AV
+
+
+component: 99, size: 15, oldest generation size: 9
+A00001: P
+A00012: AV
+A25023: AV
+A25027: AV
+A25042: AV
+A25069: AV
+A25091: P
+A25110: AV
+
+
+component: 100, size: 64, oldest generation size: 28
+A00144: AV
+A00145: P
+A00148: GP
+A00149: GP
+A00797: P
+A00870: AV
+A00890: P
+A00899: P
+A26122: GP
+A26170: GP
+A26258: FS
+
+
+component: 101, size: 64, oldest generation size: 30
+A00165: AV
+A00166: AV
+A00181: AV
+A00182: AV
+A00184: AV
+A00201: GP
+A00530: P
+A00648: GP
+A00675: P
+A27110: GP
+A27155: AV
+A27164: GP
+
+
+component: 102, size: 46, oldest generation size: 19
+A00217: GP
+A00366: GP
+A01044: P
+A04064: GP
+A04191: GP
+A04210: P
+
+
+component: 103, size: 33, oldest generation size: 10
+A00226: AV
+A00227: GP
+A00228: AV
+A00395: P
+A04040: GP
+
+
+component: 104, size: 21, oldest generation size: 10
+A00255: AV
+A00261: P
+A00565: P
+A05006: P
+A05007: GP
+A05013: AV
+
+
+component: 105, size: 44, oldest generation size: 20
+A00275: GP
+A00291: GP
+A00292: GP
+A00294: P
+A00295: AV
+A00300: P
+A00585: P
+A00591: P
+
+
+component: 106, size: 37, oldest generation size: 13
+A00316: AV
+A00464: P
+A00499: GP
+A07006: AV
+A07009: GP
+A07058: AV
+A07075: P
+A09002: GP
+A09048: AV
+A09178: GP
+
+
+component: 108, size: 33, oldest generation size: 11
+A00414: P
+A00462: AV
+A00814: GP
+A00841: P
+A00842: P
+
+
+component: 109, size: 15, oldest generation size: 5
+A09138: GP
+
+
+component: 115, size: 4, oldest generation size: 2
+A00734: P
+A00735: P
+
+
+component: 116, size: 6, oldest generation size: 2
+A00759: P
+
+
+component: 126, size: 2, oldest generation size: 2
+A00944: FS
+A00947: FS
+
+
+component: 130, size: 4, oldest generation size: 4
+
+
+component: 134, size: 13, oldest generation size: 3
+A01490: GP
+A01517: P
+
+
+component: 135, size: 166, oldest generation size: 61
+A01471: GP
+A01485: AV
+A01576: P
+A11105: P
+A11123: GP
+A11188: AV
+A11190: P
+A44004: GP
+A44018: GP
+A44019: GP
+A44021: GP
+A44035: P
+A44038: AV
+A44087: GP
+A44094: P
+A44123: P
+A44162: AV
+A44163: AV
+A44164: AV
+A44187: P
+A44202: GP
+A44423: P
+
+
+component: 137, size: 35, oldest generation size: 18
+A01667: AV
+A01668: AV
+A01669: AV
+A01670: AV
+A01672: AV
+A01673: GP
+A01674: AV
+A01675: AV
+A02775: AV
+A14133: P
+
+
+component: 138, size: 22, oldest generation size: 9
+A14045: P
+A14139: P
+
+
+component: 140, size: 2, oldest generation size: 2
+
+
+component: 142, size: 68, oldest generation size: 22
+A02102: GP
+A16005: AV
+A16007: AV
+A16013: AV
+A16023: GP
+A16032: P
+A16040: P
+A16049: P
+A16086: P
+A16144: P
+
+
+component: 144, size: 37, oldest generation size: 16
+A02132: GP
+A02157: P
+A02417: GP
+A02845: GP
+
+
+component: 145, size: 10, oldest generation size: 6
+A02158: P
+A02159: P
+A02177: AV
+A18011: P
+
+
+component: 148, size: 32, oldest generation size: 11
+A19009: GP
+A19038: AV
+A19251: P
+
+
+component: 149, size: 5, oldest generation size: 3
+A02211: P
+A02215: P
+A19032: AV
+
+
+component: 150, size: 55, oldest generation size: 8
+A02271: P
+A02272: P
+A20003: GP
+A20073: P
+
+
+component: 151, size: 43, oldest generation size: 13
+A02287: GP
+A02304: GP
+A21125: P
+A21157: P
+
+
+component: 159, size: 58, oldest generation size: 22
+A03077: AV
+A03099: AV
+A03110: GP
+A03115: AV
+A22011: AV
+A22013: AV
+A22015: AV
+A22021: AV
+A22044: GP
+A22062: AV
+A22066: AV
+A22133: P
+
+
+component: 163, size: 2, oldest generation size: 2
+
+
+component: 164, size: 9, oldest generation size: 2
+A03520: P
+
+
+component: 165, size: 66, oldest generation size: 19
+A03237: AV
+A03378: P
+A24019: P
+A24093: P
+A24103: P
+A24105: AV
+A24147: P
+A24150: GP
+A24213: P
+
+
+component: 180, size: 4, oldest generation size: 1
+A09161: P
+
+
+component: 188, size: 2, oldest generation size: 2
+
+
+component: 191, size: 24, oldest generation size: 4
+A18040: GP
+A18061: GP
+A18080: P
+A18085: P
+
+
+component: 192, size: 3, oldest generation size: 1
+A19058: P
+
+
+component: 213, size: 11, oldest generation size: 6
+A23002: AV
+
+
+component: 214, size: 11, oldest generation size: 4
+A23003: P
+A23190: P
+A23200: AV
+
+
+component: 215, size: 2, oldest generation size: 2
+
+
+component: 219, size: 2, oldest generation size: 2
+A24026: FS
+A24264: FS
+
+
+componen==64125== Invalid read of size 4
+==64125==    at 0x40BD9D: write_output(std::map<std::pair<unsigned long, unsigned long>, int, std::less<std::pair<unsigned long, unsigned long> >, std::allocator<std::pair<std::pair<unsigned long, unsigned long> const, int> > > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, sample, relationship, boost::no_property, boost::listS> const&, std::map<unsigned long, unsigned long, std::less<unsigned long>, std::allocator<std::pair<unsigned long const, unsigned long> > > const&) (function.cpp:543)
+==64125==    by 0x402CF9: main (DRUID.cpp:90)
+==64125==  Address 0x0 is not stack'd, malloc'd or (recently) free'd
+==64125== 
+==64125== 
+==64125== Process terminating with default action of signal 11 (SIGSEGV)
+==64125==  Access not within mapped region at address 0x0
+==64125==    at 0x40BD9D: write_output(std::map<std::pair<unsigned long, unsigned long>, int, std::less<std::pair<unsigned long, unsigned long> >, std::allocator<std::pair<std::pair<unsigned long, unsigned long> const, int> > > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, sample, relationship, boost::no_property, boost::listS> const&, std::map<unsigned long, unsigned long, std::less<unsigned long>, std::allocator<std::pair<unsigned long const, unsigned long> > > const&) (function.cpp:543)
+==64125==    by 0x402CF9: main (DRUID.cpp:90)
+==64125==  If you believe this happened as a result of a stack
+==64125==  overflow in your program's main thread (unlikely but
+==64125==  possible), you can try to increase the size of the
+==64125==  main thread stack using the --main-stacksize= flag.
+==64125==  The main thread stack size used in this run was 8388608.
+t: 225, size: 9, oldest generation size: 1
+A24285: P
+
+
+component: 234, size: 10, oldest generation size: 6
+A28101: AV
+A28125: AV
+A28133: AV
+A28134: P
+A28161: AV
+
+
+component: 238, size: 3, oldest generation size: 1
+A28159: P
+
+
+component: 241, size: 26, oldest generation size: 12
+A29002: P
+A29007: GP
+A29008: AV
+A29014: AV
+A29015: GP
+
+
+component: 247, size: 32, oldest generation size: 13
+A30001: P
+A30002: AV
+A30029: GP
+A30036: AV
+A30047: GP
+A30048: P
+A30079: P
+A30103: P
+A30127: P
+
+
+component: 250, size: 2, oldest generation size: 2
+
+
+component: 252, size: 2, oldest generation size: 2
+
+
+component: 254, size: 8, oldest generation size: 6
+A31006: P
+A31011: FS
+
+
+component: 255, size: 4, oldest generation size: 4
+A31067: FS
+A31068: FS
+A31069: FS
+A31070: FS
+
+
+component: 257, size: 11, oldest generation size: 4
+A32056: AV
+A32059: AV
+A32085: AV
+
+
+component: 258, size: 5, oldest generation size: 3
+A32087: P
+A32132: P
+
+
+component: 261, size: 8, oldest generation size: 6
+A33001: AV
+A33012: P
+A33016: AV
+A33110: P
+
+
+component: 263, size: 8, oldest generation size: 1
+A36001: AV
+
+
+component: 264, size: 12, oldest generation size: 4
+A36041: P
+A36049: P
+
+
+component: 265, size: 2, oldest generation size: 2
+A36122: FS
+A36123: FS
+
+
+component: 266, size: 8, oldest generation size: 4
+A37001: AV
+A37009: P
+
+
+component: 267, size: 8, oldest generation size: 1
+A37034: AV
+
+
+component: 268, size: 25, oldest generation size: 9
+A38045: FS
+A38056: P
+A38111: AV
+A38147: P
+
+
+component: 269, size: 10, oldest generation size: 2
+A38051: P
+A38052: P
+
+
+component: 272, size: 33, oldest generation size: 12
+A39001: GP
+A39002: GP
+A39067: P
+
+
+component: 273, size: 11, oldest generation size: 4
+A40001: GP
+A40002: GP
+A40022: P
+
+
+component: 275, size: 2, oldest generation size: 2
+
+
+component: 277, size: 9, oldest generation size: 5
+A41003: P
+
+
+component: 278, size: 18, oldest generation size: 14
+A42001: AV
+A42002: P
+A42027: AV
+A42028: AV
+A42029: AV
+A42030: AV
+
+
+component: 280, size: 3, oldest generation size: 3
+
+
+component: 281, size: 5, oldest generation size: 3
+
+
+component: 287, size: 4, oldest generation size: 1
+A44199: P
+
+
+component: 288, size: 4, oldest generation size: 2
+A44223: P
+
+
+component: 292, size: 3, oldest generation size: 1
+A44439: P
+
+
+component: 295, size: 28, oldest generation size: 10
+A45001: AV
+A45013: GP
+A45020: AV
+A45021: AV
+A45022: AV
+A45025: AV
+A45063: P
+
+
+component: 298, size: 9, oldest generation size: 3
+A46006: GP
+A46038: P
+
+
+component: 301, size: 7, oldest generation size: 7
+A46034: FS
+
+
+component: 302, size: 12, oldest generation size: 7
+
+
+==64125== 
+==64125== HEAP SUMMARY:
+==64125==     in use at exit: 1,982,776,788 bytes in 43,221,968 blocks
+==64125==   total heap usage: 74,992,845 allocs, 31,770,877 frees, 3,281,396,940 bytes allocated
+==64125== 
+==64125== LEAK SUMMARY:
+==64125==    definitely lost: 103,657 bytes in 4 blocks
+==64125==    indirectly lost: 31,782 bytes in 4 blocks
+==64125==      possibly lost: 0 bytes in 0 blocks
+==64125==    still reachable: 1,982,641,349 bytes in 43,221,960 blocks
+==64125==         suppressed: 0 bytes in 0 blocks
+==64125== Rerun with --leak-check=full to see details of leaked memory
+==64125== 
+==64125== For counts of detected and suppressed errors, rerun with: -v
+==64125== ERROR SUMMARY: 1 errors from 1 contexts (suppressed: 0 from 0)
+/var/spool/slurmd/job1799804/slurm_script: line 22: 64125 Segmentation fault      (core dumped) valgrind --track-origins=yes ./DRUID -i $prefix/safs.seg --bim $prefix/safs.bim --Ne $prefix/safs.ibdne-ped2.ne -o safs --max 10

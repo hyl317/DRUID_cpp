@@ -53,6 +53,28 @@ bool checkAvunc(const std::vector<std::string> &full_sibs, const std::string &av
     const std::map<std::pair<std::string, std::string>, Pair*> &allsegs,
     const std::map<std::string, std::map<int, double>*> &snpmap);
 
+void run_druid(Pedigree &pedigree, 
+    const std::map<std::pair<std::string, std::string>, Pair*> &allsegs,
+    const std::map<std::string, std::map<int, double>*> &snpmap,
+    std::map<std::pair<Vertex, Vertex>, int> &results,
+    FileOrGZ<FILE *> &logFile,
+    double tot_genome, double bkg_sharing, int maxDeg);
+
+struct ConnInfo{
+    // this struct keeps track of the information we need for combining segments for every non-trivial (size > 1) connected components
+    // all relationships are from the point view of the full-sib generation
+    std::vector<Vertex> gp; // grandparents if any
+    std::vector<Vertex> av; // AV if any
+    std::vector<Vertex> p; // parents if any
+    std::vector<Vertex> fs; // full siblings
+};
+
+bool isGP(Vertex u, const Pedigree &pedgiree);
+bool isAV(Vertex u, const Pedigree &pedgiree);
+bool isP(Vertex u, const Pedigree &pedgiree);
+bool isFS(Vertex u, const Pedigree &pedgiree);
+
+
 void write_output(const std::map<std::pair<Vertex, Vertex>, int> &results, 
     const std::string &prefix, const Pedigree &pedigree, const std::map<Vertex, Vertex> &twins);
 

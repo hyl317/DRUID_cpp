@@ -6,5 +6,7 @@ Reading IBD segment file: /fs/cbsubscb09/storage/yilei/simulate/DRUID_cpp/ped.se
 	Finished reading segments for 328 samples
 Maximum Relatedness Reported: degree 10
 Identifying clusters of close relatives...
+Start the primary DRUID algorithm...
+	number of connected components: 58
 Writitng to output file: test.DRUID
 	Number of edges: 965

@@ -535,8 +535,12 @@ void write_output(const std::map<std::pair<Vertex, Vertex>, int> &results,
             std::string id2 = vertex_property_map[*vi2];
             Vertex v = twins.find(*vi2) == twins.end()? *vi2 : twins.find(*vi2)->second;
             if (*vi1 >= *vi2){continue;} // avoid reporting pairs twice
+            else if (u == v){
+                // u == v means we have twins
+                outFile.printf("%s\t%s\t%s\n", id1.c_str(), id2.c_str(), "MZ");
+            }
             else if (boost::edge(u, v, pedigree).second){
-                outFile.printf("%s\t%s\t%s\n", id1.c_str(), id2.c_str(), rel2string[pedigree[boost::edge(*vi1, *vi2, pedigree).first].rel].c_str());
+                outFile.printf("%s\t%s\t%s\n", id1.c_str(), id2.c_str(), rel2string[pedigree[boost::edge(u, v, pedigree).first].rel].c_str());
             }else{
                 auto p = results.find(make_pair_v(u, v));
                 // pairs that don't have segments shared is not stored in the results map, so need to check this

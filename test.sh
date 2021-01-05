@@ -19,7 +19,7 @@ fi
 
 # command to run test on SAMFAS dataset
 prefix="/fs/cbsubscb09/storage/yilei/simulate/SAMAFS"
-./DRUID -i $prefix/safs.seg --bim $prefix/safs.bim --Ne $prefix/safs.ibdne-ped2.ne -o safs --max 10 
+/usr/bin/time -v ./DRUID -i $prefix/safs.seg --bim $prefix/safs.bim --Ne $prefix/safs.ibdne-ped2.ne -o safs --max 10 
 
 
 # command to run on my simulated dataset using ukb

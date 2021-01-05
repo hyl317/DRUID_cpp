@@ -1,6 +1,7 @@
 #include <math.h>
 #include <memory>
 #include <numeric>
+#include <queue>
 #include "function.h"
 #include "constants.h"
 #include <boost/graph/connected_components.hpp>
@@ -377,75 +378,136 @@ void run_druid(Pedigree &pedigree,
     int num_components = boost::connected_components(pedigree, &components[0]);
     logFile.printf("\tnumber of connected components: %d\n", num_components);
 
-    std::map<int, int> comp_size_map;
+    //std::map<int, int> comp_size_map;
     std::map<int, std::shared_ptr<std::vector<Vertex>>> comp_map;
     boost::graph_traits<Pedigree>::vertex_iterator vi, vi_end;
     for(boost::tie(vi, vi_end) = boost::vertices(pedigree); vi != vi_end; vi++){
         int comp_index = components[*vi];
-        if (comp_size_map.find(comp_index) == comp_size_map.end()){
-            comp_size_map.insert(std::make_pair(comp_index, 0));
+        if (comp_map.find(comp_index) == comp_map.end()){
+            //comp_size_map.insert(std::make_pair(comp_index, 0));
             comp_map.insert(std::make_pair(comp_index, std::shared_ptr<std::vector<Vertex>>(new std::vector<Vertex>())));
         }
-        comp_size_map[comp_index]++;
+        //comp_size_map[comp_index]++;
         comp_map[comp_index]->push_back(*vi);
     }
 
-    std::map<int, ConnInfo> connInfoMap;
-    for(auto it = comp_map.begin(); it != comp_map.end(); it++){
-        if (comp_size_map[it->first] == 1){continue;}
-        else{
-            // first, find the oldest generation in this connected component
-            // the oldest generation is defined to be the set of individuals
-            // who are always the older individual for all polarized edges incidenct upon it
-            // or individuals all of whose edges are unpolarized (in this case, we only have a set of full-sibs)
-            std::vector<Vertex> oldest;
-            for(Vertex u : *(it->second)){
-                auto out_edge_iter_pair = boost::out_edges(u, pedigree);
-                bool isOlder = true;
-                for(auto it2 = out_edge_iter_pair.first; it2 != out_edge_iter_pair.second; it2++){
-                    if(pedigree[*it2].polarized && pedigree[*it2].older != u){isOlder = false;}
-                }
-                if(isOlder){oldest.push_back(u);}
-            }
+    auto vertex_property_map = boost::get(&sample::id, pedigree);
+    for(int i = 0; i < num_components; i++){
+        auto ordered = std::shared_ptr<std::vector<Vertex>>(new std::vector<Vertex>());
+        postorder(*(comp_map.find(i)->second), pedigree, *ordered);
+        comp_map[i] = ordered;
+    }
 
-            ConnInfo conninfo;
-            // now we examine relationship between the oldest guys and their descendants
-            fprintf(stdout, "component: %d, size: %d, oldest generation size: %d\n", it->first, comp_size_map[it->first], oldest.size());
-            auto vertex_property_map = boost::get(&sample::id, pedigree);
-            for(Vertex u : oldest){
-                fprintf(stdout, "checking %s\n", vertex_property_map[u].c_str());
-                bool GP = false;
-                bool AV = false;
-                bool P = false;
-                bool FS = false;
-                if(isGP(u, pedigree)){
-                    conninfo.gp.push_back(u);
-                    GP = true;
-                    fprintf(stdout, "%s: GP\n", vertex_property_map[u].c_str());
-                }
-                else if(isAV(u, pedigree)){
-                    conninfo.av.push_back(u);
-                    AV = true;
-                    fprintf(stdout, "%s: AV\n", vertex_property_map[u].c_str());
-                }
-                else if(isP(u, pedigree)){
-                    conninfo.p.push_back(u);
-                    P = true;
-                    fprintf(stdout, "%s: P\n", vertex_property_map[u].c_str());
-                }
-                else if(isFS(u, pedigree)){
-                    conninfo.fs.push_back(u);
-                    FS = true;
-                    fprintf(stdout, "%s: FS\n", vertex_property_map[u].c_str());
-                }
-            }
-            fprintf(stdout, "\n\n");
+
+    for(int i = 0; i < num_components; i++){
+        // no need to do anything if the connected component is a singleton
+        // if size is 2, then the two samples can only be either a unpolarized parent-child pair or a FS pair
+        ConnInfo connInfo1;
+        //std::vector<Vertex> ordered1;
+        //postorder(*(comp_map.find(i)->second), pedigree, ordered1);
+        fprintf(stdout, "component: %d\n", i);
+        for(Vertex u : *comp_map[i]){
+            fprintf(stdout, "%s\n", vertex_property_map[u].c_str());
+        }
+        fprintf(stdout, "\n\n"); 
+        for(int j = i+1; j < num_components; j++){
+
         }
     }
+
+    // std::map<int, ConnInfo> connInfoMap;
+    // for(auto it = comp_map.begin(); it != comp_map.end(); it++){
+    //     if (comp_size_map[it->first] == 1){continue;}
+    //     else{
+    //         // first, find the oldest generation in this connected component
+    //         // the oldest generation is defined to be the set of individuals
+    //         // who are always the older individual for all polarized edges incidenct upon it
+    //         // or individuals all of whose edges are unpolarized (in this case, we only have a set of full-sibs)
+    //         std::vector<Vertex> oldest;
+    //         for(Vertex u : *(it->second)){
+    //             auto out_edge_iter_pair = boost::out_edges(u, pedigree);
+    //             bool isOlder = true;
+    //             for(auto it2 = out_edge_iter_pair.first; it2 != out_edge_iter_pair.second; it2++){
+    //                 if(pedigree[*it2].polarized && pedigree[*it2].older != u){isOlder = false;}
+    //             }
+    //             if(isOlder){oldest.push_back(u);}
+    //         }
+
+    //         ConnInfo conninfo;
+    //         // now we examine relationship between the oldest guys and their descendants
+    //         fprintf(stdout, "component: %d, size: %d, oldest generation size: %d\n", it->first, comp_size_map[it->first], oldest.size());
+    //         auto vertex_property_map = boost::get(&sample::id, pedigree);
+    //         for(Vertex u : oldest){
+    //             fprintf(stdout, "checking %s\n", vertex_property_map[u].c_str());
+    //             bool GP = false;
+    //             bool AV = false;
+    //             bool P = false;
+    //             bool FS = false;
+    //             if(isGP(u, pedigree)){
+    //                 conninfo.gp.push_back(u);
+    //                 GP = true;
+    //                 fprintf(stdout, "%s: GP\n", vertex_property_map[u].c_str());
+    //             }
+    //             else if(isAV(u, pedigree)){
+    //                 conninfo.av.push_back(u);
+    //                 AV = true;
+    //                 fprintf(stdout, "%s: AV\n", vertex_property_map[u].c_str());
+    //             }
+    //             else if(isP(u, pedigree)){
+    //                  conninfo.p.push_back(u);
+    //                 P = true;
+    //                 fprintf(stdout, "%s: P\n", vertex_property_map[u].c_str());
+    //             }
+    //             else if(isFS(u, pedigree)){
+    //                 conninfo.fs.push_back(u);
+    //                 FS = true;
+    //                 fprintf(stdout, "%s: FS\n", vertex_property_map[u].c_str());
+    //             }
+    //         }
+    //         fprintf(stdout, "\n\n");
+    //     }
+    // }
 
     return;
 }
 
+
+void postorder(const std::vector<Vertex> &components, const Pedigree &pedigree, std::vector<Vertex> &ordered)
+{   
+
+    // find the youngest generation
+    std::queue<Vertex> youngest;
+    for(Vertex u : components){
+        bool isYounger = true;
+        auto out_edge_iter_pair = boost::out_edges(u, pedigree);
+        for(auto it = out_edge_iter_pair.first; it != out_edge_iter_pair.second; it++){
+            Edge e = *it;
+            if(pedigree[e].polarized && pedigree[e].older == u){isYounger = false;}
+        }
+        if(isYounger){youngest.push(u);}
+    }
+
+    std::unordered_set<Vertex> checked;
+    while(!youngest.empty()){
+        Vertex u = youngest.front();
+        youngest.pop();
+        if (checked.find(u) != checked.end()){continue;}
+        ordered.push_back(u);
+        auto out_edge_iter_pair = boost::out_edges(u, pedigree);
+        for(auto it = out_edge_iter_pair.first; it != out_edge_iter_pair.second; it++){
+            Edge e = *it;
+            if(pedigree[e].polarized && pedigree[e].older != u){
+                Vertex s = boost::source(e, pedigree);
+                Vertex t = boost::target(e, pedigree);
+                Vertex v = u == s? t : s;
+                youngest.push(v);
+            }
+        }
+        checked.insert(u);
+    }
+
+    assert(components.size() == ordered.size());
+}
 
 bool isFS(Vertex u, const Pedigree &pedigree)
 {

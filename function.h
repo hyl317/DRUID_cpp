@@ -69,6 +69,7 @@ struct ConnInfo{
     std::vector<Vertex> fs; // full siblings
 };
 
+void postorder(const std::vector<Vertex> &components, const Pedigree &pedigree, std::vector<Vertex> &ordered);
 bool isGP(Vertex u, const Pedigree &pedgiree);
 bool isAV(Vertex u, const Pedigree &pedgiree);
 bool isP(Vertex u, const Pedigree &pedgiree);

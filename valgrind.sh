@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --mem=50000
-#SBATCH --partition=regular
-#SBATCH --job-name=DRUID.cpp
+#SBATCH --mem=10000
+#SBATCH --partition=short
+#SBATCH --job-name=DRUID.valgrind
 #SBATCH --output=valgrind.out.%j
 #SBATCH --mail-user=yh362@cornell.edu
 #SBATCH --mail-type=ALL
@@ -18,5 +18,9 @@ if [ ! -d /fs/cbsubscb09/storage/yilei/simulate/chrom ]; then
 fi
 
 # command to run test on SAMFAS dataset
-prefix="/fs/cbsubscb09/storage/yilei/simulate/SAMAFS"
-valgrind --track-origins=yes ./DRUID -i $prefix/safs.seg --bim $prefix/safs.bim --Ne $prefix/safs.ibdne-ped2.ne -o safs --max 10 
+#prefix="/fs/cbsubscb09/storage/yilei/simulate/SAMAFS"
+#valgrind --track-origins=yes ./DRUID -i $prefix/safs.seg --bim $prefix/safs.bim --Ne $prefix/safs.ibdne-ped2.ne -o safs --max 10 
+
+# command to run on my simulated dataset using ukb
+prefix="/fs/cbsubscb09/storage/yilei/simulate/DRUID_cpp"
+valgrind --track-origins=yes --leak-check=yes ./DRUID -i $prefix/ped.seg --bim $prefix/ped.bim -o test --max 10 

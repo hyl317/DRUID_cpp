@@ -1,0 +1,57 @@
+On host cbsubscb13.biohpc.cornell.edu
+Wed Jan  6 00:08:56 EST 2021
+==18993== Memcheck, a memory error detector
+==18993== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==18993== Using Valgrind-3.13.0 and LibVEX; rerun with -h for copyright info
+==18993== Command: ./DRUID -i /fs/cbsubscb09/storage/yilei/simulate/DRUID_cpp/ped.seg --bim /fs/cbsubscb09/storage/yilei/simulate/DRUID_cpp/ped.bim -o test --max 10
+==18993== 
+==18993== 
+==18993== HEAP SUMMARY:
+==18993==     in use at exit: 237,384 bytes in 10 blocks
+==18993==   total heap usage: 2,249,982 allocs, 2,249,972 frees, 76,491,848 bytes allocated
+==18993== 
+==18993== 32,016 (232 direct, 31,784 indirect) bytes in 1 blocks are definitely lost in loss record 6 of 10
+==18993==    at 0x4C29BC3: malloc (vg_replace_malloc.c:299)
+==18993==    by 0x4E42A09: ??? (in /usr/lib64/libz.so.1.2.7)
+==18993==    by 0x42EA4A: FileOrGZ<gzFile_s*>::open(char const*, char const*) (tools.cpp:382)
+==18993==    by 0x42C1F7: readIBDFile(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::map<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, Pair*, std::less<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >, std::allocator<std::pair<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > const, Pair*> > >&, std::set<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) (tools.cpp:88)
+==18993==    by 0x4028B9: main (DRUID.cpp:33)
+==18993== 
+==18993== 51,200 bytes in 1 blocks are definitely lost in loss record 7 of 10
+==18993==    at 0x4C29BC3: malloc (vg_replace_malloc.c:299)
+==18993==    by 0x435745: FileOrGZ<_IO_FILE*>::alloc_buf() (tools.h:37)
+==18993==    by 0x42E9DF: FileOrGZ<_IO_FILE*>::open(char const*, char const*) (tools.cpp:367)
+==18993==    by 0x40272A: main (DRUID.cpp:18)
+==18993== 
+==18993== 51,200 bytes in 1 blocks are definitely lost in loss record 8 of 10
+==18993==    at 0x4C29BC3: malloc (vg_replace_malloc.c:299)
+==18993==    by 0x435745: FileOrGZ<_IO_FILE*>::alloc_buf() (tools.h:37)
+==18993==    by 0x42E9DF: FileOrGZ<_IO_FILE*>::open(char const*, char const*) (tools.cpp:367)
+==18993==    by 0x42BD5D: readBimFile(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::map<int, double, std::less<int>, std::allocator<std::pair<int const, double> > >*, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, std::map<int, double, std::less<int>, std::allocator<std::pair<int const, double> > >*> > >&, FileOrGZ<_IO_FILE*>&) (tools.cpp:47)
+==18993==    by 0x40281A: main (DRUID.cpp:28)
+==18993== 
+==18993== 51,200 bytes in 1 blocks are definitely lost in loss record 9 of 10
+==18993==    at 0x4C29BC3: malloc (vg_replace_malloc.c:299)
+==18993==    by 0x4357B7: FileOrGZ<gzFile_s*>::alloc_buf() (tools.h:37)
+==18993==    by 0x42EA37: FileOrGZ<gzFile_s*>::open(char const*, char const*) (tools.cpp:380)
+==18993==    by 0x42C1F7: readIBDFile(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::map<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, Pair*, std::less<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >, std::allocator<std::pair<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > const, Pair*> > >&, std::set<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > > >&) (tools.cpp:88)
+==18993==    by 0x4028B9: main (DRUID.cpp:33)
+==18993== 
+==18993== 51,200 bytes in 1 blocks are definitely lost in loss record 10 of 10
+==18993==    at 0x4C29BC3: malloc (vg_replace_malloc.c:299)
+==18993==    by 0x435745: FileOrGZ<_IO_FILE*>::alloc_buf() (tools.h:37)
+==18993==    by 0x42E9DF: FileOrGZ<_IO_FILE*>::open(char const*, char const*) (tools.cpp:367)
+==18993==    by 0x40DB0C: write_output(std::map<std::pair<unsigned long, unsigned long>, int, std::less<std::pair<unsigned long, unsigned long> >, std::allocator<std::pair<std::pair<unsigned long, unsigned long> const, int> > > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, sample, relationship, boost::no_property, boost::listS> const&, std::map<unsigned long, unsigned long, std::less<unsigned long>, std::allocator<std::pair<unsigned long const, unsigned long> > > const&) (function.cpp:746)
+==18993==    by 0x402D39: main (DRUID.cpp:90)
+==18993== 
+==18993== LEAK SUMMARY:
+==18993==    definitely lost: 205,032 bytes in 5 blocks
+==18993==    indirectly lost: 31,784 bytes in 4 blocks
+==18993==      possibly lost: 0 bytes in 0 blocks
+==18993==    still reachable: 568 bytes in 1 blocks
+==18993==         suppressed: 0 bytes in 0 blocks
+==18993== Reachable blocks (those to which a pointer was found) are not shown.
+==18993== To see them, rerun with: --leak-check=full --show-leak-kinds=all
+==18993== 
+==18993== For counts of detected and suppressed errors, rerun with: -v
+==18993== ERROR SUMMARY: 5 errors from 5 contexts (suppressed: 0 from 0)

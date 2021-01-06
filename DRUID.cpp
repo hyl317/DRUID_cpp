@@ -103,6 +103,8 @@ int main(int argc, char **argv){
         for(auto it3 = p->ibd2_map->begin(); it3 != p->ibd2_map->end(); it3++){
             delete it3->second;
         }
+	delete p->ibd1_map;
+	delete p->ibd2_map;
         delete p;
 
     }

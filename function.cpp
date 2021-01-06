@@ -398,75 +398,39 @@ void run_druid(Pedigree &pedigree,
         comp_map[i] = ordered;
     }
 
-
     for(int i = 0; i < num_components; i++){
-        // no need to do anything if the connected component is a singleton
-        // if size is 2, then the two samples can only be either a unpolarized parent-child pair or a FS pair
-        ConnInfo connInfo1;
-        //std::vector<Vertex> ordered1;
-        //postorder(*(comp_map.find(i)->second), pedigree, ordered1);
-        fprintf(stdout, "component: %d\n", i);
-        for(Vertex u : *comp_map[i]){
-            fprintf(stdout, "%s\n", vertex_property_map[u].c_str());
-        }
-        fprintf(stdout, "\n\n"); 
         for(int j = i+1; j < num_components; j++){
+            std::unordered_set<Vertex> visited1;
+            std::unordered_set<Vertex> visited2;
+            for(Vertex u : *comp_map[i]){
+                if (visited1.find(u) != visited1.end()){continue;}
+                ConnInfo con1;
+                grabCloseRelatives(u, con1, pedigree);
+                bool isSingleton1 = isSingleton(con1);
+                for(Vertex v : *comp_map[j]){
+                    if(visited2.find(v) != visited2.end()){continue;}
+                    ConnInfo con2;
+                    grabCloseRelatives(v, con2, pedigree);
+                    // analyzing the two ConInfo component
+                    bool isSingleton2 = isSingleton(con2);
+                    if (isSingleton1 && isSingleton2){
+                        visited1.insert(u);
+                        visited2.insert(v);
+                        continue;}
+                    else if(isSingleton1 && !isSingleton2){
+                        visited1.insert(u);
+                        oneVSpedigree(u, con2, visited2, allsegs, results, pedigree, bkg_sharing, tot_genome, maxDeg);
+                    }else if(!isSingleton1 && isSingleton2){
+                        visited2.insert(v);
+                        oneVSpedigree(v, con1, visited1, allsegs, results, pedigree, bkg_sharing, tot_genome, maxDeg);
+                    }else{
 
+                    }
+
+                }
+            }
         }
     }
-
-    // std::map<int, ConnInfo> connInfoMap;
-    // for(auto it = comp_map.begin(); it != comp_map.end(); it++){
-    //     if (comp_size_map[it->first] == 1){continue;}
-    //     else{
-    //         // first, find the oldest generation in this connected component
-    //         // the oldest generation is defined to be the set of individuals
-    //         // who are always the older individual for all polarized edges incidenct upon it
-    //         // or individuals all of whose edges are unpolarized (in this case, we only have a set of full-sibs)
-    //         std::vector<Vertex> oldest;
-    //         for(Vertex u : *(it->second)){
-    //             auto out_edge_iter_pair = boost::out_edges(u, pedigree);
-    //             bool isOlder = true;
-    //             for(auto it2 = out_edge_iter_pair.first; it2 != out_edge_iter_pair.second; it2++){
-    //                 if(pedigree[*it2].polarized && pedigree[*it2].older != u){isOlder = false;}
-    //             }
-    //             if(isOlder){oldest.push_back(u);}
-    //         }
-
-    //         ConnInfo conninfo;
-    //         // now we examine relationship between the oldest guys and their descendants
-    //         fprintf(stdout, "component: %d, size: %d, oldest generation size: %d\n", it->first, comp_size_map[it->first], oldest.size());
-    //         auto vertex_property_map = boost::get(&sample::id, pedigree);
-    //         for(Vertex u : oldest){
-    //             fprintf(stdout, "checking %s\n", vertex_property_map[u].c_str());
-    //             bool GP = false;
-    //             bool AV = false;
-    //             bool P = false;
-    //             bool FS = false;
-    //             if(isGP(u, pedigree)){
-    //                 conninfo.gp.push_back(u);
-    //                 GP = true;
-    //                 fprintf(stdout, "%s: GP\n", vertex_property_map[u].c_str());
-    //             }
-    //             else if(isAV(u, pedigree)){
-    //                 conninfo.av.push_back(u);
-    //                 AV = true;
-    //                 fprintf(stdout, "%s: AV\n", vertex_property_map[u].c_str());
-    //             }
-    //             else if(isP(u, pedigree)){
-    //                  conninfo.p.push_back(u);
-    //                 P = true;
-    //                 fprintf(stdout, "%s: P\n", vertex_property_map[u].c_str());
-    //             }
-    //             else if(isFS(u, pedigree)){
-    //                 conninfo.fs.push_back(u);
-    //                 FS = true;
-    //                 fprintf(stdout, "%s: FS\n", vertex_property_map[u].c_str());
-    //             }
-    //         }
-    //         fprintf(stdout, "\n\n");
-    //     }
-    // }
 
     return;
 }
@@ -507,6 +471,211 @@ void postorder(const std::vector<Vertex> &components, const Pedigree &pedigree, 
     }
 
     assert(components.size() == ordered.size());
+}
+
+bool isFS2Everyone(const Vertex &u, const std::vector<Vertex> &fs, const Pedigree &pedigree)
+{
+    for(Vertex v : fs){
+        if(!boost::edge(u, v, pedigree).second){return false;}
+        else{
+            // edge exists, check if it's a FS edge
+            Edge e = boost::edge(u, v, pedigree).first;
+            if (pedigree[e].rel != FS){return false;}
+        }
+    }
+    return true;
+}
+
+
+void grabCloseRelatives(const Vertex &u, ConnInfo &con, const Pedigree &pedigree)
+{   
+    con.fs.push_back(u);
+    // first we will find u's full-sibslings, aunts/uncles, parents
+    auto out_edge_iter_pair = boost::out_edges(u, pedigree);
+    for(auto it = out_edge_iter_pair.first; it != out_edge_iter_pair.second; it++){
+        Edge e = *it;
+        Vertex s = boost::source(e, pedigree);
+        Vertex t = boost::target(e, pedigree);
+        Vertex other = s == u ? t : s;
+        if (pedigree[e].rel == PC && pedigree[e].polarized && pedigree[e].older == other){
+            con.p.push_back(other);
+        }else if (pedigree[e].rel == FS){
+            con.fs.push_back(other);
+        }else if (pedigree[e].rel == AV && pedigree[e].polarized && pedigree[e].older == other){
+            if (con.av1.empty()){con.av1.push_back(other);}
+            else{
+                // if the other vertex form full-sib to everyone in av1, add it to av1
+                if(isFS2Everyone(other, con.av1, pedigree)){con.av1.push_back(other);}
+                else{
+                    if (con.av2.empty()){con.av2.push_back(other);}
+                    else if (isFS2Everyone(other, con.av2, pedigree)){con.av2.push_back(other);}
+                }
+            }
+        }
+    }
+
+    // now check if we have grandparents
+    std::unordered_set<Vertex> added;
+    for(Vertex av : con.av1){
+        auto out_edge_iter_pair = boost::out_edges(av, pedigree);
+        for(auto it = out_edge_iter_pair.first; it != out_edge_iter_pair.second; it++){
+            Edge e = *it;
+            Vertex s = boost::source(e, pedigree);
+            Vertex t = boost::target(e, pedigree);
+            Vertex other = s == av ? t : s;
+            if (pedigree[e].rel == PC && pedigree[e].polarized && pedigree[e].older == other){
+                if (added.find(other) == added.end()){
+                    con.gp1.push_back(other);
+                    added.insert(other);
+                }
+            }
+        }
+    }
+
+    for(Vertex av : con.av2){
+        auto out_edge_iter_pair = boost::out_edges(av, pedigree);
+        for(auto it = out_edge_iter_pair.first; it != out_edge_iter_pair.second; it++){
+            Edge e = *it;
+            Vertex s = boost::source(e, pedigree);
+            Vertex t = boost::target(e, pedigree);
+            Vertex other = s == av ? t : s;
+            if (pedigree[e].rel == PC && pedigree[e].polarized && pedigree[e].older == other){
+                if (added.find(other) == added.end()){
+                    con.gp2.push_back(other);
+                    added.insert(other);
+                }
+            }
+        }
+    }
+}
+
+bool isSingleton(const ConnInfo &con)
+{
+    return (con.gp1.empty() && con.gp2.empty() 
+    && con.av1.empty() && con.av2.empty() && con.p.empty() &&
+    con.fs.size() == 1);
+}
+
+double UnionIbdOverTwoSets(const std::vector<std::string> &set1, const std::vector<std::string> &set2,
+    const std::map<std::pair<std::string, std::string>, Pair*> &allsegs)
+{
+    ibdMapType currUnion;
+    for(auto s1 : set1){
+        for(auto s2 : set2){
+            //fprintf(stdout, "%s\t%s\n", s1.c_str(), s2.c_str());
+            auto p = allsegs.find(make_pair_str(s1, s2));
+            if (p == allsegs.end()){continue;}
+            else{
+                const Pair &pair = *(p->second);
+                for(auto it = pair.ibd1_map->begin(); it != pair.ibd1_map->end(); it++){
+                    std::string chrName = it->first;
+                    //fprintf(stdout, "chrom Name: %s\n", chrName.c_str());
+                    if (currUnion.find(chrName) == currUnion.end()){
+                        currUnion.insert(std::make_pair(chrName, new ibdSegments()));
+                    }
+                    ibdSegments *dest = new ibdSegments();
+                    interval_union(*(it->second), *(currUnion.find(chrName)->second), *dest);
+                    ibdSegments *prev_ptr = currUnion.find(chrName)->second;
+                    currUnion[chrName] = dest;
+                    delete prev_ptr;
+                    //currUnion.insert(std::make_pair(chrName, dest));
+                }
+
+            }
+        }
+    }
+
+    double tot_length = 0.0;
+    for(auto it = currUnion.begin(); it != currUnion.end(); it++){
+        ibdSegments *tmp = it->second;
+        std::vector<double> segLengths;
+        std::for_each(tmp->begin(), tmp->end(), 
+                [&](const std::pair<double, double> &p)
+                {segLengths.push_back(p.second - p.first);});
+        tot_length += std::accumulate(segLengths.begin(), segLengths.end(), decltype(segLengths)::value_type(0));
+    }
+
+    // clean up
+    for(auto it = currUnion.begin(); it != currUnion.end(); it++){
+        delete it->second;
+    }
+
+    return tot_length;
+}
+
+
+void oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &visited,
+    const std::map<std::pair<std::string, std::string>, Pair*> &allsegs,
+    std::map<std::pair<Vertex, Vertex>, int> &results, 
+    const Pedigree &pedigree, double bkg_sharing, double tot_genome, int maxDeg)
+{   
+    auto vertex_property_map = boost::get(&sample::id, pedigree);
+    if(con.av1.empty() && con.av2.empty()){
+        std::vector<std::string> set1;
+        std::vector<std::string> set2;
+        set1.push_back(vertex_property_map[u]);
+        for(Vertex v : con.fs){set2.push_back(vertex_property_map[v]);}
+        double unionLength = UnionIbdOverTwoSets(set1, set2, allsegs);
+        int numSibs = con.fs.size();
+        unionLength = std::max(0.0, unionLength - 2*bkg_sharing*(1.0 - pow(0.5, numSibs)));
+        double K = (unionLength/tot_genome)/(1 - pow(0.5, numSibs));
+        int deg = getRelfromK(K, maxDeg);
+        //fprintf(stdout, "new degree is %d\n", deg);
+        for(Vertex v : con.fs){
+            results[make_pair_v(u,v)] = deg;
+            visited.insert(v);
+        }
+    }
+}
+
+// for debugging
+void printConnInfo(const ConnInfo &con, const Pedigree &pedigree)
+{
+    auto vertex_property_map = boost::get(&sample::id, pedigree);
+    if(!con.gp1.empty()){
+        fprintf(stdout, "grandparents1:\n");
+        for(Vertex u : con.gp1){
+            fprintf(stdout, "%s\n", vertex_property_map[u].c_str());
+        }
+    }
+
+    if(!con.gp2.empty()){
+        fprintf(stdout, "grandparents2:\n");
+        for(Vertex u : con.gp2){
+            fprintf(stdout, "%s\n", vertex_property_map[u].c_str());
+        }
+    }
+
+    if(!con.av1.empty()){
+        fprintf(stdout, "av1:\n");
+        for(Vertex u : con.av1){
+            fprintf(stdout, "%s\n", vertex_property_map[u].c_str());
+        }
+    }
+
+    if(!con.av2.empty()){
+        fprintf(stdout, "av2:\n");
+        for(Vertex u : con.av2){
+            fprintf(stdout, "%s\n", vertex_property_map[u].c_str());
+        }
+    }
+
+    if(!con.p.empty()){
+        fprintf(stdout, "parents:\n");
+        for(Vertex u : con.p){
+            fprintf(stdout, "%s\n", vertex_property_map[u].c_str());
+        }
+    }
+
+    if(!con.fs.empty()){
+        fprintf(stdout, "full-sibs:\n");
+        for(Vertex u : con.fs){
+            fprintf(stdout, "%s\n", vertex_property_map[u].c_str());
+        }
+    }
+
+    fprintf(stdout, "\n\n");
+
 }
 
 bool isFS(Vertex u, const Pedigree &pedigree)

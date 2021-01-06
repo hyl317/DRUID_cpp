@@ -36,7 +36,7 @@ inline std::pair<Vertex, Vertex> make_pair_v
   return u < v? std::make_pair(u, v) : std::make_pair(v, u);
 }
 
-int getRelfromK(double ibd1, double ibd2, double bkg, double tot_genome, int maxDeg);
+int getRelfromK(double K, int maxDeg);
 
 void build_graph(Pedigree &pedigree, 
     const std::map<std::pair<std::string, std::string>, Pair*> &allsegs,
@@ -63,13 +63,33 @@ void run_druid(Pedigree &pedigree,
 struct ConnInfo{
     // this struct keeps track of the information we need for combining segments for every non-trivial (size > 1) connected components
     // all relationships are from the point view of the full-sib generation
-    std::vector<Vertex> gp; // grandparents if any
-    std::vector<Vertex> av; // AV if any
+    std::vector<Vertex> gp1; // grandparents if any
+    std::vector<Vertex> gp2;
+    std::vector<Vertex> av1; // AV if any
+    std::vector<Vertex> av2;
     std::vector<Vertex> p; // parents if any
     std::vector<Vertex> fs; // full siblings
 };
 
 void postorder(const std::vector<Vertex> &components, const Pedigree &pedigree, std::vector<Vertex> &ordered);
+void grabCloseRelatives(const Vertex &u, ConnInfo &con, const Pedigree &pedigree);
+bool isFS2Everyone(const Vertex &u, const std::vector<Vertex> &fs, const Pedigree &pedigree);
+void combineIBD(const ConnInfo &con1, const ConnInfo &con2, std::unordered_set<Vertex> &checked1,
+    std::unordered_set<Vertex> &checked2, std::map<std::pair<Vertex, Vertex>, int> &results,
+    double bkg_sharing, int max_deg);
+
+bool isSingleton(const ConnInfo &con);
+void printConnInfo(const ConnInfo &con, const Pedigree &pedigree); // for debugging
+
+double UnionIbdOverTwoSets(const std::vector<std::string> &set1, const std::vector<std::string> &set2,
+    const std::map<std::pair<std::string, std::string>, Pair*> &allsegs); // return the total length of combined IBD
+
+void oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &checked,
+    const std::map<std::pair<std::string, std::string>, Pair*> &allsegs,
+    std::map<std::pair<Vertex, Vertex>, int> &results, 
+    const Pedigree &pedigree, double bkg_sharing, double tot_genome, int max_deg);
+
+
 bool isGP(Vertex u, const Pedigree &pedgiree);
 bool isAV(Vertex u, const Pedigree &pedgiree);
 bool isP(Vertex u, const Pedigree &pedgiree);

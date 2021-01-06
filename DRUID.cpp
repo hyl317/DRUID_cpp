@@ -61,6 +61,23 @@ int main(int argc, char **argv){
         it2++;
     }
     assert(it2 == inds.end());
+
+    auto vertex_property_map = boost::get(&sample::id, pedigree);
+    // make a map from sampleID(string) to Vertex
+    std::map<std::string, Vertex> id2Vertex;
+    boost::graph_traits<Pedigree>::vertex_iterator vi, vi_end;
+    for(boost::tie(vi, vi_end) = boost::vertices(pedigree); vi != vi_end; vi++){
+        id2Vertex.insert(std::make_pair(vertex_property_map[*vi], *vi));
+    }
+
+    std::map<std::pair<Vertex, Vertex>, Pair*> allsegs_v;
+    for(auto it = allsegs.begin(); it != allsegs.end(); it++){
+        std::pair<std::string, std::string> p = it->first;
+        Vertex u = id2Vertex[p.first];
+        Vertex v = id2Vertex[p.second];
+        allsegs_v[make_pair_v(u,v)] = it->second;
+    }
+
     // add edges between close relatives
     std::map<std::pair<Vertex, Vertex>, int> results;
     std::map<Vertex, Vertex> twins;

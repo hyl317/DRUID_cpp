@@ -610,7 +610,7 @@ void oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &vi
     const Pedigree &pedigree, double bkg_sharing, double tot_genome, int maxDeg)
 {   
     auto vertex_property_map = boost::get(&sample::id, pedigree);
-    if(con.av1.empty() && con.av2.empty()){
+    if(con.av1.empty() && con.av2.empty() && con.p.empty()){
         std::vector<std::string> set1;
         std::vector<std::string> set2;
         set1.push_back(vertex_property_map[u]);
@@ -619,7 +619,9 @@ void oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &vi
         int numSibs = con.fs.size();
         unionLength = std::max(0.0, unionLength - 2*bkg_sharing*(1.0 - pow(0.5, numSibs)));
         double K = (unionLength/tot_genome)/(1 - pow(0.5, numSibs));
-        int deg = getRelfromK(K, maxDeg);
+        int tmp = getRelfromK(K, maxDeg);
+	    int deg = tmp == -1 ?  -1 : tmp+1;
+	    if(deg > maxDeg){deg = -1;}
         //fprintf(stdout, "new degree is %d\n", deg);
         for(Vertex v : con.fs){
             results[make_pair_v(u,v)] = deg;

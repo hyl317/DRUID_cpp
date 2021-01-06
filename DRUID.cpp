@@ -73,6 +73,8 @@ int main(int argc, char **argv){
     std::map<std::pair<Vertex, Vertex>, Pair*> allsegs_v;
     for(auto it = allsegs.begin(); it != allsegs.end(); it++){
         std::pair<std::string, std::string> p = it->first;
+        assert(id2Vertex.find(p.first) != id2Vertex.end());
+        assert(id2Vertex.find(p.second) != id2Vertex.end());
         Vertex u = id2Vertex[p.first];
         Vertex v = id2Vertex[p.second];
         allsegs_v[make_pair_v(u,v)] = it->second;

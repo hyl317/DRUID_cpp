@@ -83,8 +83,8 @@ int main(int argc, char **argv){
     // add edges between close relatives
     std::map<std::pair<Vertex, Vertex>, int> results;
     std::map<Vertex, Vertex> twins;
-    build_graph(pedigree, allsegs, snpmap, results, twins, chrLens.sum(), bkg_sharing, maxDeg);
-    run_druid(pedigree, allsegs, snpmap, results, logFile, chrLens.sum(), bkg_sharing, maxDeg);
+    build_graph(pedigree, allsegs_v, snpmap, results, twins, chrLens.sum(), bkg_sharing, maxDeg);
+    run_druid(pedigree, allsegs_v, snpmap, results, logFile, chrLens.sum(), bkg_sharing, maxDeg);
 
     // for testing purpose
     // is_avunc("801120", "801121", "801113", allsegs, snpmap);
@@ -122,8 +122,8 @@ int main(int argc, char **argv){
         for(auto it3 = p->ibd2_map->begin(); it3 != p->ibd2_map->end(); it3++){
             delete it3->second;
         }
-	delete p->ibd1_map;
-	delete p->ibd2_map;
+	    delete p->ibd1_map;
+	    delete p->ibd2_map;
         delete p;
 
     }

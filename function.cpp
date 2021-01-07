@@ -16,25 +16,21 @@ int getRelfromK(double K, int maxDeg){
 }
 
 void build_graph(Pedigree &pedigree, 
-    const std::map<std::pair<std::string, std::string>, Pair*> &allsegs,
+    const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs,
     const std::map<std::string, std::map<int, double>*> &snpmap,
     std::map<std::pair<Vertex, Vertex>, int> &results,
     std::map<Vertex, Vertex> &twins,
     double tot_genome, double bkg_sharing, int maxDeg)
 {
-    auto vertex_property_map = boost::get(&sample::id, pedigree);
     boost::graph_traits<Pedigree>::vertex_iterator vi1, vi_end1;
     boost::graph_traits<Pedigree>::vertex_iterator vi2, vi_end2;
     std::set<std::pair<Vertex, Vertex>> pcs;
     std::map<Vertex, std::shared_ptr<std::unordered_set<Vertex>>> fs_degs;
     std::map<Vertex, std::shared_ptr<std::unordered_set<Vertex>>> second_degs;
     for(boost::tie(vi1, vi_end1) = boost::vertices(pedigree); vi1 != vi_end1; vi1++){
-        std::string id1 = vertex_property_map[*vi1];
-        //std::cout << id1 << "\t" << *vi1 << std::endl;
         for(boost::tie(vi2, vi_end2) = boost::vertices(pedigree); vi2 != vi_end2; vi2++){
-            std::string id2 = vertex_property_map[*vi2];
             if (*vi1 >= *vi2){continue;} // avoid analyzing pairs twice
-            auto it = allsegs.find(make_pair_str(id1, id2)); 
+            auto it = allsegs.find(make_pair_v(*vi1, *vi2)); 
             // some pairs may not have ibd segments, so need to check here
             if(it == allsegs.end()){continue;};
             Pair &p = *(it->second);
@@ -235,13 +231,9 @@ void build_graph(Pedigree &pedigree,
             continue;
         }
         
-        const std::unordered_set<Vertex> &fs_to_focal_ind = *(fs_degs[focal_ind]);
-        // consider all pairs of full-siblings of the focal individual
-        std::unordered_set<Vertex> full_sib_vertex_set = fs_to_focal_ind; // copy
-        full_sib_vertex_set.insert(focal_ind);
-        std::vector<std::string> full_sib_id_set(full_sib_vertex_set.size());
-        std::transform(full_sib_vertex_set.begin(), full_sib_vertex_set.end(),
-            full_sib_id_set.begin(), [&](Vertex v){return vertex_property_map[v];});
+        std::vector<Vertex> full_sib_vertex_set;
+        full_sib_vertex_set.push_back(focal_ind);
+        for(Vertex v : *fs_degs[focal_ind]){full_sib_vertex_set.push_back(v);}
 
         // take the union of second_deg of all the first-sibs
         // I did this because sometimes a person's AV might be classified as 3rd by kinship coefficient
@@ -256,9 +248,9 @@ void build_graph(Pedigree &pedigree,
         }
 
         for(Vertex avunc_candidate : second_deg_relatives){
-            std::string avunc_candidate_id = vertex_property_map[avunc_candidate];
+            //std::string avunc_candidate_id = vertex_property_map[avunc_candidate];
             //std::cout << "checking " << avunc_candidate_id << std::endl;
-            if (checkAvunc(full_sib_id_set, avunc_candidate_id, allsegs, snpmap)){
+            if (checkAvunc(full_sib_vertex_set, avunc_candidate, allsegs, snpmap)){
                 //std::cout << avunc_candidate_id << " is a AV!" << std::endl;
                 // add second-deg edges to the graph
                 // what should we do if there is already an edge in between? Let's for now overwrite the previously edge
@@ -293,17 +285,17 @@ void build_graph(Pedigree &pedigree,
 
 }
 
-bool is_avunc(const std::string &fs1, const std::string &fs2, const std::string &avunc, 
-        const std::map<std::pair<std::string, std::string>, Pair*> &allsegs, 
+bool is_avunc(const Vertex fs1, const Vertex fs2, const Vertex avunc, 
+        const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs, 
         const std::map<std::string, std::map<int, double>*> &snpmap)
 {
-    auto fs_p = allsegs.find(make_pair_str(fs1, fs2));
+    auto fs_p = allsegs.find(make_pair_v(fs1, fs2));
     assert(fs_p != allsegs.end());
     Pair &full_sib_pair = *(fs_p->second);
-    auto fa_p1 = allsegs.find(make_pair_str(fs1, avunc));
+    auto fa_p1 = allsegs.find(make_pair_v(fs1, avunc));
     assert(fa_p1 != allsegs.end());
     Pair &sib1_avunc_pair = *(fa_p1->second);
-    auto fa_p2 = allsegs.find(make_pair_str(fs2, avunc));
+    auto fa_p2 = allsegs.find(make_pair_v(fs2, avunc));
     assert(fa_p2 != allsegs.end());
     Pair &sib2_avunc_pair = *(fa_p2->second);
 
@@ -352,8 +344,8 @@ bool is_avunc(const std::string &fs1, const std::string &fs2, const std::string 
     return ibd011_tot >= AVUNC_011;
 }
 
-bool checkAvunc(const std::vector<std::string> &full_sibs, const std::string &avunc, 
-    const std::map<std::pair<std::string, std::string>, Pair*> &allsegs,
+bool checkAvunc(const std::vector<Vertex> &full_sibs, const Vertex avunc, 
+    const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs,
     const std::map<std::string, std::map<int, double>*> &snpmap)
 {
     // check if avunc is the avunc of the given set of full_sibs
@@ -367,7 +359,7 @@ bool checkAvunc(const std::vector<std::string> &full_sibs, const std::string &av
 }
 
 void run_druid(Pedigree &pedigree, 
-    const std::map<std::pair<std::string, std::string>, Pair*> &allsegs,
+    const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs,
     const std::map<std::string, std::map<int, double>*> &snpmap,
     std::map<std::pair<Vertex, Vertex>, int> &results,
     FileOrGZ<FILE *> &logFile,
@@ -378,25 +370,32 @@ void run_druid(Pedigree &pedigree,
     int num_components = boost::connected_components(pedigree, &components[0]);
     logFile.printf("\tnumber of connected components: %d\n", num_components);
 
-    //std::map<int, int> comp_size_map;
     std::map<int, std::shared_ptr<std::vector<Vertex>>> comp_map;
     boost::graph_traits<Pedigree>::vertex_iterator vi, vi_end;
     for(boost::tie(vi, vi_end) = boost::vertices(pedigree); vi != vi_end; vi++){
         int comp_index = components[*vi];
         if (comp_map.find(comp_index) == comp_map.end()){
-            //comp_size_map.insert(std::make_pair(comp_index, 0));
             comp_map.insert(std::make_pair(comp_index, std::shared_ptr<std::vector<Vertex>>(new std::vector<Vertex>())));
         }
-        //comp_size_map[comp_index]++;
         comp_map[comp_index]->push_back(*vi);
     }
 
-    auto vertex_property_map = boost::get(&sample::id, pedigree);
+    //auto vertex_property_map = boost::get(&sample::id, pedigree);
     for(int i = 0; i < num_components; i++){
         auto ordered = std::shared_ptr<std::vector<Vertex>>(new std::vector<Vertex>());
         postorder(*(comp_map.find(i)->second), pedigree, *ordered);
         comp_map[i] = ordered;
     }
+
+    // test
+    for(int i = 0; i < num_components; i++){
+        ConnInfo con;
+        Vertex u = (*comp_map[i])[0];
+        grabCloseRelatives(u, con, pedigree);
+        printConnInfo(con, pedigree);
+    }
+    // return;
+    //end of test
 
     for(int i = 0; i < num_components; i++){
         for(int j = i+1; j < num_components; j++){
@@ -411,20 +410,24 @@ void run_druid(Pedigree &pedigree,
                     if(visited2.find(v) != visited2.end()){continue;}
                     ConnInfo con2;
                     grabCloseRelatives(v, con2, pedigree);
-                    // analyzing the two ConInfo component
+                    // analyzing the two ConnInfo component
                     bool isSingleton2 = isSingleton(con2);
                     if (isSingleton1 && isSingleton2){
                         visited1.insert(u);
                         visited2.insert(v);
-                        continue;}
+                        continue;
+                    }
                     else if(isSingleton1 && !isSingleton2){
                         visited1.insert(u);
-                        oneVSpedigree(u, con2, visited2, allsegs, results, pedigree, bkg_sharing, tot_genome, maxDeg);
+                        oneVSpedigree(u, con2, visited2, allsegs, results, bkg_sharing, tot_genome, maxDeg);
                     }else if(!isSingleton1 && isSingleton2){
                         visited2.insert(v);
-                        oneVSpedigree(v, con1, visited1, allsegs, results, pedigree, bkg_sharing, tot_genome, maxDeg);
+                        oneVSpedigree(v, con1, visited1, allsegs, results, bkg_sharing, tot_genome, maxDeg);
                     }else{
-
+                        //fprintf(stdout, "pedigree vs. pedigree\n");
+                        //printConnInfo(con1, pedigree);
+                        //printConnInfo(con2, pedigree);
+                        pedigreeVSpedigree(con1, con2, visited1, visited2, allsegs, results, bkg_sharing, tot_genome, maxDeg);
                     }
 
                 }
@@ -556,20 +559,18 @@ bool isSingleton(const ConnInfo &con)
     con.fs.size() == 1);
 }
 
-double UnionIbdOverTwoSets(const std::vector<std::string> &set1, const std::vector<std::string> &set2,
-    const std::map<std::pair<std::string, std::string>, Pair*> &allsegs)
+double UnionIbdOverTwoSets(const std::vector<Vertex> &set1, const std::vector<Vertex> &set2,
+    const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs)
 {
     ibdMapType currUnion;
     for(auto s1 : set1){
         for(auto s2 : set2){
-            //fprintf(stdout, "%s\t%s\n", s1.c_str(), s2.c_str());
-            auto p = allsegs.find(make_pair_str(s1, s2));
+            auto p = allsegs.find(make_pair_v(s1, s2));
             if (p == allsegs.end()){continue;}
             else{
                 const Pair &pair = *(p->second);
                 for(auto it = pair.ibd1_map->begin(); it != pair.ibd1_map->end(); it++){
                     std::string chrName = it->first;
-                    //fprintf(stdout, "chrom Name: %s\n", chrName.c_str());
                     if (currUnion.find(chrName) == currUnion.end()){
                         currUnion.insert(std::make_pair(chrName, new ibdSegments()));
                     }
@@ -578,7 +579,6 @@ double UnionIbdOverTwoSets(const std::vector<std::string> &set1, const std::vect
                     ibdSegments *prev_ptr = currUnion.find(chrName)->second;
                     currUnion[chrName] = dest;
                     delete prev_ptr;
-                    //currUnion.insert(std::make_pair(chrName, dest));
                 }
 
             }
@@ -603,32 +603,396 @@ double UnionIbdOverTwoSets(const std::vector<std::string> &set1, const std::vect
     return tot_length;
 }
 
+void inferFStoSingleDistantRelative(Vertex d, const std::vector<Vertex> &fs,
+    std::unordered_set<Vertex> &visited,
+    const std::map<std::pair<Vertex, Vertex>, Pair*> allsegs, 
+    std::map<std::pair<Vertex, Vertex>, int> &results,
+    double bkg_sharing, double tot_genome, int maxDeg)
+{
+    std::vector<Vertex> set1;
+    set1.push_back(d);
+    double unionLength = UnionIbdOverTwoSets(set1, fs, allsegs);
+    int numSibs = fs.size();
+    unionLength = std::max(0.0, unionLength - 2*bkg_sharing*(1.0 - pow(0.5, numSibs)));
+    double Tp = getTg(0, numSibs);
+    double K = ((unionLength/tot_genome)/Tp)/4.0;
+    int deg = resetRelationship(getRelfromK(K, maxDeg), 1, maxDeg);
+    for(Vertex v : fs){
+        results[make_pair_v(d, v)] = deg;
+        visited.insert(v);
+    }
+}
 
 void oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &visited,
-    const std::map<std::pair<std::string, std::string>, Pair*> &allsegs,
+    const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs,
     std::map<std::pair<Vertex, Vertex>, int> &results, 
-    const Pedigree &pedigree, double bkg_sharing, double tot_genome, int maxDeg)
+    double bkg_sharing, double tot_genome, int maxDeg)
 {   
-    auto vertex_property_map = boost::get(&sample::id, pedigree);
     if(con.av1.empty() && con.av2.empty() && con.p.empty()){
-        std::vector<std::string> set1;
-        std::vector<std::string> set2;
-        set1.push_back(vertex_property_map[u]);
-        for(Vertex v : con.fs){set2.push_back(vertex_property_map[v]);}
-        double unionLength = UnionIbdOverTwoSets(set1, set2, allsegs);
-        int numSibs = con.fs.size();
-        unionLength = std::max(0.0, unionLength - 2*bkg_sharing*(1.0 - pow(0.5, numSibs)));
-        double K = (unionLength/tot_genome)/(1 - pow(0.5, numSibs));
-        int tmp = getRelfromK(K, maxDeg);
-	    int deg = tmp == -1 ?  -1 : tmp+1;
-	    if(deg > maxDeg){deg = -1;}
-        //fprintf(stdout, "new degree is %d\n", deg);
+        inferFStoSingleDistantRelative(u, con.fs, visited, allsegs, results, bkg_sharing, tot_genome, maxDeg);
+    }else if(con.av1.empty() && con.av2.empty() && !con.p.empty()){
+        // use full-sibs's parents if applicable
+        double maxK = 0.0;
         for(Vertex v : con.fs){
-            results[make_pair_v(u,v)] = deg;
-            visited.insert(v);
+            auto it = allsegs.find(make_pair_v(u, v));
+            if(it == allsegs.end()){continue;}
+            else if(it->second->kin > maxK){maxK = it->second->kin;}
+        }
+        if (con.p.size() == 1){
+            auto it = allsegs.find(make_pair_v(con.p[0], u));
+            if (it != allsegs.end() && it->second->kin > maxK){
+                int deg = resetRelationship(getRelfromK(it->second->kin, maxDeg), 1, maxDeg);
+                for(Vertex v : con.fs){
+                    results[make_pair_v(u,v)] = deg;
+                    visited.insert(v);
+                }
+                visited.insert(con.p[0]);
+            }else{
+                inferFStoSingleDistantRelative(u, con.fs, visited, allsegs, results, bkg_sharing, tot_genome, maxDeg);
+            }
+        }else if(con.p.size() ==2){
+            auto it1 = allsegs.find(make_pair_v(con.p[0], u));
+            auto it2 = allsegs.find(make_pair_v(con.p[1], u));
+            bool isGreater1 = it1 != allsegs.end() && it1->second->kin > maxK;
+            bool isGreater2 = it2 != allsegs.end() && it2->second->kin > maxK;
+            int index = -1; // denote which parent to use
+            if (isGreater1 && isGreater2){index = it1->second->kin >= it2->second->kin ? 0 : 1;}
+            else if (isGreater1 && !isGreater2){index = 0;}
+            else if (!isGreater1 && isGreater2){index = 1;}
+            if (index != -1){
+                int deg = resetRelationship(getRelfromK(allsegs.find(make_pair_v(con.p[index], u))->second->kin, maxDeg), 1, maxDeg);
+                for(Vertex v : con.fs){
+                    results[make_pair_v(u, v)] = deg;
+                    visited.insert(v);
+                }
+                visited.insert(con.p[index]);
+            }else{
+                inferFStoSingleDistantRelative(u, con.fs, visited, allsegs, results, bkg_sharing, tot_genome, maxDeg);
+            }
+        }
+    }else if(!con.av1.empty() || !con.av2.empty()){
+        bool includeAunts1 = includeAunts(con.av1, con.fs, u, allsegs); // if con.av1 is empty this still works
+        bool includeAunts2 = includeAunts(con.av2, con.fs, u, allsegs);
+        int index_av = -1;
+        if (includeAunts1 && includeAunts2){
+            // use the set of aunts with higher average kinship to d
+            double average1 = 0.0;
+            for(Vertex a : con.av1){
+                auto it = allsegs.find(make_pair_v(a, u));
+                if (it != allsegs.end()){average1 += it->second->kin;}
+                // if the pair doesn't have an entry in allsegs, which means they don't share any ibd segments,
+                // then their kinship is zero, so no need to do anything here
+            }
+            average1 = average1/((double) con.av1.size());
+
+            double average2 = 0.0;
+            for(Vertex a : con.av2){
+                auto it = allsegs.find(make_pair_v(a, u));
+                if (it != allsegs.end()){average1 += it->second->kin;}
+            }
+            average2 = average2/((double) con.av2.size());
+
+            index_av = average1 >= average2 ? 1 : 2;
+        }else if(!includeAunts1 && includeAunts2){index_av = 2;}
+        else if(includeAunts1 && !includeAunts2){index_av = 1;}
+
+        if (index_av != -1){
+            // check if we can use grandparents
+            const std::vector<Vertex> &av2use = index_av == 1 ? con.av1 : con.av2; 
+            const std::vector<Vertex> &gp2check = index_av == 1 ? con.gp1 : con.gp2;
+            int index_gp = -1;
+            if (!gp2check.empty()){
+                double max_kad = 0.0;
+                for(Vertex a : av2use){
+                    auto it = allsegs.find(make_pair_v(a, u));
+                    if(it != allsegs.end() && it->second->kin > max_kad){max_kad = it->second->kin;}
+                }
+
+                if (gp2check.size() == 1){
+                    auto it = allsegs.find(make_pair_v(gp2check[0], u));
+                    if(it != allsegs.end() && it->second->kin > max_kad){index_gp = 0;}
+                }else if (gp2check.size() ==2){
+                    auto it1 = allsegs.find(make_pair_v(gp2check[0], u));
+                    auto it2 = allsegs.find(make_pair_v(gp2check[1], u));
+                    bool isGreater1 = it1 != allsegs.end() && it1->second->kin > max_kad;
+                    bool isGreater2 = it2 != allsegs.end() && it2->second->kin > max_kad;
+                    if (isGreater1 && isGreater2){index_gp = it1->second->kin > it2->second->kin ? 0 : 1;}
+                    else if(!isGreater1 && isGreater2){index_gp = 1;}
+                    else if(isGreater1 && !isGreater2){index_gp = 0;}
+                }
+            }
+
+            if (index_gp != -1){
+                // can use grandparents for inference
+                int deg_gp = getRelfromK(allsegs.find(make_pair_v(gp2check[index_gp], u))->second->kin, maxDeg);
+                int deg_av = resetRelationship(deg_gp, 1, maxDeg);
+                int deg_fs = resetRelationship(deg_gp, 2, maxDeg);
+                for(Vertex a : av2use){
+                    results[make_pair_v(a, u)] = deg_av;
+                    visited.insert(a);
+                }
+                for(Vertex fs : con.fs){
+                    results[make_pair_v(fs, u)] = deg_fs;
+                    visited.insert(fs);
+                }
+                visited.insert(gp2check[index_gp]);
+            }else{
+                std::vector<Vertex> set1;
+                set1.push_back(u);
+                std::vector<Vertex> set2;
+                set2.insert(set2.end(), con.fs.begin(), con.fs.end());
+                set2.insert(set2.end(), av2use.begin(), av2use.end());
+                double unionLength = UnionIbdOverTwoSets(set1, set2, allsegs);
+                int numAV = av2use.size();
+                int numSibs = con.fs.size();
+                double bkg_combined = 2.0*bkg_sharing*(1.0 - pow(0.5, numAV) + pow(0.5, numAV+1)*(1.0 - pow(0.5, numSibs+1))) + bkg_sharing*(1.0 - pow(0.5, numSibs)); 
+                unionLength = std::max(0.0, unionLength - bkg_combined);
+                double T_g = getTg(numAV, numSibs);
+                double K = ((unionLength/tot_genome)/T_g)/4.0;
+                int deg_gp = getRelfromK(K, maxDeg);
+                int deg_av = resetRelationship(deg_gp, 1, maxDeg);
+                for(Vertex a : av2use){
+                    results[make_pair_v(a, u)] = deg_av;
+                    visited.insert(a);
+                }
+                int deg_fs = resetRelationship(deg_gp, 2, maxDeg);
+                for(Vertex fs : con.fs){
+                    results[make_pair_v(fs, u)] = deg_fs;
+                    visited.insert(fs);
+                }
+            }
+        }else{
+            // if no aunts/uncle sets satisfy the criterion, we can only use full-sibs
+            inferFStoSingleDistantRelative(u, con.fs, visited, allsegs, results, bkg_sharing, tot_genome, maxDeg);
         }
     }
 }
+
+
+bool includeAunts(const std::vector<Vertex> &aunts, const std::vector<Vertex> &sibs,
+    Vertex d, const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs)
+{
+    // include the set of aunts if max k{a,d} > min k{s,d}
+    // this is used for oneVSpedigree
+    // Vertex d is the distant relative of interest
+    double min_ksd = 1.0;
+    for(Vertex v : sibs){
+        auto it = allsegs.find(make_pair_v(v, d));
+        if (it == allsegs.end()){
+            min_ksd = 0.0;
+            break;
+        }else{
+            double k = it->second->kin;
+            if (k < min_ksd){min_ksd = k;}
+        }
+    }
+
+    double max_kad = 0.0;
+    for(Vertex v : aunts){
+        auto it = allsegs.find(make_pair_v(v, d));
+        if (it == allsegs.end()){continue;}
+        else{
+            double k = it->second->kin;
+            if(k > max_kad){max_kad = k;}
+        }
+    }
+
+    return max_kad > min_ksd;
+}
+
+double minKinshipBetweenTwoSibset(const std::vector<Vertex> &sib1, 
+    const std::vector<Vertex> &sib2, const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs)
+{
+    // find min k_{s1, s2}
+    double min_ks1s2 = 1.0;
+    for(Vertex u : sib1){
+        for(Vertex v : sib2){
+            auto it = allsegs.find(make_pair_v(u, v));
+            if (it == allsegs.end()){
+                return 0.0;
+            }else if(it->second->kin < min_ks1s2){min_ks1s2 = it->second->kin;}
+        }
+    }
+    return min_ks1s2;
+}
+
+bool includeAunts(const std::vector<Vertex> &aunts, const std::vector<Vertex> &sibs,
+    double min_ks1s2, const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs)
+{
+    double max_kas2 = 0.0;
+    for(Vertex a : aunts){
+        for(Vertex s : sibs){
+            auto it = allsegs.find(make_pair_v(a, s));
+            if (it == allsegs.end()){continue;}
+            else if (it->second->kin > max_kas2){max_kas2 = it->second->kin;}
+        }
+    }
+    return max_kas2 > min_ks1s2;
+}
+
+int whichAV2Include(const std::vector<Vertex> &av11, const std::vector<Vertex> &av12, 
+    const std::vector<Vertex> &sib1, const std::vector<Vertex> &sib2,
+    const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs)
+{
+    if (av11.empty() && av12.empty()){return -1;}
+    else{
+        double min_ks1s2 = minKinshipBetweenTwoSibset(sib1, sib2, allsegs);
+        if(av11.empty() && !av12.empty()){
+            return includeAunts(av12, sib2, min_ks1s2, allsegs) ? 2 : -1;
+        }else if (!av11.empty() && av12.empty()){
+            return includeAunts(av11, sib2, min_ks1s2, allsegs) ? 1 : -1;
+        }else{
+            bool isGreater1 = includeAunts(av11, sib2, min_ks1s2, allsegs);
+            bool isGreater2 = includeAunts(av12, sib2, min_ks1s2, allsegs);
+            if (isGreater1 && !isGreater2){return 1;}
+            else if (!isGreater1 && isGreater2){return 2;}
+            else if (!isGreater1 && !isGreater2){return -1;}
+            else{
+                double average1 = 0.0;
+                for(Vertex a : av11){
+                    for(Vertex s : sib2){
+                        auto it = allsegs.find(make_pair_v(a, s));
+                        if (it != allsegs.end()){average1 += it->second->kin;}
+                    }
+                }
+                average1 = average1/((double) av11.size()*sib2.size());
+
+                double average2 = 0.0;
+                for(Vertex a : av12){
+                    for(Vertex s : sib2){
+                        auto it = allsegs.find(make_pair_v(a, s));
+                        if (it != allsegs.end()){average2 += it->second->kin;}
+                    }
+                }
+                average2 = average2/((double) av12.size()*sib2.size());
+                return average1 >= average2 ? 1 : 2;
+            }
+        }
+    }
+}
+
+void pedigreeVSpedigree(const ConnInfo &con1, const ConnInfo &con2,
+    std::unordered_set<Vertex> &visited1, std::unordered_set<Vertex> &visited2,
+    const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs,
+    std::map<std::pair<Vertex, Vertex>, int> &results,
+    double bkg_sharing, double tot_genome, int maxDeg)
+{   
+    // How to properly handle parents and grandparents in this setting?
+    int index_av1 = whichAV2Include(con1.av1, con1.av2, con1.fs, con2.fs, allsegs);
+    int index_av2 = whichAV2Include(con2.av1, con2.av2, con2.fs, con1.fs, allsegs);
+    std::vector<Vertex> set1;
+    std::vector<Vertex> set2;
+    set1.insert(set1.end(), con1.fs.begin(), con1.fs.end());
+    set2.insert(set2.end(), con2.fs.begin(), con2.fs.end());
+    std::for_each(con1.fs.begin(), con1.fs.end(), [&](const Vertex fs){visited1.insert(fs);});
+    std::for_each(con2.fs.begin(), con2.fs.end(), [&](const Vertex fs){visited2.insert(fs);});
+    int numSib1 = con1.fs.size();
+    int numSib2 = con2.fs.size();
+    int numAV1 = 0;
+    int numAV2 = 0;
+    if(index_av1 != -1){
+        const std::vector<Vertex> &av2use = index_av1 == 1 ? con1.av1 : con1.av2;
+        set1.insert(set1.end(), av2use.begin(), av2use.end());
+        numAV1 = av2use.size();
+        std::for_each(av2use.begin(), av2use.end(), [&](const Vertex a){visited1.insert(a);});
+    }
+    if(index_av2 != -1){
+        const std::vector<Vertex> &av2use = index_av2 == 1 ? con2.av1 : con2.av2;
+        set2.insert(set2.end(), av2use.begin(), av2use.end());
+        numAV2 = av2use.size();
+        std::for_each(av2use.begin(), av2use.end(), [&](const Vertex a){visited2.insert(a);});
+    }
+
+    double Tg1 = getTg(numAV1, numSib1);
+    double Tg2 = getTg(numAV2, numSib2);
+    double k1 = (UnionIbdOverTwoSets(set1, set2, allsegs)/tot_genome)/(Tg1*Tg2);
+    double bkg = 4.0*bkg_sharing*(1.0 - pow(0.5, numAV1) + pow(0.5, numAV1+1)*(1.0 - pow(0.5, numSib1)))
+                    *(1.0 - pow(0.5, numAV2) + pow(0.5, numAV2+1)*(1.0 - pow(0.5, numSib2))) + 
+                    2.0*bkg_sharing*(1.0 - pow(0.5, numAV1) + pow(0.5, numAV1+1)*(1.0 - pow(0.5, numSib1)))*(1.0 - pow(0.5, numSib2)) + 
+                    2.0*bkg_sharing*(1.0 - pow(0.5, numAV2) + pow(0.5, numAV2+1)*(1.0 - pow(0.5, numSib2)))*(1.0 - pow(0.5, numSib1)) + 
+                    bkg_sharing*(1.0 - pow(0.5, numSib1))*(1.0 - pow(0.5, numSib2));
+    
+    int deg = getRelfromK(std::max(0.0, (k1-bkg)/4.0), maxDeg);
+    if (deg <= 3){
+        // need to account for IBD2 in the grandparent geenration
+    }
+
+
+    // update result map
+    if (index_av1 != -1 && index_av2 != -1){
+        // the inferred deg is between gp and gp for both pedigrees
+        int deg_av2av = resetRelationship(deg, 2, maxDeg);
+        const std::vector<Vertex> &av2use1 = index_av1 == 1 ? con1.av1 : con1.av2;
+        const std::vector<Vertex> &av2use2 = index_av2 == 1 ? con2.av1 : con2.av2;
+        for(Vertex a1 : av2use1){
+            for(Vertex a2 : av2use2){
+                results[make_pair_v(a1, a2)] = deg_av2av;
+            }
+        }
+
+        int deg_av2fs = resetRelationship(deg, 3, maxDeg);
+        for(Vertex a : av2use1){
+            for(Vertex fs : con2.fs){
+                results[make_pair_v(a, fs)] = deg_av2fs;
+            }
+        }
+        for(Vertex a : av2use2){
+            for(Vertex fs : con1.fs){
+                results[make_pair_v(a, fs)] = deg_av2fs;
+            }
+        }
+
+        int deg_fs2fs = resetRelationship(deg, 4, maxDeg);
+        for(Vertex fs1 : con1.fs){
+            for(Vertex fs2 : con2.fs){
+                results[make_pair_v(fs1, fs2)] = deg_fs2fs;
+            }
+        }
+
+    }else if (index_av1 != -1 && index_av2 == -1){
+        // the inferred deg is between pedigree 1's gp to pedigree 2's parents
+        int deg_av2fs = resetRelationship(deg, 2, maxDeg);
+        const std::vector<Vertex> &av2use1 = index_av1 == 1 ? con1.av1 : con1.av2;
+        for(Vertex a : av2use1){
+            for(Vertex fs : con2.fs){
+                results[make_pair_v(a, fs)] = deg_av2fs;
+            }
+        }
+        int deg_fs2fs = resetRelationship(deg, 3, maxDeg);
+        for(Vertex fs1 : con1.fs){
+            for(Vertex fs2 : con2.fs){
+                results[make_pair_v(fs1, fs2)] = deg_fs2fs;
+            }
+        }
+    }else if (index_av1 == -1 && index_av2 != -1){
+         // the inferred deg is between pedigree 1's gp to pedigree 2's parents
+        int deg_av2fs = resetRelationship(deg, 2, maxDeg);
+        const std::vector<Vertex> &av2use1 = index_av2 == 1 ? con2.av1 : con2.av2;
+        for(Vertex a : av2use1){
+            for(Vertex fs : con1.fs){
+                results[make_pair_v(a, fs)] = deg_av2fs;
+            }
+        }
+        int deg_fs2fs = resetRelationship(deg, 3, maxDeg);
+        for(Vertex fs1 : con1.fs){
+            for(Vertex fs2 : con2.fs){
+                results[make_pair_v(fs1, fs2)] = deg_fs2fs;
+            }
+        }
+    }else{
+        // inferred deg is between pedigree 1's parents to pedigree 2's parents
+        int deg_fs2fs = resetRelationship(deg, 2, maxDeg);
+        for(Vertex fs1 : con1.fs){
+            for(Vertex fs2 : con2.fs){
+                results[make_pair_v(fs1, fs2)] = deg_fs2fs;
+            }
+        }
+    }
+}
+
+
+
+
 
 // for debugging
 void printConnInfo(const ConnInfo &con, const Pedigree &pedigree)

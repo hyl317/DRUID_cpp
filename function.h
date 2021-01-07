@@ -39,7 +39,7 @@ inline std::pair<Vertex, Vertex> make_pair_v
 int getRelfromK(double K, int maxDeg);
 
 void build_graph(Pedigree &pedigree, 
-    const std::map<std::pair<std::string, std::string>, Pair*> &allsegs,
+    const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs,
     const std::map<std::string, std::map<int, double>*> &snpmap,
     std::map<std::pair<Vertex, Vertex>, int> &results,
     std::map<Vertex, Vertex> &twins,
@@ -49,12 +49,12 @@ bool is_avunc(const std::string &fs1, const std::string &fs2, const std::string 
         const std::map<std::pair<std::string, std::string>, Pair*> &allsegs,
         const std::map<std::string, std::map<int, double>*> &snpmap);
 
-bool checkAvunc(const std::vector<std::string> &full_sibs, const std::string &avunc, 
-    const std::map<std::pair<std::string, std::string>, Pair*> &allsegs,
+bool checkAvunc(const std::vector<Vertex> &full_sibs, const Vertex avunc, 
+    const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs,
     const std::map<std::string, std::map<int, double>*> &snpmap);
 
 void run_druid(Pedigree &pedigree, 
-    const std::map<std::pair<std::string, std::string>, Pair*> &allsegs,
+    const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs,
     const std::map<std::string, std::map<int, double>*> &snpmap,
     std::map<std::pair<Vertex, Vertex>, int> &results,
     FileOrGZ<FILE *> &logFile,
@@ -84,10 +84,45 @@ void printConnInfo(const ConnInfo &con, const Pedigree &pedigree); // for debugg
 double UnionIbdOverTwoSets(const std::vector<std::string> &set1, const std::vector<std::string> &set2,
     const std::map<std::pair<std::string, std::string>, Pair*> &allsegs); // return the total length of combined IBD
 
-void oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &checked,
-    const std::map<std::pair<std::string, std::string>, Pair*> &allsegs,
+void oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &visited,
+    const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs,
     std::map<std::pair<Vertex, Vertex>, int> &results, 
-    const Pedigree &pedigree, double bkg_sharing, double tot_genome, int max_deg);
+    double bkg_sharing, double tot_genome, int max_deg);
+
+void pedigreeVSpedigree(const ConnInfo &con1, const ConnInfo &con2,
+    std::unordered_set<Vertex> &visited1, std::unordered_set<Vertex> &visited2,
+    const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs,
+    std::map<std::pair<Vertex, Vertex>, int> &results,
+    double bkg_sharing, double tot_genome, int maxDeg);
+
+inline int resetRelationship(int ref, int offset, int maxDeg)
+{
+    int deg = ref == -1 ? -1 : ref + offset;
+    if (deg > maxDeg){deg = -1;}
+    return deg;
+}
+
+bool includeAunts(const std::vector<Vertex> &aunts, const std::vector<Vertex> &sibs,
+    Vertex d, const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs);
+
+
+double minKinshipBetweenTwoSibset(const std::vector<Vertex> &sib1, 
+    const std::vector<Vertex> &sib2,
+    const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs);
+
+int whichAV2Include(const std::vector<Vertex> &av11, const std::vector<Vertex> &av12, 
+    const std::vector<Vertex> &sib1, const std::vector<Vertex> &sib2,
+    const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs);
+
+bool includeAunts(const std::vector<Vertex> &aunts, const std::vector<Vertex> &sibs,
+    double min_ks1s2, const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs);
+
+inline double getTg(int numAV, int numSib){
+    if(numAV == 0){return 1.0 - pow(0.5, numSib);}
+    else{
+        return 1.0 - pow(0.5, numAV) + pow(0.5, numAV+1)*(1.0 - pow(0.5, numSib));
+    }
+}
 
 
 bool isGP(Vertex u, const Pedigree &pedgiree);

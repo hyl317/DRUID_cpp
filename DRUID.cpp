@@ -86,7 +86,7 @@ int main(int argc, char **argv){
     build_graph(pedigree, allsegs_v, snpmap, results, twins, chrLens.sum(), bkg_sharing, maxDeg);
     run_druid(pedigree, allsegs_v, snpmap, results, logFile, chrLens.sum(), bkg_sharing, maxDeg);
 
-    // for testing purpose
+    // for testing AV detection
     // is_avunc("801120", "801121", "801113", allsegs, snpmap);
     // is_avunc("801120", "801121", "801114", allsegs, snpmap);
     // is_avunc("801120", "801121", "801115", allsegs, snpmap);
@@ -103,9 +103,77 @@ int main(int argc, char **argv){
     // is_avunc("801121", "801122", "801118", allsegs, snpmap);
     // end of test
 
+    
+    // testing IBD0011
+    // std::vector<Vertex> set1;
+    // set1.push_back(id2Vertex["ped4_D5_1_g3-b1-i1"]);
+    // set1.push_back(id2Vertex["ped4_D5_1_g3-b2-i1"]);
+    // set1.push_back(id2Vertex["ped4_D5_1_g3-b3-i1"]);
+
+    // std::vector<Vertex> set2;
+    // set2.push_back(id2Vertex["ped4_D5_1_g3-b4-i1"]);
+    // set2.push_back(id2Vertex["ped4_D5_1_g3-b5-i1"]);
+    // set2.push_back(id2Vertex["ped4_D5_1_g3-b6-i1"]);
+    // double tmp = IBD0011(set1, set2, snpmap, allsegs_v);
+    // fprintf(stdout, "ibd0011: %lf\n", tmp);
+
+    // //another test
+    // set1.clear();
+    // set2.clear();
+    // set1.push_back(id2Vertex["ped2_D3_1_g3-b1-i1"]);
+    // set1.push_back(id2Vertex["ped2_D3_1_g3-b2-i1"]);
+    // set1.push_back(id2Vertex["ped2_D3_1_g3-b3-i1"]);
+    // set1.push_back(id2Vertex["ped2_D3_1_g3-b4-i1"]);
+    // set1.push_back(id2Vertex["ped2_D3_1_g3-b5-i1"]);
+
+    // set2.push_back(id2Vertex["ped2_D3_1_g3-b6-i1"]);
+    // set2.push_back(id2Vertex["ped2_D3_1_g3-b7-i1"]);
+    // set2.push_back(id2Vertex["ped2_D3_1_g3-b8-i1"]);
+    // set2.push_back(id2Vertex["ped2_D3_1_g3-b9-i1"]);
+    // set2.push_back(id2Vertex["ped2_D3_1_g3-b10-i1"]);
+    // tmp = IBD0011(set1, set2, snpmap, allsegs_v);
+    // fprintf(stdout, "ibd0011: %lf\n", tmp);
+
+    // // another test, this set should have nearly no IBD0011 region because their ungenotyped parents are first-cousin
+    // set1.clear();
+    // set2.clear();
+    // set1.push_back(id2Vertex["ped2_D5_1_g4-b1-i1"]);
+    // set1.push_back(id2Vertex["ped2_D5_1_g4-b2-i1"]);
+    // set1.push_back(id2Vertex["ped2_D5_1_g4-b3-i1"]);
+    // set1.push_back(id2Vertex["ped2_D5_1_g4-b4-i1"]);
+    // set1.push_back(id2Vertex["ped2_D5_1_g4-b5-i1"]);
+
+    // set2.push_back(id2Vertex["ped2_D5_1_g4-b6-i1"]);
+    // set2.push_back(id2Vertex["ped2_D5_1_g4-b7-i1"]);
+    // set2.push_back(id2Vertex["ped2_D5_1_g4-b8-i1"]);
+    // set2.push_back(id2Vertex["ped2_D5_1_g4-b9-i1"]);
+    // set2.push_back(id2Vertex["ped2_D5_1_g4-b10-i1"]);
+    // tmp = IBD0011(set1, set2, snpmap, allsegs_v);
+    // fprintf(stdout, "ibd0011: %lf\n", tmp);
+
+    // // another test, this set should alaso have nearly no IBD0011 region
+    // set1.clear();
+    // set2.clear();
+    // set1.push_back(id2Vertex["ped2_D4_1_g3-b2-i1"]);
+    // set1.push_back(id2Vertex["ped2_D4_1_g3-b3-i1"]);
+    // set1.push_back(id2Vertex["ped2_D4_1_g3-b4-i1"]);
+    // set1.push_back(id2Vertex["ped2_D4_1_g3-b5-i1"]);
+    // set1.push_back(id2Vertex["ped2_D4_1_g3-b6-i1"]);
+
+    // set2.push_back(id2Vertex["ped2_D4_1_g4-b1-i1"]);
+    // set2.push_back(id2Vertex["ped2_D4_1_g4-b2-i1"]);
+    // set2.push_back(id2Vertex["ped2_D4_1_g4-b3-i1"]);
+    // set2.push_back(id2Vertex["ped2_D4_1_g4-b4-i1"]);
+    // set2.push_back(id2Vertex["ped2_D4_1_g4-b5-i1"]);
+    // tmp = IBD0011(set1, set2, snpmap, allsegs_v);
+    // fprintf(stdout, "ibd0011: %lf\n", tmp);
+    // end of test
+
+
+
     // writing output, finishing up
     logFile.printf("Writitng to output file: %s\n", std::string(prefix + ".DRUID").c_str());
-    logFile.printf("\tNumber of edges: %d\n", boost::num_edges(pedigree));
+    //logFile.printf("\tNumber of edges: %d\n", boost::num_edges(pedigree));
     write_output(results, prefix, pedigree, twins);
     logFile.close();
 

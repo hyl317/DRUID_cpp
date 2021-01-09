@@ -990,7 +990,96 @@ void pedigreeVSpedigree(const ConnInfo &con1, const ConnInfo &con2,
     }
 }
 
+double IBD0011(const std::vector<Vertex> &set1, const std::vector<Vertex> &set2,
+    const std::map<std::string, std::map<int, double>*> &snpmap,
+    const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs)
+{
+    ibdMapType currUnion; // stores IBD0011 region for each of the chromosome
+    int numSib1 = set1.size();
+    int numSib2 = set2.size();
+    for(int i = 0; i < numSib1; i++){
+        Vertex u1 = set1[i];
+        for(int j = i+1; j < numSib1; j++){
+            ibdMapType ibd0Map;
+            Vertex u2 = set1[j];
+            std::pair<Vertex, Vertex> p = make_pair_v(u1, u2);
+            ibdMapType *ibd1 = allsegs.find(p)->second->ibd1_map;
+            ibdMapType *ibd2 = allsegs.find(p)->second->ibd2_map;
+            // first, find IBD0 region between u1 and u2
+            // do this chromosome by chromosome
+            for(auto it = snpmap.begin(); it != snpmap.end(); it++){
+                std::string chrName = it->first;
+                auto ibd0 = new ibdSegments();
+                bool isEmpty_ibd1 = ibd1->find(chrName) == ibd1->end();
+                bool isEmpty_ibd2 = ibd2->find(chrName) == ibd2->end();
+                double chr_s = snpmap.find(chrName)->second->begin()->second; 
+                double chr_e = (--snpmap.find(chrName)->second->end())->second;
+                if (!isEmpty_ibd1 && !isEmpty_ibd2){
+                    ibdSegments ibdUnion;
+                    interval_union(*(ibd1->find(chrName)->second), *(ibd2->find(chrName)->second), ibdUnion);
+                    interval_complement(ibdUnion, *ibd0, chr_s, chr_e);
+                }else if (!isEmpty_ibd1 && isEmpty_ibd2){
+                    interval_complement(*(ibd1->find(chrName)->second), *ibd0, chr_s, chr_e);
+                }else if (isEmpty_ibd1 && !isEmpty_ibd2){
+                    interval_complement(*(ibd2->find(chrName)->second), *ibd0, chr_s, chr_e);
+                }else{
+                    ibd0->push_back(std::make_pair(chr_s, chr_e));
+                }
+                ibd0Map.insert(std::make_pair(chrName, ibd0));
+            }
 
+            for(int m = 0; m < numSib2; m++){
+                Vertex v1 = set2[m];
+                for(int n = 0; n < numSib2 && n != m; n++){
+                    Vertex v2 = set2[n];
+                    // now identify ibd0011 region, also chrom by chrom
+                    ibdMapType *pair1 = allsegs.find(make_pair_v(u1, v1))->second->ibd1_map;
+                    ibdMapType *pair2 = allsegs.find(make_pair_v(u2, v2))->second->ibd1_map;
+                    for(auto it = snpmap.begin(); it != snpmap.end(); it++){
+                        std::string chrName = it->first;
+                        if (pair1->find(chrName) == pair1->end() || 
+                            pair2->find(chrName) == pair2->end() || 
+                            ibd0Map.find(chrName) == ibd0Map.end()){continue;}
+                        else{
+                            ibdSegments ibd11;
+                            interval_intersection(*(pair1->find(chrName)->second), *(pair2->find(chrName)->second), ibd11);
+                            if(currUnion.find(chrName) == currUnion.end()){
+                                currUnion.insert(std::make_pair(chrName, new ibdSegments));
+                            }
+                            ibdSegments ibd0011;
+                            interval_intersection(ibd11, *(ibd0Map.find(chrName)->second), ibd0011);
+                            // add the new ibd0011 region to the big union
+                            ibdSegments *updated_0011Union = new ibdSegments();
+                            interval_union(ibd0011, *(currUnion.find(chrName)->second), *updated_0011Union);
+                            ibdSegments *prev_ptr = currUnion.find(chrName)->second;
+                            currUnion[chrName] = updated_0011Union;
+                            delete prev_ptr; 
+                        }
+
+
+                    }
+
+                }
+            }
+
+        for(auto it = ibd0Map.begin(); it != ibd0Map.end(); it++){delete it->second;}
+
+        }
+    }
+
+
+    double ibd0011_tot = 0.0;
+    for(auto it = currUnion.begin(); it != currUnion.end(); it++){
+        std::vector<double> segLengths;
+        std::for_each(it->second->begin(), it->second->end(), 
+                [&](const std::pair<double, double> &p)
+                {segLengths.push_back(p.second - p.first);});
+        ibd0011_tot += std::accumulate(segLengths.begin(), segLengths.end(), decltype(segLengths)::value_type(0));
+    }
+    // clean up
+    for(auto it = currUnion.begin(); it != currUnion.end(); it++){delete it->second;}
+    return ibd0011_tot;
+}
 
 
 

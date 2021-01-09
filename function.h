@@ -117,6 +117,10 @@ int whichAV2Include(const std::vector<Vertex> &av11, const std::vector<Vertex> &
 bool includeAunts(const std::vector<Vertex> &aunts, const std::vector<Vertex> &sibs,
     double min_ks1s2, const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs);
 
+double IBD0011(const std::vector<Vertex> &set1, const std::vector<Vertex> &set2,
+    const std::map<std::string, std::map<int, double>*> &snpmap,
+    const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs);
+
 inline double getTg(int numAV, int numSib){
     if(numAV == 0){return 1.0 - pow(0.5, numSib);}
     else{

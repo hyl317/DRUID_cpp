@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --mem=50000
+#SBATCH --mem=8000
 #SBATCH --partition=short
 #SBATCH --job-name=DRUID.cpp
 #SBATCH --output=druid.out.%j
@@ -18,10 +18,10 @@ if [ ! -d /fs/cbsubscb09/storage/yilei/simulate/chrom ]; then
 fi
 
 # command to run test on SAMFAS dataset
-prefix="/fs/cbsubscb09/storage/yilei/simulate/SAMAFS"
-/usr/bin/time -v ./DRUID -i $prefix/safs.seg --bim $prefix/safs.bim --Ne $prefix/safs.ibdne-ped2.ne -o safs --max 10 
+#prefix="/fs/cbsubscb09/storage/yilei/simulate/SAMAFS"
+#/usr/bin/time -v ./DRUID -i $prefix/safs.seg --bim $prefix/safs.bim --Ne $prefix/safs.ibdne-ped2.ne -o safs --max 10 
 
 
 # command to run on my simulated dataset using ukb
-#prefix="/fs/cbsubscb09/storage/yilei/simulate/DRUID_cpp"
-#./DRUID -i $prefix/ped.seg --bim $prefix/ped.bim -o test --max 10 
+prefix="/fs/cbsubscb09/storage/yilei/simulate/DRUID_cpp"
+./DRUID -i $prefix/ped.seg --bim $prefix/ped.bim -o test --max 10 

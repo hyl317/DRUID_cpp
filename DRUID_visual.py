@@ -9,10 +9,10 @@ from collections import defaultdict
 # acronym names used by DRUID for some very close relatives
 # see github page for details
 # I will use 0 to denote unrelated pairs
-relationship = {'FS':1, 'PC':1, 'P':1, 'C':1, 'HS':2, 'GP':2, 'GC':2, 'AU':2, 'NN':2, 'UN':-1, 'DC':2, 'MZ':0}
+relationship = {'FS':1, 'PC':1, 'P':1, 'C':1, 'HS':2, 'GP':2, 'GC':2, 'AU':2, 'NN':2, 'UN':-1, 'DC':2, 'MZ':0, 'AV':2}
 N_COLUMNS = 11
 true_label_file = '/fs/cbsubscb09/storage/yilei/simulate/SAMAFS/safs.ped.labels'
-infer_label_file = './test.DRUID'
+infer_label_file = './safs.DRUID'
 removed_inds = ['802213', 'A09222', 'A19021', 'A38060', 'A45074', 'A28102',
 '840914', 'A09222', 'A27186', 'A28171', '808134']
 
@@ -31,6 +31,8 @@ def read_true_labels(file):
             else:
                 degree = int(degree)
             id1, id2 = min(id1, id2), max(id1, id2)
+            if degree > 10:
+                degree = -1
             rels[id1][id2] = degree
             line = f.readline()
     # take care of twins
@@ -50,7 +52,7 @@ def read_druid_labels(file):
         while line:
             id1, id2, degree = line.strip().split('\t')
             id1, id2 = min(id1, id2), max(id1, id2)
-            rels[id1][id2] = relationship[degree] if str.isalpha(degree) else min(int(degree), 10)
+            rels[id1][id2] = relationship[degree] if str.isalpha(degree) else int(degree)
             line = f.readline()
     return rels
 
@@ -82,7 +84,7 @@ def main():
     plt.title(f'Inference for SAMAFS using DRUID', fontsize=20, fontweight='bold')
     plt.xlabel('Inferred Degree of Relatedness', fontsize=15, fontweight='bold')
     plt.ylabel('Reference Degree of Relatedness', fontsize=15, fontweight='bold')
-    plt.savefig(f'safs.kin.druid.png', dpi=300)
+    plt.savefig(f'safs.druid.png', dpi=300)
 
 if __name__ == '__main__':
     main()

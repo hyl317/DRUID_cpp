@@ -366,8 +366,8 @@ void interval_union(const ibdSegments &set1, const ibdSegments &set2, ibdSegment
   ibdSegments tmp;
   auto it2 = set2_sorted.begin();
   for(auto it1 = set1_sorted.begin(); it1 != set1_sorted.end(); it1++){
-    double start1 = (*it1).first;
-    double end1 = (*it1).second;
+    double start1 = it1->first;
+    double end1 = it1->second;
     while (it2 != set2_sorted.end() && (*it2).second < start1){
       tmp.push_back(std::make_pair((*it2).first, (*it2).second));
       it2++;
@@ -375,22 +375,29 @@ void interval_union(const ibdSegments &set1, const ibdSegments &set2, ibdSegment
     if (it2 == set2_sorted.end()){
       // push back set1's remaining segments
       for(; it1 != set1_sorted.end(); it1++){
-        tmp.push_back(std::make_pair((*it1).first, (*it1).second));
+        tmp.push_back(std::make_pair(it1->first, it1->second));
       }
       break;
     }
 
-    double start2 = (*it2).first;
-    double end2 = (*it2).second;
+    double start2 = it2->first;
+    double end2 = it2->second;
     if (start2 <= end1){
-      while ( it2 != set2_sorted.end() && (*it2).first <= end1){
-        end2 = (*it2).second;
+      while ( it2 != set2_sorted.end() && it2->first <= end1){
+        end2 = it2->second;
         it2++;
       }
       tmp.push_back(std::make_pair(std::min(start1, start2), std::max(end1, end2)));
     }else{
       // no segments from set2 overlap this segment in set1
       tmp.push_back(std::make_pair(start1, end1));
+    }
+  }
+
+  if (it2 != set2_sorted.end()){
+    // push back set2's remaining segments if any
+    for(; it2 != set2_sorted.end(); it2++){
+      tmp.push_back(std::make_pair(it2->first, it2->second));
     }
   }
 

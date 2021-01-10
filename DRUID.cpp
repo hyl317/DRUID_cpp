@@ -90,7 +90,7 @@ int main(int argc, char **argv){
     std::map<std::pair<Vertex, Vertex>, int> results;
     std::map<Vertex, Vertex> twins;
     build_graph(pedigree, allsegs_v, snpmap, results, twins, chrLens.sum(), bkg_sharing, maxDeg);
-    run_druid(pedigree, allsegs_v, snpmap, results, logFile, chrLens.sum(), bkg_sharing, maxDeg);
+    //run_druid(pedigree, allsegs_v, snpmap, results, logFile, chrLens.sum(), bkg_sharing, maxDeg);
 
     // for testing AV detection
     // is_avunc("801120", "801121", "801113", allsegs, snpmap);
@@ -125,14 +125,23 @@ int main(int argc, char **argv){
     set2.push_back(id2Vertex["ped2_D3_1_g3-b10-i1"]);
 
     double tmp = UnionIbdOverTwoSets(set1, set2, allsegs_v);
-    double t1 = getTg(0, 5);
-    double t2 = getTg(0, 5);
-    double k1 = (tmp/chrLens.sum())/(t1*t2);
-    fprintf(stdout, "k1 is %lf\n", k1);
-    double k2 = (IBD0011(set1, set2, snpmap, allsegs_v)/chrLens.sum())/(t1*t2);
-    fprintf(stdout, "k2 is %lf\n", k2);
-    int deg = getRelfromK(k1/4.0, maxDeg);
-    fprintf(stdout, "Unioned IBD length for ped2_D3: %lf, estimated deg is %d\n", tmp, deg);
+    fprintf(stdout, "combined ibd1 length: %lf\n", tmp);
+    // double t1 = getTg(0, 5);
+    // double t2 = getTg(0, 5);
+    // double k1 = (tmp/chrLens.sum())/(t1*t2);
+    // fprintf(stdout, "k1 is %lf\n", k1);
+    // double k2 = (IBD0011(set1, set2, snpmap, allsegs_v)/chrLens.sum())/(t1*t2);
+    // fprintf(stdout, "k2 is %lf\n", k2);
+    // int deg = getRelfromK(k1/4.0, maxDeg);
+    // fprintf(stdout, "Unioned IBD length for ped2_D3: %lf, estimated deg is %d\n", tmp, deg);
+
+
+    //for (int i = 0; i < 100; i++){
+    //    std::random_shuffle(set1.begin(), set1.end());
+    //    std::random_shuffle(set2.begin(), set2.end());
+    //    double tmp = UnionIbdOverTwoSets(set1, set2, allsegs_v);
+    //    fprintf(stdout, "Unioned IBD length: %lf\n", tmp);
+    //}
     // end of test
     
     // testing IBD0011

@@ -81,8 +81,8 @@ void combineIBD(const ConnInfo &con1, const ConnInfo &con2, std::unordered_set<V
 bool isSingleton(const ConnInfo &con);
 void printConnInfo(const ConnInfo &con, const Pedigree &pedigree); // for debugging
 
-double UnionIbdOverTwoSets(const std::vector<std::string> &set1, const std::vector<std::string> &set2,
-    const std::map<std::pair<std::string, std::string>, Pair*> &allsegs); // return the total length of combined IBD
+double UnionIbdOverTwoSets(const std::vector<Vertex> &set1, const std::vector<Vertex> &set2,
+    const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs); // return the total length of combined IBD
 
 void oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &visited,
     const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs,
@@ -92,6 +92,7 @@ void oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &vi
 void pedigreeVSpedigree(const ConnInfo &con1, const ConnInfo &con2,
     std::unordered_set<Vertex> &visited1, std::unordered_set<Vertex> &visited2,
     const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs,
+    const std::map<std::string, std::map<int, double>*> &snpmap,
     std::map<std::pair<Vertex, Vertex>, int> &results,
     double bkg_sharing, double tot_genome, int maxDeg);
 

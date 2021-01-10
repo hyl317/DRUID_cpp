@@ -9,7 +9,7 @@ void print_help(){
 }
 
 void parse_command_line(int argc, char **argv, std::string &ibdFile, std::string &bimFile, 
-    std::string &NeFile, std::string &prefix, int &maxDeg, double &minIBD){
+    std::string &NeFile, std::string &exSamples, std::string &prefix, int &maxDeg, double &minIBD){
     int i = 1;
     for(; i < argc; i++){
         char *token = argv[i];
@@ -33,6 +33,9 @@ void parse_command_line(int argc, char **argv, std::string &ibdFile, std::string
         }else if (strcmp(token, "--max") == 0){
             maxDeg = std::stoi(argv[i+1]);
             i++; 
+        }else if (strcmp(token, "-e") == 0){
+            exSamples = argv[i+1];
+            i++;
         }else{
             fprintf(stderr, "unrecognized token %s\n", token);
             print_help();
@@ -129,6 +132,83 @@ void readIBDFile(const std::string &ibdFile,
   }
 
 }
+
+
+void readIBDFile_ex(const std::string &ibdFile, 
+  std::map<std::pair<std::string, std::string>, Pair*> &allsegs, 
+  std::set<std::string> &inds, const std::string &exSamples, FileOrGZ<FILE *> &logFile){
+  
+  // first read in samples to exclude
+  FileOrGZ<FILE *> in_ex;
+  bool ret_ex = in_ex.open(exSamples.c_str(), "r");
+  if(!ret_ex){
+    fprintf(stderr, "cannot open %s\n", exSamples.c_str());
+    exit(1);
+  }
+
+  std::unordered_set<std::string> ex;
+  while(in_ex.getline() >= 0){
+    char id[50];
+    sscanf(in_ex.buf, "%s", id);
+    ex.insert(id);
+  }
+  logFile.printf("\texcluding %d samples from analysis\n", ex.size());
+  
+  FileOrGZ<gzFile> in;
+  bool ret = in.open(ibdFile.c_str(), "r");
+  if (!ret){
+    fprintf(stderr, "cannot open %s\n", ibdFile.c_str());
+    exit(1);
+  }
+
+  while(in.getline() >= 0){
+    char id1_[50];
+    char id2_[50];
+    char chr_[50];
+    char ibd12_[5];
+    double start, end;
+    sscanf(in.buf, "%s %s %s %s %lf %lf", id1_, id2_, chr_, ibd12_, &start, &end);
+
+    std::string id1 = id1_;
+    std::string id2 = id2_;
+    if (ex.find(id1) != ex.end() || ex.find(id2) != ex.end()){continue;}
+    std::string chr = chr_;
+    std::string ibd12 = ibd12_;
+    double segLen = end - start;
+    std::pair<std::string, std::string> pair = make_pair_str(id1, id2);
+    inds.insert(id1);
+    inds.insert(id2);
+    if (allsegs.find(pair) == allsegs.end()){
+      allsegs.insert(std::make_pair(pair, new Pair()));
+    }
+
+    Pair *p = allsegs[pair];
+    if (ibd12 == "IBD1"){
+      p->ibd1_tot += segLen;
+      if (p->ibd1_map->find(chr) == p->ibd1_map->end()){
+        (*(p->ibd1_map)).insert(std::make_pair(chr, new std::vector<std::pair<double, double>>()));
+      }
+      (*(p->ibd1_map))[chr]->push_back(std::make_pair(start, end));
+    }
+    else{
+      p->ibd2_tot += segLen;
+      if (p->ibd2_map->find(chr) == p->ibd2_map->end()){
+        (*(p->ibd2_map)).insert(std::make_pair(chr, new std::vector<std::pair<double, double>>()));
+      }
+      (*(p->ibd2_map))[chr]->push_back(std::make_pair(start, end));
+    }
+  }
+
+}
+
+
+
+
+
+
+
+
+
 
 double calc_bkg_sharing(const std::string &NeFile, const Eigen::VectorXd &chrLens, const double &minIBD){
   // read the Ne File first; Don't know G yet, so need to store in a vector first

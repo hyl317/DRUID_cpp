@@ -9,9 +9,10 @@ int main(int argc, char **argv){
 
     std::string ibdFile, bimFile, NeFile;
     std::string prefix;
+    std::string exSamples;
     int maxDeg = 11;
-    double minIBD = 0.0;
-    parse_command_line(argc, argv, ibdFile, bimFile, NeFile, prefix, maxDeg, minIBD);
+    double minIBD = 2.0;
+    parse_command_line(argc, argv, ibdFile, bimFile, NeFile, exSamples, prefix, maxDeg, minIBD);
 
     std::string logFileName = prefix + ".log";
     FileOrGZ<FILE *> logFile;
@@ -30,9 +31,14 @@ int main(int argc, char **argv){
     logFile.printf("Reading IBD segment file: %s\n", ibdFile.c_str());
     auto allsegs = std::map<std::pair<std::string, std::string>, Pair*>();
     std::set<std::string> inds;
-    readIBDFile(ibdFile, allsegs, inds);
+    if (exSamples.length() == 0){
+        readIBDFile(ibdFile, allsegs, inds);
+    }else{
+        // exclude some samples
+        readIBDFile_ex(ibdFile, allsegs, inds, exSamples, logFile);
+    }
     int numSample = inds.size();
-    logFile.printf("\tFinished reading segments for %d samples\n", numSample);
+    logFile.printf("\tFinished reading segments from %d samples for analysis\n", numSample);
 
     double bkg_sharing = 0.0;
     if (NeFile.length() > 0){
@@ -103,6 +109,31 @@ int main(int argc, char **argv){
     // is_avunc("801121", "801122", "801118", allsegs, snpmap);
     // end of test
 
+    // test UnionIBDover2sets
+    std::vector<Vertex> set1;
+    set1.push_back(id2Vertex["ped2_D3_1_g3-b1-i1"]);
+    set1.push_back(id2Vertex["ped2_D3_1_g3-b2-i1"]);
+    set1.push_back(id2Vertex["ped2_D3_1_g3-b3-i1"]);
+    set1.push_back(id2Vertex["ped2_D3_1_g3-b4-i1"]);
+    set1.push_back(id2Vertex["ped2_D3_1_g3-b5-i1"]);
+
+    std::vector<Vertex> set2;
+    set2.push_back(id2Vertex["ped2_D3_1_g3-b6-i1"]);
+    set2.push_back(id2Vertex["ped2_D3_1_g3-b7-i1"]);
+    set2.push_back(id2Vertex["ped2_D3_1_g3-b8-i1"]);
+    set2.push_back(id2Vertex["ped2_D3_1_g3-b9-i1"]);
+    set2.push_back(id2Vertex["ped2_D3_1_g3-b10-i1"]);
+
+    double tmp = UnionIbdOverTwoSets(set1, set2, allsegs_v);
+    double t1 = getTg(0, 5);
+    double t2 = getTg(0, 5);
+    double k1 = (tmp/chrLens.sum())/(t1*t2);
+    fprintf(stdout, "k1 is %lf\n", k1);
+    double k2 = (IBD0011(set1, set2, snpmap, allsegs_v)/chrLens.sum())/(t1*t2);
+    fprintf(stdout, "k2 is %lf\n", k2);
+    int deg = getRelfromK(k1/4.0, maxDeg);
+    fprintf(stdout, "Unioned IBD length for ped2_D3: %lf, estimated deg is %d\n", tmp, deg);
+    // end of test
     
     // testing IBD0011
     // std::vector<Vertex> set1;

@@ -6,6 +6,7 @@
 #include <map>
 #include <vector>
 #include <set>
+#include <unordered_set>
 #include "Eigen/Dense"
 #include "zlib.h"
 
@@ -66,7 +67,7 @@ struct Pair{
 void print_help();
 
 void parse_command_line(int argc, char **argv, std::string &ibdFile, std::string &bimFile, std::string &NeFile,
-        std::string &prefix, int &maxDeg, double &minIBD);
+        std::string &exSamples, std::string &prefix, int &maxDeg, double &minIBD);
 
 Eigen::VectorXd readBimFile(const std::string &bimFile, 
   std::map<std::string, std::map<int, double>*> &snpmap, FileOrGZ<FILE *> &logFile);
@@ -74,6 +75,11 @@ Eigen::VectorXd readBimFile(const std::string &bimFile,
 void readIBDFile(const std::string &ibdFile, 
   std::map<std::pair<std::string, std::string>, Pair*> &allsegs, 
   std::set<std::string> &inds);
+
+void readIBDFile_ex(const std::string &ibdFile, 
+  std::map<std::pair<std::string, std::string>, Pair*> &allsegs, 
+  std::set<std::string> &inds, const std::string &exSamples,
+  FileOrGZ<FILE *> &logFile);
 
 double calc_bkg_sharing(const std::string &NeFile, const Eigen::VectorXd &chrLens, const double &minIBD);
 void cumsum_eigen_colvector(const Eigen::VectorXd &source, Eigen::VectorXd &dest);

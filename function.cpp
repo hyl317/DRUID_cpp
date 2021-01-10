@@ -388,12 +388,12 @@ void run_druid(Pedigree &pedigree,
     }
 
     // test
-    for(int i = 0; i < num_components; i++){
-        ConnInfo con;
-        Vertex u = (*comp_map[i])[0];
-        grabCloseRelatives(u, con, pedigree);
-        printConnInfo(con, pedigree);
-    }
+    // for(int i = 0; i < num_components; i++){
+    //     ConnInfo con;
+    //     Vertex u = (*comp_map[i])[0];
+    //     grabCloseRelatives(u, con, pedigree);
+    //     printConnInfo(con, pedigree);
+    // }
     // return;
     //end of test
 
@@ -424,10 +424,10 @@ void run_druid(Pedigree &pedigree,
                         visited2.insert(v);
                         oneVSpedigree(v, con1, visited1, allsegs, results, bkg_sharing, tot_genome, maxDeg);
                     }else{
-                        //fprintf(stdout, "pedigree vs. pedigree\n");
-                        //printConnInfo(con1, pedigree);
-                        //printConnInfo(con2, pedigree);
-                        pedigreeVSpedigree(con1, con2, visited1, visited2, allsegs, results, bkg_sharing, tot_genome, maxDeg);
+                        fprintf(stdout, "pedigree vs. pedigree\n");
+                        printConnInfo(con1, pedigree);
+                        printConnInfo(con2, pedigree);
+                        pedigreeVSpedigree(con1, con2, visited1, visited2, allsegs, snpmap, results, bkg_sharing, tot_genome, maxDeg);
                     }
 
                 }
@@ -874,6 +874,7 @@ int whichAV2Include(const std::vector<Vertex> &av11, const std::vector<Vertex> &
 void pedigreeVSpedigree(const ConnInfo &con1, const ConnInfo &con2,
     std::unordered_set<Vertex> &visited1, std::unordered_set<Vertex> &visited2,
     const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs,
+    const std::map<std::string, std::map<int, double>*> &snpmap,
     std::map<std::pair<Vertex, Vertex>, int> &results,
     double bkg_sharing, double tot_genome, int maxDeg)
 {   
@@ -911,10 +912,26 @@ void pedigreeVSpedigree(const ConnInfo &con1, const ConnInfo &con2,
                     2.0*bkg_sharing*(1.0 - pow(0.5, numAV1) + pow(0.5, numAV1+1)*(1.0 - pow(0.5, numSib1)))*(1.0 - pow(0.5, numSib2)) + 
                     2.0*bkg_sharing*(1.0 - pow(0.5, numAV2) + pow(0.5, numAV2+1)*(1.0 - pow(0.5, numSib2)))*(1.0 - pow(0.5, numSib1)) + 
                     bkg_sharing*(1.0 - pow(0.5, numSib1))*(1.0 - pow(0.5, numSib2));
-    
-    int deg = getRelfromK(std::max(0.0, (k1-bkg)/4.0), maxDeg);
-    if (deg <= 3){
-        // need to account for IBD2 in the grandparent geenration
+    fprintf(stdout, "estimated IBD1 rate: %lf\n", k1);    
+    int deg = getRelfromK(std::max(0.0, (k1 - bkg/tot_genome)/4.0), maxDeg);
+    if (deg >= 0 && deg <= 3){
+        // need to account for IBD2 in the grandparent/parent generation
+        double t1, t2, k2;
+        if (index_av1 != -1 && index_av2 != -1){
+            const std::vector<Vertex> &av2use1 = index_av1 == 1 ? con1.av1 : con1.av2;
+            const std::vector<Vertex> &av2use2 = index_av2 == 1 ? con2.av1 : con2.av2;
+            t1 = 1.0 - pow(0.5, av2use1.size());
+            t2 = 1.0 - pow(0.5, av2use2.size());
+            k2 = (IBD0011(av2use1, av2use2, snpmap, allsegs)/tot_genome)/(t1*t2);
+            
+        }else{
+            t1 = 1.0 - pow(0.5, con1.fs.size());
+            t2 = 1.0 - pow(0.5, con2.fs.size());
+            k2 = (IBD0011(con1.fs, con2.fs, snpmap, allsegs)/tot_genome)/(t1*t2);
+        }
+        fprintf(stdout, "deg is %d, estimated IBD2 rate: %lf\n", deg, k2);
+        k1 -= k2;
+        deg = getRelfromK(std::max(0.0, k1/4.0 + k2/2.0 - bkg/4.0), maxDeg);
     }
 
 
@@ -1003,7 +1020,7 @@ double IBD0011(const std::vector<Vertex> &set1, const std::vector<Vertex> &set2,
             ibdMapType ibd0Map;
             Vertex u2 = set1[j];
             std::pair<Vertex, Vertex> p = make_pair_v(u1, u2);
-            ibdMapType *ibd1 = allsegs.find(p)->second->ibd1_map;
+            ibdMapType *ibd1 = allsegs.find(p)->second->ibd1_map; // since p is a pair of full-sibs, they for sure will have segments, so no need to check allsegs.find(p) != allsegs.end()
             ibdMapType *ibd2 = allsegs.find(p)->second->ibd2_map;
             // first, find IBD0 region between u1 and u2
             // do this chromosome by chromosome
@@ -1033,8 +1050,11 @@ double IBD0011(const std::vector<Vertex> &set1, const std::vector<Vertex> &set2,
                 for(int n = 0; n < numSib2 && n != m; n++){
                     Vertex v2 = set2[n];
                     // now identify ibd0011 region, also chrom by chrom
-                    ibdMapType *pair1 = allsegs.find(make_pair_v(u1, v1))->second->ibd1_map;
-                    ibdMapType *pair2 = allsegs.find(make_pair_v(u2, v2))->second->ibd1_map;
+                    auto it1 = allsegs.find(make_pair_v(u1, v1));
+                    auto it2 = allsegs.find(make_pair_v(u2, v2));
+                    if (it1 == allsegs.end() || it2 == allsegs.end()){continue;}
+                    ibdMapType *pair1 = it1->second->ibd1_map;
+                    ibdMapType *pair2 = it2->second->ibd1_map;
                     for(auto it = snpmap.begin(); it != snpmap.end(); it++){
                         std::string chrName = it->first;
                         if (pair1->find(chrName) == pair1->end() || 

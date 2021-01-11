@@ -424,9 +424,9 @@ void run_druid(Pedigree &pedigree,
                         visited2.insert(v);
                         oneVSpedigree(v, con1, visited1, allsegs, results, bkg_sharing, tot_genome, maxDeg);
                     }else{
-                        fprintf(stdout, "pedigree vs. pedigree\n");
-                        printConnInfo(con1, pedigree);
-                        printConnInfo(con2, pedigree);
+                        //fprintf(stdout, "pedigree vs. pedigree\n");
+                        //printConnInfo(con1, pedigree);
+                        //printConnInfo(con2, pedigree);
                         pedigreeVSpedigree(con1, con2, visited1, visited2, allsegs, snpmap, results, bkg_sharing, tot_genome, maxDeg);
                     }
 
@@ -575,12 +575,12 @@ double UnionIbdOverTwoSets(const std::vector<Vertex> &set1, const std::vector<Ve
                         currUnion.insert(std::make_pair(chrName, new ibdSegments()));
                     }
                     ibdSegments *dest = new ibdSegments();
-                    fprintf(stdout, "union the following two intervals in chr%s\n", chrName.c_str());
-                    std::for_each(it->second->begin(), it->second->end(), [&](const std::pair<double, double> interval){fprintf(stdout, "[%lf, %lf]\n", interval.first, interval.second);});
-                    std::for_each(currUnion.find(chrName)->second->begin(), currUnion.find(chrName)->second->end(), [&](const std::pair<double, double> interval){fprintf(stdout, "[%lf, %lf]\n", interval.first, interval.second);});
+                    //fprintf(stdout, "union the following two intervals in chr%s\n", chrName.c_str());
+                    //std::for_each(it->second->begin(), it->second->end(), [&](const std::pair<double, double> interval){fprintf(stdout, "[%lf, %lf]\n", interval.first, interval.second);});
+                    //std::for_each(currUnion.find(chrName)->second->begin(), currUnion.find(chrName)->second->end(), [&](const std::pair<double, double> interval){fprintf(stdout, "[%lf, %lf]\n", interval.first, interval.second);});
                     interval_union(*(it->second), *(currUnion.find(chrName)->second), *dest);
-                    fprintf(stdout, "after combining: \n");
-                    std::for_each(dest->begin(), dest->end(), [&](const std::pair<double, double> interval){fprintf(stdout, "[%lf, %lf]\n", interval.first, interval.second);});
+                    //fprintf(stdout, "after combining: \n");
+                    //std::for_each(dest->begin(), dest->end(), [&](const std::pair<double, double> interval){fprintf(stdout, "[%lf, %lf]\n", interval.first, interval.second);});
                     ibdSegments *prev_ptr = currUnion.find(chrName)->second;
                     currUnion[chrName] = dest;
                     delete prev_ptr;

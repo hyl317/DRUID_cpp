@@ -368,8 +368,8 @@ void interval_union(const ibdSegments &set1, const ibdSegments &set2, ibdSegment
   for(auto it1 = set1_sorted.begin(); it1 != set1_sorted.end(); it1++){
     double start1 = it1->first;
     double end1 = it1->second;
-    while (it2 != set2_sorted.end() && (*it2).second < start1){
-      tmp.push_back(std::make_pair((*it2).first, (*it2).second));
+    while (it2 != set2_sorted.end() && it2->second < start1){
+      tmp.push_back(std::make_pair(it2->first, it2->second));
       it2++;
     }
     if (it2 == set2_sorted.end()){
@@ -413,7 +413,7 @@ void interval_union(const ibdSegments &set1, const ibdSegments &set2, ibdSegment
       set3.push_back(std::make_pair(prev_start, prev_end));
       prev_start = seg.first;
       prev_end = seg.second;
-    }else if (seg.first == prev_end){
+    }else{
       prev_end = seg.second;
     }
   }

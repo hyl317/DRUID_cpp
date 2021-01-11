@@ -3,6 +3,26 @@
 #include "function.h"
 
 int main(int argc, char **argv){
+
+    // test interval union
+    // ibdSegments set1;
+    // set1.push_back(std::make_pair(0.079263, 17.0939));
+    // set1.push_back(std::make_pair(36.9644, 53.8065));
+    // set1.push_back(std::make_pair(54.3264, 80.3289));
+    // set1.push_back(std::make_pair(83.5778, 197.2790));
+
+    // ibdSegments set2;
+    // set2.push_back(std::make_pair(36.9644, 53.8065));
+    // set2.push_back(std::make_pair(54.3264, 83.6337));
+    // set2.push_back(std::make_pair(194.4780, 203.9290));
+
+    // ibdSegments set3;
+    // interval_union(set1, set2, set3);
+    // std::for_each(set3.begin(), set3.end(), [&](const std::pair<double, double> interval){fprintf(stdout, "[%lf, %lf]\n", interval.first, interval.second);});
+    // return 0;
+
+    //end of test
+
     if (argc <= 1){
         print_help();
     }
@@ -90,7 +110,7 @@ int main(int argc, char **argv){
     std::map<std::pair<Vertex, Vertex>, int> results;
     std::map<Vertex, Vertex> twins;
     build_graph(pedigree, allsegs_v, snpmap, results, twins, chrLens.sum(), bkg_sharing, maxDeg);
-    //run_druid(pedigree, allsegs_v, snpmap, results, logFile, chrLens.sum(), bkg_sharing, maxDeg);
+    run_druid(pedigree, allsegs_v, snpmap, results, logFile, chrLens.sum(), bkg_sharing, maxDeg);
 
     // for testing AV detection
     // is_avunc("801120", "801121", "801113", allsegs, snpmap);
@@ -110,22 +130,22 @@ int main(int argc, char **argv){
     // end of test
 
     // test UnionIBDover2sets
-    std::vector<Vertex> set1;
-    set1.push_back(id2Vertex["ped2_D3_1_g3-b1-i1"]);
-    set1.push_back(id2Vertex["ped2_D3_1_g3-b2-i1"]);
-    set1.push_back(id2Vertex["ped2_D3_1_g3-b3-i1"]);
-    set1.push_back(id2Vertex["ped2_D3_1_g3-b4-i1"]);
-    set1.push_back(id2Vertex["ped2_D3_1_g3-b5-i1"]);
+    // std::vector<Vertex> set1;
+    // set1.push_back(id2Vertex["ped2_D3_1_g3-b1-i1"]);
+    // set1.push_back(id2Vertex["ped2_D3_1_g3-b2-i1"]);
+    // set1.push_back(id2Vertex["ped2_D3_1_g3-b3-i1"]);
+    // set1.push_back(id2Vertex["ped2_D3_1_g3-b4-i1"]);
+    // set1.push_back(id2Vertex["ped2_D3_1_g3-b5-i1"]);
 
-    std::vector<Vertex> set2;
-    set2.push_back(id2Vertex["ped2_D3_1_g3-b6-i1"]);
-    set2.push_back(id2Vertex["ped2_D3_1_g3-b7-i1"]);
-    set2.push_back(id2Vertex["ped2_D3_1_g3-b8-i1"]);
-    set2.push_back(id2Vertex["ped2_D3_1_g3-b9-i1"]);
-    set2.push_back(id2Vertex["ped2_D3_1_g3-b10-i1"]);
+    // std::vector<Vertex> set2;
+    // set2.push_back(id2Vertex["ped2_D3_1_g3-b6-i1"]);
+    // set2.push_back(id2Vertex["ped2_D3_1_g3-b7-i1"]);
+    // set2.push_back(id2Vertex["ped2_D3_1_g3-b8-i1"]);
+    // set2.push_back(id2Vertex["ped2_D3_1_g3-b9-i1"]);
+    // set2.push_back(id2Vertex["ped2_D3_1_g3-b10-i1"]);
 
-    double tmp = UnionIbdOverTwoSets(set1, set2, allsegs_v);
-    fprintf(stdout, "combined ibd1 length: %lf\n", tmp);
+    // double tmp = UnionIbdOverTwoSets(set1, set2, allsegs_v);
+    // fprintf(stdout, "combined ibd1 length: %lf\n", tmp);
     // double t1 = getTg(0, 5);
     // double t2 = getTg(0, 5);
     // double k1 = (tmp/chrLens.sum())/(t1*t2);
@@ -136,12 +156,12 @@ int main(int argc, char **argv){
     // fprintf(stdout, "Unioned IBD length for ped2_D3: %lf, estimated deg is %d\n", tmp, deg);
 
 
-    //for (int i = 0; i < 100; i++){
+    // for (int i = 0; i < 100; i++){
     //    std::random_shuffle(set1.begin(), set1.end());
     //    std::random_shuffle(set2.begin(), set2.end());
     //    double tmp = UnionIbdOverTwoSets(set1, set2, allsegs_v);
     //    fprintf(stdout, "Unioned IBD length: %lf\n", tmp);
-    //}
+    // }
     // end of test
     
     // testing IBD0011

@@ -608,6 +608,33 @@ double UnionIbdOverTwoSets(const std::vector<Vertex> &set1, const std::vector<Ve
     return tot_length;
 }
 
+double averageKinship(Vertex u, const std::vector<Vertex> &set, 
+    const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs)
+{   
+    assert(!set.empty());
+    double average = 0.0;
+    for(Vertex s : set){
+        auto it = allsegs.find(make_pair_v(u, s));
+        if (it != allsegs.end()){average += it->second->kin;}
+    }
+    return average/((double) set.size());
+}
+
+double averageKinshipBetweenTwoSets(const std::vector<Vertex> &set1, const std::vector<Vertex> &set2,
+    const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs)
+{
+    assert(!set1.empty());
+    assert(!set2.empty());
+    double average = 0.0;
+    for(Vertex s1 : set1){
+        for(Vertex s2 : set2){
+            auto it = allsegs.find(make_pair_v(s1, s2));
+            if (it != allsegs.end()){average += it->second->kin;}
+        }
+    }
+    return average/((double) set1.size()*set2.size());
+}
+
 void inferFStoSingleDistantRelative(Vertex d, const std::vector<Vertex> &fs,
     std::unordered_set<Vertex> &visited,
     const std::map<std::pair<Vertex, Vertex>, Pair*> allsegs, 
@@ -653,6 +680,7 @@ void oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &vi
                 }
                 visited.insert(con.p[0]);
             }else{
+                results[make_pair_v(u, con.p[0])] = -1;
                 inferFStoSingleDistantRelative(u, con.fs, visited, allsegs, results, bkg_sharing, tot_genome, maxDeg);
             }
         }else if(con.p.size() ==2){
@@ -671,7 +699,10 @@ void oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &vi
                     visited.insert(v);
                 }
                 visited.insert(con.p[index]);
+                int not_chosen = index == 0 ? 1 : 0;
+                results[make_pair_v(u, con.p[not_chosen])]  = -1;
             }else{
+                // no strong evidence to choose among the two parents, then just use sibs
                 inferFStoSingleDistantRelative(u, con.fs, visited, allsegs, results, bkg_sharing, tot_genome, maxDeg);
             }
         }
@@ -681,22 +712,8 @@ void oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &vi
         int index_av = -1;
         if (includeAunts1 && includeAunts2){
             // use the set of aunts with higher average kinship to d
-            double average1 = 0.0;
-            for(Vertex a : con.av1){
-                auto it = allsegs.find(make_pair_v(a, u));
-                if (it != allsegs.end()){average1 += it->second->kin;}
-                // if the pair doesn't have an entry in allsegs, which means they don't share any ibd segments,
-                // then their kinship is zero, so no need to do anything here
-            }
-            average1 = average1/((double) con.av1.size());
-
-            double average2 = 0.0;
-            for(Vertex a : con.av2){
-                auto it = allsegs.find(make_pair_v(a, u));
-                if (it != allsegs.end()){average1 += it->second->kin;}
-            }
-            average2 = average2/((double) con.av2.size());
-
+            double average1 = averageKinship(u, con.av1, allsegs);
+            double average2 = averageKinship(u, con.av2, allsegs);
             index_av = average1 >= average2 ? 1 : 2;
         }else if(!includeAunts1 && includeAunts2){index_av = 2;}
         else if(includeAunts1 && !includeAunts2){index_av = 1;}
@@ -705,6 +722,11 @@ void oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &vi
             // check if we can use grandparents
             const std::vector<Vertex> &av2use = index_av == 1 ? con.av1 : con.av2; 
             const std::vector<Vertex> &gp2check = index_av == 1 ? con.gp1 : con.gp2;
+            const std::vector<Vertex> &avNOTuse = index_av == 1 ? con.av2 : con.av1;
+            const std::vector<Vertex> &gpNOTcheck = index_av == 1 ? con.gp2 : con.gp1;
+            for(Vertex v : avNOTuse){results[make_pair_v(u, v)] = -1;}
+            for(Vertex v : gpNOTcheck){results[make_pair_v(u, v)] = -1;}
+
             int index_gp = -1;
             if (!gp2check.empty()){
                 double max_kad = 0.0;
@@ -741,6 +763,11 @@ void oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &vi
                     visited.insert(fs);
                 }
                 visited.insert(gp2check[index_gp]);
+
+                if(gp2check.size() ==2){
+                    int gp_not_chosen = index_gp == 0 ? 1 : 0;
+                    results[make_pair_v(u, gp_not_chosen)] = -1;
+                }
             }else{
                 std::vector<Vertex> set1;
                 set1.push_back(u);
@@ -765,6 +792,13 @@ void oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &vi
                     results[make_pair_v(fs, u)] = deg_fs;
                     visited.insert(fs);
                 }
+
+                // set the un-used grand-parent to be unrelated to u
+                if (gp2check.size() == 1){results[make_pair_v(u, gp2check[0])] = -1;}
+                // don't do this when gp2check.size() == 2 becuase,
+                // when size=2 and no gp is chosen, then probably there is some error in IBD detection
+                // can't say for sure
+
             }
         }else{
             // if no aunts/uncle sets satisfy the criterion, we can only use full-sibs
@@ -821,6 +855,20 @@ double minKinshipBetweenTwoSibset(const std::vector<Vertex> &sib1,
     return min_ks1s2;
 }
 
+double maxKinshipBetweenTwoSibset(const std::vector<Vertex> &sib1,
+    const std::vector<Vertex> &sib2, const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs)
+{
+    // find max k_{s1, s2}
+    double max_ks1s2 = 0.0;
+    for(Vertex u : sib1){
+        for(Vertex v : sib2){
+            auto it = allsegs.find(make_pair_v(u, v));
+            if (it != allsegs.end() && it->second->kin > max_ks1s2){max_ks1s2 = it->second->kin;}
+        }
+    }
+    return max_ks1s2;
+}
+
 bool includeAunts(const std::vector<Vertex> &aunts, const std::vector<Vertex> &sibs,
     double min_ks1s2, const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs)
 {
@@ -853,28 +901,54 @@ int whichAV2Include(const std::vector<Vertex> &av11, const std::vector<Vertex> &
             else if (!isGreater1 && isGreater2){return 2;}
             else if (!isGreater1 && !isGreater2){return -1;}
             else{
-                double average1 = 0.0;
-                for(Vertex a : av11){
-                    for(Vertex s : sib2){
-                        auto it = allsegs.find(make_pair_v(a, s));
-                        if (it != allsegs.end()){average1 += it->second->kin;}
-                    }
-                }
-                average1 = average1/((double) av11.size()*sib2.size());
-
-                double average2 = 0.0;
-                for(Vertex a : av12){
-                    for(Vertex s : sib2){
-                        auto it = allsegs.find(make_pair_v(a, s));
-                        if (it != allsegs.end()){average2 += it->second->kin;}
-                    }
-                }
-                average2 = average2/((double) av12.size()*sib2.size());
+                double average1 = averageKinshipBetweenTwoSets(av11, sib2, allsegs);
+                double average2 = averageKinshipBetweenTwoSets(av12, sib2, allsegs);
                 return average1 >= average2 ? 1 : 2;
             }
         }
     }
 }
+
+bool includeParent(Vertex p, double max_ks1s2, 
+    const std::vector<Vertex> &sibs, const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs)
+{  
+    // return true if max k_{p, s2} > max_ks1s2
+    for(Vertex s2 : sibs){
+        auto it = allsegs.find(make_pair_v(p, s2));
+        if (it != allsegs.end() && it->second->kin > max_ks1s2){return true;}
+    }
+    return false;
+}
+
+
+int whichParent2Include(const std::vector<Vertex> &parents, 
+    const std::vector<Vertex> &sib1, const std::vector<Vertex> &sib2,
+    const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs)
+{
+    // parents is the parents of sib1
+    if (parents.size() == 0){return -1;}
+    else{
+        double max_ks1s2 = maxKinshipBetweenTwoSibset(sib1, sib2, allsegs);
+        // how to determine if a parent should be included?
+        // use max k_{p, s2} > max k_{s1,s2}
+        if (parents.size() == 1){
+            return includeParent(parents[0], max_ks1s2, sib2, allsegs) ? 0 : -1;
+        }else{
+            bool include1 = includeParent(parents[0], max_ks1s2, sib2, allsegs);
+            bool include2 = includeParent(parents[1], max_ks1s2, sib2, allsegs);
+            if (!include1 && !include2){return -1;}
+            else if (!include1 && include2){return 1;}
+            else if (include1 && !include2){return 0;}
+            else{
+                // choose the parent with higher average kinship coefficient with sib2
+                double average1 = averageKinship(parents[0], sib2, allsegs);
+                double average2 = averageKinship(parents[1], sib2, allsegs);
+                return average1 > average2 ? 0 : 1;
+            }
+        }
+    }
+}
+
 
 void pedigreeVSpedigree(const ConnInfo &con1, const ConnInfo &con2,
     std::unordered_set<Vertex> &visited1, std::unordered_set<Vertex> &visited2,
@@ -922,19 +996,17 @@ void pedigreeVSpedigree(const ConnInfo &con1, const ConnInfo &con2,
     if (deg >= 0 && deg <= 3){
         // need to account for IBD2 in the grandparent/parent generation
         double t1, t2, k2;
-        if (index_av1 != -1 && index_av2 != -1){
-            const std::vector<Vertex> &av2use1 = index_av1 == 1 ? con1.av1 : con1.av2;
-            const std::vector<Vertex> &av2use2 = index_av2 == 1 ? con2.av1 : con2.av2;
-            t1 = 1.0 - pow(0.5, av2use1.size());
-            t2 = 1.0 - pow(0.5, av2use2.size());
-            k2 = (IBD0011(av2use1, av2use2, snpmap, allsegs)/tot_genome)/(t1*t2);
-            
-        }else{
-            t1 = 1.0 - pow(0.5, con1.fs.size());
-            t2 = 1.0 - pow(0.5, con2.fs.size());
-            k2 = (IBD0011(con1.fs, con2.fs, snpmap, allsegs)/tot_genome)/(t1*t2);
-        }
-        fprintf(stdout, "deg is %d, estimated IBD2 rate: %lf\n", deg, k2);
+        std::vector<Vertex> left;
+        std::vector<Vertex> right;
+        if (index_av1 != -1){
+            left = index_av1 == 1 ? con1.av1 : con1.av2; 
+        }else{left = con1.fs;}
+        if (index_av2 != -1){
+            right = index_av2 == 1 ? con2.av1 : con2.av2;
+        }else{right = con2.fs;}
+        t1 = 1.0 - pow(0.5, left.size());
+        t2 = 1.0 - pow(0.5, right.size());
+        k2 = (IBD0011(left, right, snpmap, allsegs)/tot_genome)/(t1*t2);
         k1 -= k2;
         deg = getRelfromK(std::max(0.0, k1/4.0 + k2/2.0 - bkg/4.0), maxDeg);
     }

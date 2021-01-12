@@ -103,13 +103,21 @@ inline int resetRelationship(int ref, int offset, int maxDeg)
     return deg;
 }
 
+double averageKinship(Vertex u, const std::vector<Vertex> &set, 
+    const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs);
+
+double averageKinshipBetweenTwoSets(const std::vector<Vertex> &set1, const std::vector<Vertex> &set2,
+    const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs);
+
 bool includeAunts(const std::vector<Vertex> &aunts, const std::vector<Vertex> &sibs,
     Vertex d, const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs);
-
 
 double minKinshipBetweenTwoSibset(const std::vector<Vertex> &sib1, 
     const std::vector<Vertex> &sib2,
     const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs);
+
+double maxKinshipBetweenTwoSibset(const std::vector<Vertex> &sib1,
+    const std::vector<Vertex> &sib2, const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs);
 
 int whichAV2Include(const std::vector<Vertex> &av11, const std::vector<Vertex> &av12, 
     const std::vector<Vertex> &sib1, const std::vector<Vertex> &sib2,
@@ -117,6 +125,13 @@ int whichAV2Include(const std::vector<Vertex> &av11, const std::vector<Vertex> &
 
 bool includeAunts(const std::vector<Vertex> &aunts, const std::vector<Vertex> &sibs,
     double min_ks1s2, const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs);
+
+int whichParent2Include(const std::vector<Vertex> &parents, 
+    const std::vector<Vertex> &sib1, const std::vector<Vertex> &sib2,
+    const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs);
+
+bool includeParent(Vertex p, double max_ks1s2, 
+    const std::vector<Vertex> &sibs, const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs);
 
 double IBD0011(const std::vector<Vertex> &set1, const std::vector<Vertex> &set2,
     const std::map<std::string, std::map<int, double>*> &snpmap,

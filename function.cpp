@@ -949,13 +949,16 @@ int whichParent2Include(const std::vector<Vertex> &parents,
     }
 }
 
-void updateSibsetByTheirParent(Vertex p2use, const std::vector<Vertex> &fs, const ConnInfo &con2,
+void updateSibsetByTheirParent(int index, 
+    const std::vector<Vertex> &fs, const std::vector<Vertex> &parents, 
+    const ConnInfo &con2,
     std::unordered_set<Vertex> &visited1, std::unordered_set<Vertex> &visited2,
     const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs,
     std::map<std::pair<Vertex, Vertex>, int> &results,
     double bkg_sharing, double tot_genome, int maxDeg)
 {
     fprintf(stdout, "updateSibsetByTheirParent\n");
+    int p2use = parents[index];
     oneVSpedigree(p2use, con2, visited2, allsegs, results, bkg_sharing, tot_genome, maxDeg);
     // update fs's relationship to con2
     if (!con2.gp1.empty()){
@@ -1048,7 +1051,7 @@ void pedigreeVSpedigree(const ConnInfo &con1, const ConnInfo &con2,
     }else{
         int index = whichParent2Include(con1.p, con1.fs, con2.fs, allsegs);
         if (index != -1){
-            updateSibsetByTheirParent(con1.p[index], con1.fs, con2, visited1, visited2, allsegs, results, bkg_sharing, tot_genome, maxDeg);
+            updateSibsetByTheirParent(index, con1.fs, con1.p, con2, visited1, visited2, allsegs, results, bkg_sharing, tot_genome, maxDeg);
             return;
         }else{fprintf(stdout, "no parents is selected\n");}
     }
@@ -1061,7 +1064,7 @@ void pedigreeVSpedigree(const ConnInfo &con1, const ConnInfo &con2,
     }else{
         int index = whichParent2Include(con2.p, con2.fs, con1.fs, allsegs);
         if (index != -1){
-            updateSibsetByTheirParent(con2.p[index], con2.fs, con1, visited2, visited1, allsegs, results, bkg_sharing, tot_genome, maxDeg);
+            updateSibsetByTheirParent(index, con2.fs, con2.p, con1, visited2, visited1, allsegs, results, bkg_sharing, tot_genome, maxDeg);
             return;
         }else{fprintf(stdout, "no parents is selected\n");}
     }
@@ -1101,69 +1104,30 @@ void pedigreeVSpedigree(const ConnInfo &con1, const ConnInfo &con2,
         int deg_av2av = resetRelationship(deg, 2, maxDeg);
         const std::vector<Vertex> &av2use1 = index_av1 == 1 ? con1.av1 : con1.av2;
         const std::vector<Vertex> &av2use2 = index_av2 == 1 ? con2.av1 : con2.av2;
-        for(Vertex a1 : av2use1){
-            for(Vertex a2 : av2use2){
-                results[make_pair_v(a1, a2)] = deg_av2av;
-            }
-        }
-
+        setRelationshipBetweenTwoSets(av2use1, av2use2, results, deg_av2av);
         int deg_av2fs = resetRelationship(deg, 3, maxDeg);
-        for(Vertex a : av2use1){
-            for(Vertex fs : con2.fs){
-                results[make_pair_v(a, fs)] = deg_av2fs;
-            }
-        }
-        for(Vertex a : av2use2){
-            for(Vertex fs : con1.fs){
-                results[make_pair_v(a, fs)] = deg_av2fs;
-            }
-        }
-
+        setRelationshipBetweenTwoSets(av2use1, con2.fs, results, deg_av2fs);
+        setRelationshipBetweenTwoSets(av2use2, con1.fs, results, deg_av2fs);
         int deg_fs2fs = resetRelationship(deg, 4, maxDeg);
-        for(Vertex fs1 : con1.fs){
-            for(Vertex fs2 : con2.fs){
-                results[make_pair_v(fs1, fs2)] = deg_fs2fs;
-            }
-        }
-
+        setRelationshipBetweenTwoSets(con1.fs, con2.fs, results, deg_fs2fs);
     }else if (index_av1 != -1 && index_av2 == -1){
         // the inferred deg is between pedigree 1's gp to pedigree 2's parents
         int deg_av2fs = resetRelationship(deg, 2, maxDeg);
         const std::vector<Vertex> &av2use1 = index_av1 == 1 ? con1.av1 : con1.av2;
-        for(Vertex a : av2use1){
-            for(Vertex fs : con2.fs){
-                results[make_pair_v(a, fs)] = deg_av2fs;
-            }
-        }
+        setRelationshipBetweenTwoSets(av2use1, con2.fs, results, deg_av2fs);
         int deg_fs2fs = resetRelationship(deg, 3, maxDeg);
-        for(Vertex fs1 : con1.fs){
-            for(Vertex fs2 : con2.fs){
-                results[make_pair_v(fs1, fs2)] = deg_fs2fs;
-            }
-        }
+        setRelationshipBetweenTwoSets(con1.fs, con2.fs, results, deg_fs2fs);
     }else if (index_av1 == -1 && index_av2 != -1){
          // the inferred deg is between pedigree 1's gp to pedigree 2's parents
         int deg_av2fs = resetRelationship(deg, 2, maxDeg);
-        const std::vector<Vertex> &av2use1 = index_av2 == 1 ? con2.av1 : con2.av2;
-        for(Vertex a : av2use1){
-            for(Vertex fs : con1.fs){
-                results[make_pair_v(a, fs)] = deg_av2fs;
-            }
-        }
+        const std::vector<Vertex> &av2use2 = index_av2 == 1 ? con2.av1 : con2.av2;
+        setRelationshipBetweenTwoSets(av2use2, con1.fs, results, deg_av2fs);
         int deg_fs2fs = resetRelationship(deg, 3, maxDeg);
-        for(Vertex fs1 : con1.fs){
-            for(Vertex fs2 : con2.fs){
-                results[make_pair_v(fs1, fs2)] = deg_fs2fs;
-            }
-        }
+        setRelationshipBetweenTwoSets(con1.fs, con2.fs, results, deg_fs2fs);
     }else{
         // inferred deg is between pedigree 1's parents to pedigree 2's parents
         int deg_fs2fs = resetRelationship(deg, 2, maxDeg);
-        for(Vertex fs1 : con1.fs){
-            for(Vertex fs2 : con2.fs){
-                results[make_pair_v(fs1, fs2)] = deg_fs2fs;
-            }
-        }
+        setRelationshipBetweenTwoSets(con1.fs, con2.fs, results, deg_fs2fs);
     }
 }
 
@@ -1416,4 +1380,17 @@ void write_output(const std::map<std::pair<Vertex, Vertex>, int> &results,
         }
     }
     outFile.close();
+}
+
+void setRelationshipBetweenTwoSets(const std::vector<Vertex> &set1, const std::vector<Vertex> &set2, 
+    std::map<std::pair<Vertex, Vertex>, int> &results, int deg)
+{
+    // set the degree between all pairs of set1 and set2 to be deg
+    // assume deg <= maxDeg (i.e, deg is a valid integer)
+    if (set1.empty() || set2.empty()){return;}
+    for(Vertex u : set1){
+        for(Vertex v : set2){
+            results[make_pair_v(u, v)] = deg;
+        }
+    }
 }

@@ -96,7 +96,9 @@ void pedigreeVSpedigree(const ConnInfo &con1, const ConnInfo &con2,
     std::map<std::pair<Vertex, Vertex>, int> &results,
     double bkg_sharing, double tot_genome, int maxDeg);
 
-void updateSibsetByTheirParent(Vertex p2use, const std::vector<Vertex> &fs, const ConnInfo &con2,
+void updateSibsetByTheirParent(int index_p, 
+    const std::vector<Vertex> &fs, const std::vector<Vertex> &parents,
+    const ConnInfo &con2,
     std::unordered_set<Vertex> &visited1, std::unordered_set<Vertex> &visited2,
     const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs,
     std::map<std::pair<Vertex, Vertex>, int> &results,
@@ -110,6 +112,9 @@ inline int resetRelationship(int ref, int offset, int maxDeg)
     if (deg > maxDeg){deg = -1;}
     return deg;
 }
+
+void setRelationshipBetweenTwoSets(const std::vector<Vertex> &set1, const std::vector<Vertex> &set2, 
+    std::map<std::pair<Vertex, Vertex>, int> &results, int deg);
 
 double averageKinship(Vertex u, const std::vector<Vertex> &set, 
     const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs);

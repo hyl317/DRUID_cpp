@@ -424,9 +424,9 @@ void run_druid(Pedigree &pedigree,
                         visited2.insert(v);
                         oneVSpedigree(v, con1, visited1, allsegs, results, bkg_sharing, tot_genome, maxDeg);
                     }else{
-                        //fprintf(stdout, "pedigree vs. pedigree\n");
-                        //printConnInfo(con1, pedigree);
-                        //printConnInfo(con2, pedigree);
+                        fprintf(stdout, "pedigree vs. pedigree\n");
+                        printConnInfo(con1, pedigree);
+                        printConnInfo(con2, pedigree);
                         pedigreeVSpedigree(con1, con2, visited1, visited2, allsegs, snpmap, results, bkg_sharing, tot_genome, maxDeg);
                     }
 
@@ -949,6 +949,74 @@ int whichParent2Include(const std::vector<Vertex> &parents,
     }
 }
 
+void updateSibsetByTheirParent(Vertex p2use, const std::vector<Vertex> &fs, const ConnInfo &con2,
+    std::unordered_set<Vertex> &visited1, std::unordered_set<Vertex> &visited2,
+    const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs,
+    std::map<std::pair<Vertex, Vertex>, int> &results,
+    double bkg_sharing, double tot_genome, int maxDeg)
+{
+    fprintf(stdout, "updateSibsetByTheirParent\n");
+    oneVSpedigree(p2use, con2, visited2, allsegs, results, bkg_sharing, tot_genome, maxDeg);
+    // update fs's relationship to con2
+    if (!con2.gp1.empty()){
+        for(Vertex gp : con2.gp1){
+            int base_deg = results[make_pair_v(p2use, gp)];
+            int reset_deg = resetRelationship(base_deg, 1, maxDeg);
+            for(Vertex sib : fs){
+                results[make_pair_v(sib, gp)] = reset_deg;
+            }
+        }
+    }
+
+    if (!con2.gp2.empty()){
+        for(Vertex gp : con2.gp2){
+            int base_deg = results[make_pair_v(p2use, gp)];
+            int reset_deg = resetRelationship(base_deg, 1, maxDeg);
+            for(Vertex sib : fs){
+                results[make_pair_v(sib, gp)] = reset_deg;
+            }
+        }
+    }
+
+    if (!con2.av1.empty()){
+        for(Vertex av : con2.av1){
+            int base_deg = results[make_pair_v(p2use, av)];
+            int reset_deg = resetRelationship(base_deg, 1, maxDeg);
+            for(Vertex sib : fs){
+                results[make_pair_v(sib, av)] = reset_deg;
+            }
+        }
+    }
+
+    if (!con2.av2.empty()){
+        for(Vertex av : con2.av2){
+            int base_deg = results[make_pair_v(p2use, av)];
+            int reset_deg = resetRelationship(base_deg, 1, maxDeg);
+            for(Vertex sib : fs){
+                results[make_pair_v(sib, av)] = reset_deg;
+            }
+        }
+    }
+
+    if (!con2.p.empty()){
+        for(Vertex p : con2.p){
+            int base_deg = results[make_pair_v(p2use, p)];
+            int reset_deg = resetRelationship(base_deg, 1, maxDeg);
+            for(Vertex sib : fs){
+                results[make_pair_v(sib, p)] = reset_deg;
+            }
+        }
+    }
+
+    for(Vertex sib2 : con2.fs){
+        int base_deg = results[make_pair_v(p2use, sib2)];
+        int reset_deg = resetRelationship(base_deg, 1, maxDeg);
+        for(Vertex sib : fs){
+            results[make_pair_v(sib, sib2)] = reset_deg;
+        }
+    }
+}
+
 
 void pedigreeVSpedigree(const ConnInfo &con1, const ConnInfo &con2,
     std::unordered_set<Vertex> &visited1, std::unordered_set<Vertex> &visited2,
@@ -970,17 +1038,32 @@ void pedigreeVSpedigree(const ConnInfo &con1, const ConnInfo &con2,
     int numSib2 = con2.fs.size();
     int numAV1 = 0;
     int numAV2 = 0;
+    // use aunts/uncle if we can
+    // if no aunts/uncle can be used, check if we have parents
     if(index_av1 != -1){
         const std::vector<Vertex> &av2use = index_av1 == 1 ? con1.av1 : con1.av2;
         set1.insert(set1.end(), av2use.begin(), av2use.end());
         numAV1 = av2use.size();
         std::for_each(av2use.begin(), av2use.end(), [&](const Vertex a){visited1.insert(a);});
+    }else{
+        int index = whichParent2Include(con1.p, con1.fs, con2.fs, allsegs);
+        if (index != -1){
+            updateSibsetByTheirParent(con1.p[index], con1.fs, con2, visited1, visited2, allsegs, results, bkg_sharing, tot_genome, maxDeg);
+            return;
+        }else{fprintf(stdout, "no parents is selected\n");}
     }
+
     if(index_av2 != -1){
         const std::vector<Vertex> &av2use = index_av2 == 1 ? con2.av1 : con2.av2;
         set2.insert(set2.end(), av2use.begin(), av2use.end());
         numAV2 = av2use.size();
         std::for_each(av2use.begin(), av2use.end(), [&](const Vertex a){visited2.insert(a);});
+    }else{
+        int index = whichParent2Include(con2.p, con2.fs, con1.fs, allsegs);
+        if (index != -1){
+            updateSibsetByTheirParent(con2.p[index], con2.fs, con1, visited2, visited1, allsegs, results, bkg_sharing, tot_genome, maxDeg);
+            return;
+        }else{fprintf(stdout, "no parents is selected\n");}
     }
 
     double Tg1 = getTg(numAV1, numSib1);

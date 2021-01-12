@@ -96,6 +96,14 @@ void pedigreeVSpedigree(const ConnInfo &con1, const ConnInfo &con2,
     std::map<std::pair<Vertex, Vertex>, int> &results,
     double bkg_sharing, double tot_genome, int maxDeg);
 
+void updateSibsetByTheirParent(Vertex p2use, const std::vector<Vertex> &fs, const ConnInfo &con2,
+    std::unordered_set<Vertex> &visited1, std::unordered_set<Vertex> &visited2,
+    const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs,
+    std::map<std::pair<Vertex, Vertex>, int> &results,
+    double bkg_sharing, double tot_genome, int maxDeg);
+// the abvoe function infers fs's relationship to con2 by using fs's parent.
+
+
 inline int resetRelationship(int ref, int offset, int maxDeg)
 {
     int deg = ref == -1 ? -1 : ref + offset;

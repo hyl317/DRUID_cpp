@@ -959,15 +959,14 @@ void updateSibsetByTheirParent(int index,
 {
     fprintf(stdout, "updateSibsetByTheirParent\n");
     int p2use = parents[index];
+    visited1.insert(p2use);
     oneVSpedigree(p2use, con2, visited2, allsegs, results, bkg_sharing, tot_genome, maxDeg);
     // update fs's relationship to con2
     if (!con2.gp1.empty()){
         for(Vertex gp : con2.gp1){
             int base_deg = results[make_pair_v(p2use, gp)];
             int reset_deg = resetRelationship(base_deg, 1, maxDeg);
-            for(Vertex sib : fs){
-                results[make_pair_v(sib, gp)] = reset_deg;
-            }
+            setRelationshipBetweenOneSampleAndSet(gp, fs, results, reset_deg);
         }
     }
 
@@ -975,9 +974,7 @@ void updateSibsetByTheirParent(int index,
         for(Vertex gp : con2.gp2){
             int base_deg = results[make_pair_v(p2use, gp)];
             int reset_deg = resetRelationship(base_deg, 1, maxDeg);
-            for(Vertex sib : fs){
-                results[make_pair_v(sib, gp)] = reset_deg;
-            }
+            setRelationshipBetweenOneSampleAndSet(gp, fs, results, reset_deg);
         }
     }
 
@@ -985,9 +982,7 @@ void updateSibsetByTheirParent(int index,
         for(Vertex av : con2.av1){
             int base_deg = results[make_pair_v(p2use, av)];
             int reset_deg = resetRelationship(base_deg, 1, maxDeg);
-            for(Vertex sib : fs){
-                results[make_pair_v(sib, av)] = reset_deg;
-            }
+            setRelationshipBetweenOneSampleAndSet(av, fs, results, reset_deg);
         }
     }
 
@@ -995,9 +990,7 @@ void updateSibsetByTheirParent(int index,
         for(Vertex av : con2.av2){
             int base_deg = results[make_pair_v(p2use, av)];
             int reset_deg = resetRelationship(base_deg, 1, maxDeg);
-            for(Vertex sib : fs){
-                results[make_pair_v(sib, av)] = reset_deg;
-            }
+            setRelationshipBetweenOneSampleAndSet(av, fs, results, reset_deg);
         }
     }
 
@@ -1005,18 +998,27 @@ void updateSibsetByTheirParent(int index,
         for(Vertex p : con2.p){
             int base_deg = results[make_pair_v(p2use, p)];
             int reset_deg = resetRelationship(base_deg, 1, maxDeg);
-            for(Vertex sib : fs){
-                results[make_pair_v(sib, p)] = reset_deg;
-            }
+            setRelationshipBetweenOneSampleAndSet(p, fs, results, reset_deg);
         }
     }
 
     for(Vertex sib2 : con2.fs){
         int base_deg = results[make_pair_v(p2use, sib2)];
         int reset_deg = resetRelationship(base_deg, 1, maxDeg);
-        for(Vertex sib : fs){
-            results[make_pair_v(sib, sib2)] = reset_deg;
-        }
+        setRelationshipBetweenOneSampleAndSet(sib2, fs, results, reset_deg);
+    }
+
+    if (parents.size() == 2){
+        int p_unrelated_index = index == 0 ? 1 : 0;
+        Vertex p_unrelated = parents[p_unrelated_index];
+        visited1.insert(p_unrelated);
+        setRelationshipBetweenOneSampleAndSet(p_unrelated, con2.gp1, results, -1);
+        setRelationshipBetweenOneSampleAndSet(p_unrelated, con2.gp2, results, -1);
+        setRelationshipBetweenOneSampleAndSet(p_unrelated, con2.av1, results, -1);
+        setRelationshipBetweenOneSampleAndSet(p_unrelated, con2.av2, results, -1);
+        setRelationshipBetweenOneSampleAndSet(p_unrelated, con2.p, results, -1);
+        setRelationshipBetweenOneSampleAndSet(p_unrelated, con2.fs, results, -1);
+        results[make_pair_v(p2use, p_unrelated)] = -1;
     }
 }
 
@@ -1392,5 +1394,14 @@ void setRelationshipBetweenTwoSets(const std::vector<Vertex> &set1, const std::v
         for(Vertex v : set2){
             results[make_pair_v(u, v)] = deg;
         }
+    }
+}
+
+void setRelationshipBetweenOneSampleAndSet(Vertex u, const std::vector<Vertex> &set,
+    std::map<std::pair<Vertex, Vertex>, int> &results, int deg)
+{   
+    if (set.empty()){return;}
+    for(Vertex v : set){
+        results[make_pair_v(u, v)] = deg;
     }
 }

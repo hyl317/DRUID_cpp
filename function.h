@@ -116,6 +116,9 @@ inline int resetRelationship(int ref, int offset, int maxDeg)
 void setRelationshipBetweenTwoSets(const std::vector<Vertex> &set1, const std::vector<Vertex> &set2, 
     std::map<std::pair<Vertex, Vertex>, int> &results, int deg);
 
+void setRelationshipBetweenOneSampleAndSet(Vertex u, const std::vector<Vertex> &set,
+    std::map<std::pair<Vertex, Vertex>, int> &results, int deg);
+
 double averageKinship(Vertex u, const std::vector<Vertex> &set, 
     const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs);
 

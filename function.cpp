@@ -424,9 +424,9 @@ void run_druid(Pedigree &pedigree,
                         visited2.insert(v);
                         oneVSpedigree(v, con1, visited1, allsegs, results, bkg_sharing, tot_genome, maxDeg);
                     }else{
-                        fprintf(stdout, "pedigree vs. pedigree\n");
-                        printConnInfo(con1, pedigree);
-                        printConnInfo(con2, pedigree);
+                        //fprintf(stdout, "pedigree vs. pedigree\n");
+                        //printConnInfo(con1, pedigree);
+                        //printConnInfo(con2, pedigree);
                         pedigreeVSpedigree(con1, con2, visited1, visited2, allsegs, snpmap, results, bkg_sharing, tot_genome, maxDeg);
                     }
 
@@ -1050,6 +1050,14 @@ void pedigreeVSpedigree(const ConnInfo &con1, const ConnInfo &con2,
         set1.insert(set1.end(), av2use.begin(), av2use.end());
         numAV1 = av2use.size();
         std::for_each(av2use.begin(), av2use.end(), [&](const Vertex a){visited1.insert(a);});
+        // check if we can use grandparents
+        const std::vector<Vertex> &gp2use = index_av1 == 1 ? con1.gp1 : con1.gp2;
+        int index = whichParent2Include(gp2use, av2use, con2.fs, allsegs);
+        if (index != -1){
+            fprintf(stdout, "grandparent to use: %d\n", index);
+            updateSibsetByTheirGrandParent(index, index_av1, con1, con2, visited1, visited2, allsegs, results, bkg_sharing, tot_genome, maxDeg);
+            return;
+        }else{fprintf(stdout, "no grandparents is selected\n");}
     }else{
         int index = whichParent2Include(con1.p, con1.fs, con2.fs, allsegs);
         if (index != -1){
@@ -1063,6 +1071,14 @@ void pedigreeVSpedigree(const ConnInfo &con1, const ConnInfo &con2,
         set2.insert(set2.end(), av2use.begin(), av2use.end());
         numAV2 = av2use.size();
         std::for_each(av2use.begin(), av2use.end(), [&](const Vertex a){visited2.insert(a);});
+        // check if we can use grandparents
+        const std::vector<Vertex> &gp2use = index_av2 == 1 ? con2.gp1 : con2.gp2;
+        int index = whichParent2Include(gp2use, av2use, con1.fs, allsegs);
+        if (index != -1){
+            fprintf(stdout, "grandparent to use: %d\n", index);
+            updateSibsetByTheirGrandParent(index, index_av2, con2, con1, visited2, visited1, allsegs, results, bkg_sharing, tot_genome, maxDeg);
+            return;
+        }else{fprintf(stdout, "no grandparents is selected\n");}
     }else{
         int index = whichParent2Include(con2.p, con2.fs, con1.fs, allsegs);
         if (index != -1){
@@ -1131,6 +1147,81 @@ void pedigreeVSpedigree(const ConnInfo &con1, const ConnInfo &con2,
         int deg_fs2fs = resetRelationship(deg, 2, maxDeg);
         setRelationshipBetweenTwoSets(con1.fs, con2.fs, results, deg_fs2fs);
     }
+}
+
+void updateSibsetByTheirGrandParent(int index_gp, int index_av,
+    const ConnInfo &con1, const ConnInfo &con2,
+    std::unordered_set<Vertex> &visited1, std::unordered_set<Vertex> &visited2,
+    const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs,
+    std::map<std::pair<Vertex, Vertex>, int> &results,
+    double bkg_sharing, double tot_genome, int maxDeg)
+{
+    const std::vector<Vertex> &avset2use = index_av == 1 ? con1.av1 : con1.av2;
+    const std::vector<Vertex> &gpset2use = index_av == 1 ? con1.gp1 : con1.gp2;
+    Vertex gp2use = gpset2use[index_gp];
+    visited1.insert(gp2use);
+    oneVSpedigree(gp2use, con2, visited2, allsegs, results, bkg_sharing, tot_genome, maxDeg);
+    if (!con2.gp1.empty()){
+        for(Vertex gp : con2.gp1){
+            int base_deg = results[make_pair_v(gp2use, gp)];
+            setRelationshipBetweenOneSampleAndSet(gp, avset2use, results, resetRelationship(base_deg, 1, maxDeg));
+            setRelationshipBetweenOneSampleAndSet(gp, con1.fs, results, resetRelationship(base_deg, 2, maxDeg));
+        }
+    }
+
+    if (!con2.gp2.empty()){
+        for(Vertex gp : con2.gp2){
+            int base_deg = results[make_pair_v(gp2use, gp)];
+            setRelationshipBetweenOneSampleAndSet(gp, avset2use, results, resetRelationship(base_deg, 1, maxDeg));
+            setRelationshipBetweenOneSampleAndSet(gp, con1.fs, results, resetRelationship(base_deg, 2, maxDeg));
+        }
+    }
+
+    if (!con2.av1.empty()){
+        for(Vertex av : con2.av1){
+            int base_deg = results[make_pair_v(gp2use, av)];
+            setRelationshipBetweenOneSampleAndSet(av, avset2use, results, resetRelationship(base_deg, 1, maxDeg));
+            setRelationshipBetweenOneSampleAndSet(av, con1.fs, results, resetRelationship(base_deg, 2, maxDeg));
+        }
+    }
+
+    if (!con2.av2.empty()){
+        for(Vertex av : con2.av2){
+            int base_deg = results[make_pair_v(gp2use, av)];
+            setRelationshipBetweenOneSampleAndSet(av, avset2use, results, resetRelationship(base_deg, 1, maxDeg));
+            setRelationshipBetweenOneSampleAndSet(av, con1.fs, results, resetRelationship(base_deg, 2, maxDeg));
+        }
+    }
+
+    if (!con2.p.empty()){
+        for(Vertex p : con2.p){
+            int base_deg = results[make_pair_v(gp2use, p)];
+            setRelationshipBetweenOneSampleAndSet(p, avset2use, results, resetRelationship(base_deg, 1, maxDeg));
+            setRelationshipBetweenOneSampleAndSet(p, con1.fs, results, resetRelationship(base_deg, 2, maxDeg));
+        }
+    }
+
+    for(Vertex sib2 : con2.fs){
+        int base_deg = results[make_pair_v(gp2use, sib2)];
+        setRelationshipBetweenOneSampleAndSet(sib2, avset2use, results, resetRelationship(base_deg, 1, maxDeg));
+        setRelationshipBetweenOneSampleAndSet(sib2, con1.fs, results, resetRelationship(base_deg, 2, maxDeg));
+    }
+
+    if (gpset2use.size() == 2){
+        int gp_unrelated_index = index_gp == 0 ? 1 : 0;
+        Vertex gp_unrelated = gpset2use[gp_unrelated_index];
+        visited1.insert(gp_unrelated);
+        setRelationshipBetweenOneSampleAndSet(gp_unrelated, con2.gp1, results, -1);
+        setRelationshipBetweenOneSampleAndSet(gp_unrelated, con2.gp2, results, -1);
+        setRelationshipBetweenOneSampleAndSet(gp_unrelated, con2.av1, results, -1);
+        setRelationshipBetweenOneSampleAndSet(gp_unrelated, con2.av2, results, -1);
+        setRelationshipBetweenOneSampleAndSet(gp_unrelated, con2.p, results, -1);
+        setRelationshipBetweenOneSampleAndSet(gp_unrelated, con2.fs, results, -1);
+        results[make_pair_v(gp2use, gp_unrelated)] = -1;
+
+        // should we set the unused aunt/uncle set as unrelated to con2 as well?
+    }
+
 }
 
 double IBD0011(const std::vector<Vertex> &set1, const std::vector<Vertex> &set2,

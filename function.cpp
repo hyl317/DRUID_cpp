@@ -139,7 +139,7 @@ void build_graph(Pedigree &pedigree,
         }
     }
 
-
+    //auto vertex_property_map = boost::get(&sample::id, pedigree);
     // add PC edges
     for(auto pc: pcs){
         boost::add_edge(pc.first, pc.second, pedigree);
@@ -151,6 +151,7 @@ void build_graph(Pedigree &pedigree,
     for(auto pc : pcs){
         Vertex v1 = pc.first;
         Vertex v2 = pc.second;
+        //std::cout << "polarizing v1 and v2: " << vertex_property_map[v1] << "\t" << vertex_property_map[v2] << std::endl;
         // if neither v1 nor v2 has any full-sibs, we can't do anything
         if (fs_degs.find(v1) == fs_degs.end() && fs_degs.find(v2) == fs_degs.end()){continue;}
         bool v2IsParent = false;
@@ -158,16 +159,17 @@ void build_graph(Pedigree &pedigree,
         if (fs_degs.find(v1) != fs_degs.end()){
             // iterate over v1's full-sib pair to check if they form a parent-child pair with v2
             // if so, then v2 must be the parent
+            int counter_formPCwithv2 = 0;
             for(auto fs : *fs_degs[v1]){
                 bool isConnected = boost::edge(fs, v2, pedigree).second;
                 //std::cout << "check v1's full-sib: " << vertex_property_map[fs] << " is connected? "<< isConnected << std::endl;
                 if (isConnected){
                     Edge e = boost::edge(fs, v2, pedigree).first;
-                    //std::cout << pedigree[e].rel << std::endl;
-                    if (pedigree[e].rel == PC){v2IsParent=true;}
+                    std::cout << pedigree[e].rel << std::endl;
+                    if (pedigree[e].rel == PC){counter_formPCwithv2++;}
                 }
             }
-
+            v2IsParent = counter_formPCwithv2 > fs_degs[v1]->size()*0.5;
             // now assign v2 as the parent of all full-sibs of v1
             if (v2IsParent){
                 pedigree[boost::edge(v1, v2, pedigree).first].older = v2;
@@ -182,22 +184,29 @@ void build_graph(Pedigree &pedigree,
                     pedigree[boost::edge(fs, v2, pedigree).first].older = v2;
                     pedigree[boost::edge(fs, v2, pedigree).first].polarized = true;
                 }
+            }else if(!v2IsParent && counter_formPCwithv2 > 0){
+                // get rid of false positive parent edge
+                boost::remove_edge(v1, v2, pedigree);
+                for (auto fs : *fs_degs[v1]){
+                    if (boost::edge(fs, v2, pedigree).second){boost::remove_edge(fs, v2, pedigree);}
+                }
             }
         }
 
         if (fs_degs.find(v2) != fs_degs.end()){
             // iterate over v2's full-sib pair to check if they form a parent-child pair with v1
             // if so, then v1 must be the parent
+            int counter_formPCwithv1 = 0;
             for(auto fs : *fs_degs[v2]){
                 bool isConnected = boost::edge(fs, v1, pedigree).second;
                 //std::cout << "check v2's full-sib: " << vertex_property_map[fs] << " is connected? "<< isConnected << std::endl;
                 if (isConnected){
                     Edge e = boost::edge(fs, v1, pedigree).first;
-                    //std::cout << pedigree[e].rel << std::endl;
-                    if (pedigree[e].rel == PC){v1IsParent=true;}
+                    std::cout << pedigree[e].rel << std::endl;
+                    if (pedigree[e].rel == PC){counter_formPCwithv1++;}
                 }
             }
-
+            v1IsParent = counter_formPCwithv1 > 0.5*fs_degs[v2]->size();
             // now assign v1 as the parent of all full-sibs of v2
             if (v1IsParent){
                 pedigree[boost::edge(v1, v2, pedigree).first].older = v1;
@@ -212,8 +221,17 @@ void build_graph(Pedigree &pedigree,
                     pedigree[boost::edge(fs, v1, pedigree).first].older = v1;
                     pedigree[boost::edge(fs, v1, pedigree).first].polarized = true;
                 }
+            }else if (!v1IsParent && counter_formPCwithv1 > 0){
+                boost::remove_edge(v1, v2, pedigree);
+                for(auto fs : *fs_degs[v2]){
+                    if (boost::edge(fs, v1, pedigree).second){boost::remove_edge(fs, v1, pedigree);}
+                }
             }
         }
+        // if(v1IsParent && v2IsParent){
+        //     std::cout << "something wrong with v1 and v2: " << vertex_property_map[v1] << "\t" << vertex_property_map[v2] << std::endl;
+        //     return;
+        // }
         assert(!(v1IsParent && v2IsParent));
     }
 
@@ -680,7 +698,7 @@ void oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &vi
                 }
                 visited.insert(con.p[0]);
             }else{
-                results[make_pair_v(u, con.p[0])] = -1;
+                //results[make_pair_v(u, con.p[0])] = -1;
                 inferFStoSingleDistantRelative(u, con.fs, visited, allsegs, results, bkg_sharing, tot_genome, maxDeg);
             }
         }else if(con.p.size() ==2){
@@ -700,7 +718,7 @@ void oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &vi
                 }
                 visited.insert(con.p[index]);
                 int not_chosen = index == 0 ? 1 : 0;
-                results[make_pair_v(u, con.p[not_chosen])]  = -1;
+                //results[make_pair_v(u, con.p[not_chosen])]  = -1;
             }else{
                 // no strong evidence to choose among the two parents, then just use sibs
                 inferFStoSingleDistantRelative(u, con.fs, visited, allsegs, results, bkg_sharing, tot_genome, maxDeg);
@@ -724,8 +742,8 @@ void oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &vi
             const std::vector<Vertex> &gp2check = index_av == 1 ? con.gp1 : con.gp2;
             const std::vector<Vertex> &avNOTuse = index_av == 1 ? con.av2 : con.av1;
             const std::vector<Vertex> &gpNOTcheck = index_av == 1 ? con.gp2 : con.gp1;
-            for(Vertex v : avNOTuse){results[make_pair_v(u, v)] = -1;}
-            for(Vertex v : gpNOTcheck){results[make_pair_v(u, v)] = -1;}
+            //for(Vertex v : avNOTuse){results[make_pair_v(u, v)] = -1;}
+            //for(Vertex v : gpNOTcheck){results[make_pair_v(u, v)] = -1;}
 
             int index_gp = -1;
             if (!gp2check.empty()){
@@ -766,7 +784,7 @@ void oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &vi
 
                 if(gp2check.size() ==2){
                     int gp_not_chosen = index_gp == 0 ? 1 : 0;
-                    results[make_pair_v(u, gp_not_chosen)] = -1;
+                    //results[make_pair_v(u, gp_not_chosen)] = -1;
                 }
             }else{
                 std::vector<Vertex> set1;
@@ -794,7 +812,7 @@ void oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &vi
                 }
 
                 // set the un-used grand-parent to be unrelated to u
-                if (gp2check.size() == 1){results[make_pair_v(u, gp2check[0])] = -1;}
+                //if (gp2check.size() == 1){results[make_pair_v(u, gp2check[0])] = -1;}
                 // don't do this when gp2check.size() == 2 becuase,
                 // when size=2 and no gp is chosen, then probably there is some error in IBD detection
                 // can't say for sure
@@ -1008,18 +1026,18 @@ void updateSibsetByTheirParent(int index,
         setRelationshipBetweenOneSampleAndSet(sib2, fs, results, reset_deg);
     }
 
-    if (parents.size() == 2){
-        int p_unrelated_index = index == 0 ? 1 : 0;
-        Vertex p_unrelated = parents[p_unrelated_index];
-        visited1.insert(p_unrelated);
-        setRelationshipBetweenOneSampleAndSet(p_unrelated, con2.gp1, results, -1);
-        setRelationshipBetweenOneSampleAndSet(p_unrelated, con2.gp2, results, -1);
-        setRelationshipBetweenOneSampleAndSet(p_unrelated, con2.av1, results, -1);
-        setRelationshipBetweenOneSampleAndSet(p_unrelated, con2.av2, results, -1);
-        setRelationshipBetweenOneSampleAndSet(p_unrelated, con2.p, results, -1);
-        setRelationshipBetweenOneSampleAndSet(p_unrelated, con2.fs, results, -1);
-        results[make_pair_v(p2use, p_unrelated)] = -1;
-    }
+    // if (parents.size() == 2){
+    //     int p_unrelated_index = index == 0 ? 1 : 0;
+    //     Vertex p_unrelated = parents[p_unrelated_index];
+    //     visited1.insert(p_unrelated);
+    //     setRelationshipBetweenOneSampleAndSet(p_unrelated, con2.gp1, results, -1);
+    //     setRelationshipBetweenOneSampleAndSet(p_unrelated, con2.gp2, results, -1);
+    //     setRelationshipBetweenOneSampleAndSet(p_unrelated, con2.av1, results, -1);
+    //     setRelationshipBetweenOneSampleAndSet(p_unrelated, con2.av2, results, -1);
+    //     setRelationshipBetweenOneSampleAndSet(p_unrelated, con2.p, results, -1);
+    //     setRelationshipBetweenOneSampleAndSet(p_unrelated, con2.fs, results, -1);
+    //     results[make_pair_v(p2use, p_unrelated)] = -1;
+    // }
 }
 
 
@@ -1207,20 +1225,20 @@ void updateSibsetByTheirGrandParent(int index_gp, int index_av,
         setRelationshipBetweenOneSampleAndSet(sib2, con1.fs, results, resetRelationship(base_deg, 2, maxDeg));
     }
 
-    if (gpset2use.size() == 2){
-        int gp_unrelated_index = index_gp == 0 ? 1 : 0;
-        Vertex gp_unrelated = gpset2use[gp_unrelated_index];
-        visited1.insert(gp_unrelated);
-        setRelationshipBetweenOneSampleAndSet(gp_unrelated, con2.gp1, results, -1);
-        setRelationshipBetweenOneSampleAndSet(gp_unrelated, con2.gp2, results, -1);
-        setRelationshipBetweenOneSampleAndSet(gp_unrelated, con2.av1, results, -1);
-        setRelationshipBetweenOneSampleAndSet(gp_unrelated, con2.av2, results, -1);
-        setRelationshipBetweenOneSampleAndSet(gp_unrelated, con2.p, results, -1);
-        setRelationshipBetweenOneSampleAndSet(gp_unrelated, con2.fs, results, -1);
-        results[make_pair_v(gp2use, gp_unrelated)] = -1;
+    // if (gpset2use.size() == 2){
+    //     int gp_unrelated_index = index_gp == 0 ? 1 : 0;
+    //     Vertex gp_unrelated = gpset2use[gp_unrelated_index];
+    //     visited1.insert(gp_unrelated);
+    //     setRelationshipBetweenOneSampleAndSet(gp_unrelated, con2.gp1, results, -1);
+    //     setRelationshipBetweenOneSampleAndSet(gp_unrelated, con2.gp2, results, -1);
+    //     setRelationshipBetweenOneSampleAndSet(gp_unrelated, con2.av1, results, -1);
+    //     setRelationshipBetweenOneSampleAndSet(gp_unrelated, con2.av2, results, -1);
+    //     setRelationshipBetweenOneSampleAndSet(gp_unrelated, con2.p, results, -1);
+    //     setRelationshipBetweenOneSampleAndSet(gp_unrelated, con2.fs, results, -1);
+    //     results[make_pair_v(gp2use, gp_unrelated)] = -1;
 
-        // should we set the unused aunt/uncle set as unrelated to con2 as well?
-    }
+    //     // should we set the unused aunt/uncle set as unrelated to con2 as well?
+    // }
 
 }
 

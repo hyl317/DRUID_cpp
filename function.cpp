@@ -165,7 +165,7 @@ void build_graph(Pedigree &pedigree,
                 //std::cout << "check v1's full-sib: " << vertex_property_map[fs] << " is connected? "<< isConnected << std::endl;
                 if (isConnected){
                     Edge e = boost::edge(fs, v2, pedigree).first;
-                    std::cout << pedigree[e].rel << std::endl;
+                    //std::cout << pedigree[e].rel << std::endl;
                     if (pedigree[e].rel == PC){counter_formPCwithv2++;}
                 }
             }
@@ -202,7 +202,7 @@ void build_graph(Pedigree &pedigree,
                 //std::cout << "check v2's full-sib: " << vertex_property_map[fs] << " is connected? "<< isConnected << std::endl;
                 if (isConnected){
                     Edge e = boost::edge(fs, v1, pedigree).first;
-                    std::cout << pedigree[e].rel << std::endl;
+                    //std::cout << pedigree[e].rel << std::endl;
                     if (pedigree[e].rel == PC){counter_formPCwithv1++;}
                 }
             }
@@ -424,10 +424,12 @@ void run_druid(Pedigree &pedigree,
                 ConnInfo con1;
                 grabCloseRelatives(u, con1, pedigree);
                 bool isSingleton1 = isSingleton(con1);
+                fprintf(stdout, "---------------------------s--------------------------------\n");
                 for(Vertex v : *comp_map[j]){
                     if(visited2.find(v) != visited2.end()){continue;}
                     ConnInfo con2;
                     grabCloseRelatives(v, con2, pedigree);
+                    printConnInfo(con2, pedigree);
                     // analyzing the two ConnInfo component
                     bool isSingleton2 = isSingleton(con2);
                     if (isSingleton1 && isSingleton2){
@@ -449,6 +451,7 @@ void run_druid(Pedigree &pedigree,
                     }
 
                 }
+                fprintf(stdout, "--------------------------e---------------------------------\n");
             }
         }
     }
@@ -698,7 +701,6 @@ void oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &vi
                 }
                 visited.insert(con.p[0]);
             }else{
-                //results[make_pair_v(u, con.p[0])] = -1;
                 inferFStoSingleDistantRelative(u, con.fs, visited, allsegs, results, bkg_sharing, tot_genome, maxDeg);
             }
         }else if(con.p.size() ==2){
@@ -740,8 +742,8 @@ void oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &vi
             // check if we can use grandparents
             const std::vector<Vertex> &av2use = index_av == 1 ? con.av1 : con.av2; 
             const std::vector<Vertex> &gp2check = index_av == 1 ? con.gp1 : con.gp2;
-            const std::vector<Vertex> &avNOTuse = index_av == 1 ? con.av2 : con.av1;
-            const std::vector<Vertex> &gpNOTcheck = index_av == 1 ? con.gp2 : con.gp1;
+            //const std::vector<Vertex> &avNOTuse = index_av == 1 ? con.av2 : con.av1;
+            //const std::vector<Vertex> &gpNOTcheck = index_av == 1 ? con.gp2 : con.gp1;
             //for(Vertex v : avNOTuse){results[make_pair_v(u, v)] = -1;}
             //for(Vertex v : gpNOTcheck){results[make_pair_v(u, v)] = -1;}
 
@@ -976,7 +978,7 @@ void updateSibsetByTheirParent(int index,
     double bkg_sharing, double tot_genome, int maxDeg)
 {
     fprintf(stdout, "updateSibsetByTheirParent\n");
-    int p2use = parents[index];
+    Vertex p2use = parents[index];
     visited1.insert(p2use);
     oneVSpedigree(p2use, con2, visited2, allsegs, results, bkg_sharing, tot_genome, maxDeg);
     // update fs's relationship to con2
@@ -1067,6 +1069,7 @@ void pedigreeVSpedigree(const ConnInfo &con1, const ConnInfo &con2,
         const std::vector<Vertex> &av2use = index_av1 == 1 ? con1.av1 : con1.av2;
         set1.insert(set1.end(), av2use.begin(), av2use.end());
         numAV1 = av2use.size();
+        fprintf(stdout, "size of the aunt/uncle set being chosen: %d\n", numAV1);
         std::for_each(av2use.begin(), av2use.end(), [&](const Vertex a){visited1.insert(a);});
         // check if we can use grandparents
         const std::vector<Vertex> &gp2use = index_av1 == 1 ? con1.gp1 : con1.gp2;
@@ -1088,6 +1091,7 @@ void pedigreeVSpedigree(const ConnInfo &con1, const ConnInfo &con2,
         const std::vector<Vertex> &av2use = index_av2 == 1 ? con2.av1 : con2.av2;
         set2.insert(set2.end(), av2use.begin(), av2use.end());
         numAV2 = av2use.size();
+        fprintf(stdout, "size of the aunt/uncle set being chosen: %d\n", numAV2);
         std::for_each(av2use.begin(), av2use.end(), [&](const Vertex a){visited2.insert(a);});
         // check if we can use grandparents
         const std::vector<Vertex> &gp2use = index_av2 == 1 ? con2.gp1 : con2.gp2;

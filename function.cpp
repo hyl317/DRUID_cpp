@@ -709,14 +709,8 @@ void oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &vi
                 inferFStoSingleDistantRelative(u, con.fs, visited, allsegs, results, bkg_sharing, tot_genome, maxDeg);
             }
         }else if(con.p.size() ==2){
-            auto it1 = allsegs.find(make_pair_v(con.p[0], u));
-            auto it2 = allsegs.find(make_pair_v(con.p[1], u));
-            bool isGreater1 = it1 != allsegs.end() && it1->second->kin > maxK;
-            bool isGreater2 = it2 != allsegs.end() && it2->second->kin > maxK;
-            int index = -1; // denote which parent to use
-            if (isGreater1 && isGreater2){index = it1->second->kin >= it2->second->kin ? 0 : 1;}
-            else if (isGreater1 && !isGreater2){index = 0;}
-            else if (!isGreater1 && isGreater2){index = 1;}
+            std::vector<Vertex> sib1 {u};
+            int index = whichParent2Include(con.p, con.fs, sib1, allsegs);
             if (index != -1){
                 int deg = resetRelationship(getRelfromK(allsegs.find(make_pair_v(con.p[index], u))->second->kin, maxDeg), 1, maxDeg);
                 for(Vertex v : con.fs){
@@ -747,28 +741,8 @@ void oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &vi
             // check if we can use grandparents
             const std::vector<Vertex> &av2use = index_av == 1 ? con.av1 : con.av2; 
             const std::vector<Vertex> &gp2check = index_av == 1 ? con.gp1 : con.gp2;
-
-            int index_gp = -1;
-            if (!gp2check.empty()){
-                double max_kad = 0.0;
-                for(Vertex a : av2use){
-                    auto it = allsegs.find(make_pair_v(a, u));
-                    if(it != allsegs.end() && it->second->kin > max_kad){max_kad = it->second->kin;}
-                }
-
-                if (gp2check.size() == 1){
-                    auto it = allsegs.find(make_pair_v(gp2check[0], u));
-                    if(it != allsegs.end() && it->second->kin > max_kad){index_gp = 0;}
-                }else if (gp2check.size() ==2){
-                    auto it1 = allsegs.find(make_pair_v(gp2check[0], u));
-                    auto it2 = allsegs.find(make_pair_v(gp2check[1], u));
-                    bool isGreater1 = it1 != allsegs.end() && it1->second->kin > max_kad;
-                    bool isGreater2 = it2 != allsegs.end() && it2->second->kin > max_kad;
-                    if (isGreater1 && isGreater2){index_gp = it1->second->kin > it2->second->kin ? 0 : 1;}
-                    else if(!isGreater1 && isGreater2){index_gp = 1;}
-                    else if(isGreater1 && !isGreater2){index_gp = 0;}
-                }
-            }
+            std::vector<Vertex> sib1 {u};
+            int index_gp = whichParent2Include(gp2check, av2use, sib1, allsegs);
 
             if (index_gp != -1){
                 // can use grandparents for inference
@@ -785,11 +759,6 @@ void oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &vi
                     visited.insert(fs);
                 }
                 visited.insert(gp2check[index_gp]);
-
-                // if(gp2check.size() ==2){
-                //     int gp_not_chosen = index_gp == 0 ? 1 : 0;
-                //     results[make_pair_v(u, gp_not_chosen)] = -1;
-                // }
             }else{
                 fprintf(stdout, "no grandparents satisfy the criterion; use AV set only\n");
                 std::vector<Vertex> set1;

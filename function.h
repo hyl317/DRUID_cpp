@@ -86,15 +86,15 @@ double UnionIbdOverTwoSets(const std::vector<Vertex> &set1, const std::vector<Ve
 
 void oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &visited,
     const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs,
-    std::map<std::pair<Vertex, Vertex>, int> &results, 
-    double bkg_sharing, double tot_genome, int max_deg);
+    std::map<std::pair<Vertex, Vertex>, int> &results,
+    const Pedigree &pedigree, double bkg_sharing, double tot_genome, int max_deg);
 
 void pedigreeVSpedigree(const ConnInfo &con1, const ConnInfo &con2,
     std::unordered_set<Vertex> &visited1, std::unordered_set<Vertex> &visited2,
     const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs,
     const std::map<std::string, std::map<int, double>*> &snpmap,
     std::map<std::pair<Vertex, Vertex>, int> &results,
-    double bkg_sharing, double tot_genome, int maxDeg);
+    const Pedigree &pedigree, double bkg_sharing, double tot_genome, int maxDeg);
 
 void updateSibsetByTheirParent(int index_p, 
     const std::vector<Vertex> &fs, const std::vector<Vertex> &parents,
@@ -102,7 +102,7 @@ void updateSibsetByTheirParent(int index_p,
     std::unordered_set<Vertex> &visited1, std::unordered_set<Vertex> &visited2,
     const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs,
     std::map<std::pair<Vertex, Vertex>, int> &results,
-    double bkg_sharing, double tot_genome, int maxDeg);
+    const Pedigree &pedigree, double bkg_sharing, double tot_genome, int maxDeg);
 // the abvoe function infers fs's relationship to con2 by using fs's parent.
 
 void updateSibsetByTheirGrandParent(int index_gp, int index_av,
@@ -110,7 +110,7 @@ void updateSibsetByTheirGrandParent(int index_gp, int index_av,
     std::unordered_set<Vertex> &visited1, std::unordered_set<Vertex> &visited2,
     const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs,
     std::map<std::pair<Vertex, Vertex>, int> &results,
-    double bkg_sharing, double tot_genome, int maxDeg);
+    const Pedigree &pedigree, double bkg_sharing, double tot_genome, int maxDeg);
 // the abvoe function infers samples in con1's relationship to con2 by using con1's grandparent.
 
 

@@ -94,7 +94,7 @@ int main(int argc, char **argv){
     boost::graph_traits<Pedigree>::vertex_iterator vi, vi_end;
     for(boost::tie(vi, vi_end) = boost::vertices(pedigree); vi != vi_end; vi++){
         id2Vertex.insert(std::make_pair(vertex_property_map[*vi], *vi));
-        fprintf(stdout, "%d: %s\n", *vi, vertex_property_map[*vi].c_str());
+        //fprintf(stdout, "%d: %s\n", *vi, vertex_property_map[*vi].c_str());
     }
 
     std::map<std::pair<Vertex, Vertex>, Pair*> allsegs_v;

@@ -96,6 +96,17 @@ void pedigreeVSpedigree(const ConnInfo &con1, const ConnInfo &con2,
     std::map<std::pair<Vertex, Vertex>, int> &results,
     const Pedigree &pedigree, double bkg_sharing, double tot_genome, int maxDeg);
 
+std::pair<bool, Vertex> polarizeUnpolarPC(Vertex v1, int d1, double k1, Vertex v2, int d2, double k2);
+
+void PCpairVSone(Vertex d, const std::pair<Vertex, Vertex> &pc, 
+    const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs,
+    std::map<std::pair<Vertex, Vertex>, int> &results, int maxDeg);
+
+void PCpairVSpedigree(const std::pair<Vertex, Vertex> &pc, const ConnInfo &con,
+    std::unordered_set<Vertex> &visited, const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs,
+    std::map<std::pair<Vertex, Vertex>, int> &results,
+    double bkg_sharing, double tot_genome, int maxDeg);
+
 void updateSibsetByTheirParent(int index_p, 
     const std::vector<Vertex> &fs, const std::vector<Vertex> &parents,
     const ConnInfo &con2,
@@ -168,6 +179,22 @@ inline double getTg(int numAV, int numSib){
         return 1.0 - pow(0.5, numAV) + pow(0.5, numAV+1)*(1.0 - pow(0.5, numSib));
     }
 }
+
+inline double calc_bkg_sharing(int numAV, int numSibs, double bkg_sharing)
+{
+    return 2.0*bkg_sharing*(1.0 - pow(0.5, numAV) + pow(0.5, numAV+1)*(1.0 - pow(0.5, numSibs+1))) + bkg_sharing*(1.0 - pow(0.5, numSibs)); 
+}
+
+inline double calc_bkg_sharing(int numAV1, int numSib1, int numAV2, int numSib2, double bkg_sharing)
+{
+    return 4.0*bkg_sharing*(1.0 - pow(0.5, numAV1) + pow(0.5, numAV1+1)*(1.0 - pow(0.5, numSib1)))
+                    *(1.0 - pow(0.5, numAV2) + pow(0.5, numAV2+1)*(1.0 - pow(0.5, numSib2))) + 
+                    2.0*bkg_sharing*(1.0 - pow(0.5, numAV1) + pow(0.5, numAV1+1)*(1.0 - pow(0.5, numSib1)))*(1.0 - pow(0.5, numSib2)) + 
+                    2.0*bkg_sharing*(1.0 - pow(0.5, numAV2) + pow(0.5, numAV2+1)*(1.0 - pow(0.5, numSib2)))*(1.0 - pow(0.5, numSib1)) + 
+                    bkg_sharing*(1.0 - pow(0.5, numSib1))*(1.0 - pow(0.5, numSib2));
+}
+
+std::pair<bool, std::size_t> findUnpolarizedPC(Vertex u, const Pedigree &pedigree); 
 
 
 bool isGP(Vertex u, const Pedigree &pedgiree);

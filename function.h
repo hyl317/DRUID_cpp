@@ -104,7 +104,7 @@ void PCpairVSone(Vertex d, const std::pair<Vertex, Vertex> &pc,
 
 void PCpairVSpedigree(const std::pair<Vertex, Vertex> &pc, const ConnInfo &con,
     std::unordered_set<Vertex> &visited, const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs,
-    std::map<std::pair<Vertex, Vertex>, int> &results,
+    std::map<std::pair<Vertex, Vertex>, int> &results, const Pedigree &pedigree,
     double bkg_sharing, double tot_genome, int maxDeg);
 
 void updateSibsetByTheirParent(int index_p, 

@@ -9,7 +9,7 @@ void print_help(){
 }
 
 void parse_command_line(int argc, char **argv, std::string &ibdFile, std::string &bimFile, 
-    std::string &NeFile, std::string &exSamples, std::string &prefix, int &maxDeg, double &minIBD){
+    std::string &NeFile, std::string &exSamples, std::string &prefix, int &maxDeg, int &threads, double &minIBD){
     int i = 1;
     for(; i < argc; i++){
         char *token = argv[i];
@@ -35,6 +35,9 @@ void parse_command_line(int argc, char **argv, std::string &ibdFile, std::string
             i++; 
         }else if (strcmp(token, "-e") == 0){
             exSamples = argv[i+1];
+            i++;
+        }else if (strcmp(token, "-t") == 0){
+            threads = std::stoi(argv[i+1]);
             i++;
         }else{
             fprintf(stderr, "unrecognized token %s\n", token);

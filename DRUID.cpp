@@ -31,8 +31,9 @@ int main(int argc, char **argv){
     std::string prefix;
     std::string exSamples;
     int maxDeg = 11;
+    int threads = 1;
     double minIBD = 2.0;
-    parse_command_line(argc, argv, ibdFile, bimFile, NeFile, exSamples, prefix, maxDeg, minIBD);
+    parse_command_line(argc, argv, ibdFile, bimFile, NeFile, exSamples, prefix, maxDeg, threads, minIBD);
 
     std::string logFileName = prefix + ".log";
     FileOrGZ<FILE *> logFile;

@@ -424,6 +424,9 @@ void run_druid(Pedigree &pedigree,
                 ConnInfo con1;
                 grabCloseRelatives(u, con1, pedigree);
                 bool isSingleton1 = isSingleton(con1);
+                bool hasPC1 = false;
+                Vertex w1;
+                if (isSingleton1){std::tie(hasPC1, w1) = findUnpolarizedPC(u, pedigree);}
 		        std::unordered_set<Vertex> visited2;
                 //fprintf(stdout, "---------------------------s--------------------------------\n");
                 //fprintf(stdout, "con1:\n");
@@ -436,21 +439,39 @@ void run_druid(Pedigree &pedigree,
                     //printConnInfo(con2, pedigree);
                     // analyzing the two ConnInfo component
                     bool isSingleton2 = isSingleton(con2);
+                    bool hasPC2 = false;
+                    Vertex w2;
+                    if (isSingleton2){std::tie(hasPC2, w2) = findUnpolarizedPC(v, pedigree);}
                     if (isSingleton1 && isSingleton2){
                         visited1.insert(u);
                         visited2.insert(v);
-                        continue;
+                        if (hasPC1){
+                            auto pc = std::make_pair(u, w1);
+                            PCpairVSone(v, pc, allsegs, results, maxDeg);
+                            visited1.insert(w1);
+                        }
+                        if (hasPC2){
+                            auto pc = std::make_pair(v, w2);
+                            PCpairVSone(u, pc, allsegs, results, maxDeg);
+                            visited2.insert(w2);
+                        }
                     }
                     else if(isSingleton1 && !isSingleton2){
                         visited1.insert(u);
-                        oneVSpedigree(u, con2, visited2, allsegs, results, pedigree, bkg_sharing, tot_genome, maxDeg);
+                        if (!hasPC1){oneVSpedigree(u, con2, visited2, allsegs, results, pedigree, bkg_sharing, tot_genome, maxDeg);}
+                        else{
+                            auto pc = std::make_pair(u, w1);
+                            visited1.insert(w1);
+                            PCpairVSpedigree(pc, con2, visited2, allsegs, results, pedigree, bkg_sharing, tot_genome, maxDeg);
+                        }
                     }else if(!isSingleton1 && isSingleton2){
                         visited2.insert(v);
-                        oneVSpedigree(v, con1, visited1, allsegs, results, pedigree, bkg_sharing, tot_genome, maxDeg);
+                        if (!hasPC2){oneVSpedigree(v, con1, visited1, allsegs, results, pedigree, bkg_sharing, tot_genome, maxDeg);}
+                        else{
+                            auto pc = std::make_pair(v, w2);
+                            PCpairVSpedigree(pc, con1, visited1, allsegs, results, pedigree, bkg_sharing, tot_genome, maxDeg);
+                        }
                     }else{
-                        //fprintf(stdout, "pedigree vs. pedigree\n");
-                        //printConnInfo(con1, pedigree);
-                        //printConnInfo(con2, pedigree);
                         pedigreeVSpedigree(con1, con2, visited1, visited2, allsegs, snpmap, results, pedigree, bkg_sharing, tot_genome, maxDeg);
                     }
 
@@ -1589,17 +1610,17 @@ std::pair<bool, Vertex> polarizeUnpolarPC(Vertex v1, int d1, double k1, Vertex v
     // return (true, v1/v2) if v1, v2 is inferred to be the parent
     // return (false, 0) if neither satisfies the criterion
 
-    if (d1 != -1 && k1 > 0.0){
+    if (d1 != -1 && k1 > 0.0 && (0.75 - 0.025*d1)*k1 > k2){
         // test if v1 is the parent
-        if ((0.75 - 0.025*d1)*k1 > k2){return std::make_pair(true, v1);}
-    }else if (d2 != -1 && k2 > 0.0){
-        if ((0.75 - 0.025*d2)*k2 > k1){return std::make_pair(true, v2);}
+        return std::make_pair(true, v1);
+    }else if (d2 != -1 && k2 > 0.0 && (0.75 - 0.025*d2)*k2 > k1){
+        return std::make_pair(true, v2);
     }else{return std::make_pair(false, 0);}
 }
 
 void PCpairVSpedigree(const std::pair<Vertex, Vertex> &pc, const ConnInfo &con,
     std::unordered_set<Vertex> &visited, const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs,
-    std::map<std::pair<Vertex, Vertex>, int> &results,
+    std::map<std::pair<Vertex, Vertex>, int> &results, const Pedigree &pedigree,
     double bkg_sharing, double tot_genome, int maxDeg)
 {
     bool aunt11 = includeAunts(con.av1, con.fs, pc.first, allsegs);
@@ -1608,9 +1629,9 @@ void PCpairVSpedigree(const std::pair<Vertex, Vertex> &pc, const ConnInfo &con,
     bool aunt22 = includeAunts(con.av2, con.fs, pc.second, allsegs);
     bool aunt1 = aunt11 || aunt12;
     bool aunt2 = aunt21 || aunt22;
-    int index_aunt = -1;
-    if (aunt1 && !aunt2){index_aunt = 1;}
-    else if (!aunt1 && aunt2){index_aunt = 2;}
+    int index_av = -1;
+    if (aunt1 && !aunt2){index_av = 1;}
+    else if (!aunt1 && aunt2){index_av = 2;}
     else if (aunt1 && aunt2){
         double average11 = averageKinship(pc.first, con.av1, allsegs);
         double average12 = averageKinship(pc.second, con.av1, allsegs);
@@ -1618,14 +1639,13 @@ void PCpairVSpedigree(const std::pair<Vertex, Vertex> &pc, const ConnInfo &con,
         double average22 = averageKinship(pc.second, con.av2, allsegs);
         double average1 = std::max(average11, average12);
         double average2 = std::max(average21, average22);
-        index_aunt = average1 > average2 ? 1 : 2;
+        index_av = average1 > average2 ? 1 : 2;
     }
 
-
-    if (index_aunt == -1){
+    std::vector<Vertex> s1 {pc.first};
+    std::vector<Vertex> s2 {pc.second};
+    if (index_av == -1){
         // check if we can use full-sibs' parent
-        std::vector<Vertex> s1 {pc.first};
-        std::vector<Vertex> s2 {pc.second};
         int p2use = whichParent2Include(con.p, con.fs, s1, allsegs);
         if (p2use == -1){
             p2use = whichParent2Include(con.p, con.fs, s2, allsegs);
@@ -1634,6 +1654,7 @@ void PCpairVSpedigree(const std::pair<Vertex, Vertex> &pc, const ConnInfo &con,
         double k1, k2;
         if (p2use != -1){
             Vertex p = con.p[p2use];
+            visited.insert(p);
             auto it = results.find(make_pair_v(pc.first, p));
             d1 = it == results.end() ? -1 : results[make_pair_v(pc.first, p)];
             it = results.find(make_pair_v(pc.second, p));
@@ -1653,12 +1674,75 @@ void PCpairVSpedigree(const std::pair<Vertex, Vertex> &pc, const ConnInfo &con,
             d2 = getRelfromK(k2, maxDeg);
         }
 
-
-
-
-
+        std::pair<bool, Vertex> tuple = polarizeUnpolarPC(pc.first, d1, k1, pc.second, d2, k2);
+        if (!tuple.first){
+            oneVSpedigree(pc.first, con, visited, allsegs, results, pedigree, bkg_sharing, tot_genome, maxDeg);
+            oneVSpedigree(pc.second, con, visited, allsegs, results, pedigree, bkg_sharing, tot_genome, maxDeg);
+        }else{
+            Vertex p = tuple.second;
+            Vertex c = p == pc.first ? pc.second : pc.first;
+            int deg_pp = pc.first == p ? d1 : d2;
+            for(auto fs : con.fs){
+                results[make_pair_v(fs, p)] = resetRelationship(deg_pp, 1, maxDeg);
+                results[make_pair_v(fs, c)] = resetRelationship(deg_pp, 2, maxDeg);
+                visited.insert(fs);
+            }
+        }
     }else{
         // check if we can use full-sib's grandparent
+        const std::vector<Vertex> &av2use = index_av == 1 ? con.av1 : con.av2;
+        const std::vector<Vertex> &gp2check = index_av == 1 ? con.gp1 : con.gp2;
+        int index_gp = whichParent2Include(gp2check, av2use, s1, allsegs);
+        if (index_gp == -1){
+            index_gp = whichParent2Include(gp2check, av2use, s2, allsegs);
+        }
+        int d1, d2;
+        double k1, k2;
+        if (index_gp != -1){
+            Vertex gp = gp2check[index_gp];
+            visited.insert(gp);
+            auto it = results.find(make_pair_v(pc.first, gp));
+            d1 = it == results.end() ? -1 : results[make_pair_v(pc.first, gp)];
+            it = results.find(make_pair_v(pc.second, gp));
+            d2 = it == results.end() ? -1 : results[make_pair_v(pc.second, gp)];
+            auto it2 = allsegs.find(make_pair_v(pc.first, gp));
+            k1 = it2 == allsegs.end()? 0.0 : it2->second->kin;
+            it2 = allsegs.find(make_pair_v(pc.second, gp));
+            k2 = it2 == allsegs.end()? 0.0 : it2->second->kin;
+        }else{
+            // use reconstructed grandparents to calculate d1, d2, k1, k2
+            std::vector<Vertex> rhs;
+            std::for_each(con.fs.begin(), con.fs.end(), [&](Vertex v){rhs.push_back(v);});
+            std::for_each(av2use.begin(), av2use.end(), [&](Vertex v){rhs.push_back(v);});
+            double tg = getTg(av2use.size(), con.fs.size());
+            double tot_ibd1 = std::max(0.0, UnionIbdOverTwoSets(s1, rhs, allsegs) - calc_bkg_sharing(av2use.size(), con.fs.size(), bkg_sharing));
+            k1 = (tot_ibd1/(tot_genome*4.0))/tg;
+            d1 = getRelfromK(k1, maxDeg);
+            double tot_ibd2 = std::max(0.0, UnionIbdOverTwoSets(s2, rhs, allsegs) -calc_bkg_sharing(av2use.size(), con.fs.size(), bkg_sharing));
+            k2 = (tot_ibd2/(tot_genome*4.0))/tg;
+            d2 = getRelfromK(k2, maxDeg);
+        }
+
+        std::pair<bool, Vertex> tuple = polarizeUnpolarPC(pc.first, d1, k1, pc.second, d2, k2);
+        if (!tuple.first){
+            oneVSpedigree(pc.first, con, visited, allsegs, results, pedigree, bkg_sharing, tot_genome, maxDeg);
+            oneVSpedigree(pc.second, con, visited, allsegs, results, pedigree, bkg_sharing, tot_genome, maxDeg);
+        }else{
+            Vertex p = tuple.second;
+            Vertex c = p == pc.first ? pc.second : pc.first;
+            int deg_pvsgp = pc.first == p ? d1 : d2;
+            for(auto av : av2use){
+                results[make_pair_v(av, p)] = resetRelationship(deg_pvsgp, 1, maxDeg);
+                results[make_pair_v(av, c)] = resetRelationship(deg_pvsgp, 2, maxDeg);
+                visited.insert(av);
+            }
+            
+            for(auto fs : con.fs){
+                results[make_pair_v(fs, p)] = resetRelationship(deg_pvsgp, 2, maxDeg);
+                results[make_pair_v(fs, c)] = resetRelationship(deg_pvsgp, 3, maxDeg);
+                visited.insert(fs);
+            }
+        }
     }
     
 }

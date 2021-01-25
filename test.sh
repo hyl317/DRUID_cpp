@@ -22,6 +22,10 @@ fi
 #/usr/bin/time -v ./DRUID -i $prefix/safs.seg --bim $prefix/safs.bim --Ne $prefix/safs.ibdne-ped2.ne -o safs --max 10 
 
 
-# command to run on my simulated dataset using ukb
+# command to run on my simulated dataset using ukb (pedigree strucutre is the same as described in the DRUID paper)
 prefix="/fs/cbsubscb09/storage/yilei/simulate/DRUID_cpp"
-./DRUID -i $prefix/ped.seg --bim $prefix/ped.bim -o test --max 10 
+#./DRUID -i $prefix/ped.seg --bim $prefix/ped.bim -o test --max 10 
+
+# command to run on simulated pedigree to test unpolarized PC pairs
+# files are in the same directory as the above
+./DRUID -i $prefix/pcpair.seg --bim $prefix/ped.bim -o test --max 10

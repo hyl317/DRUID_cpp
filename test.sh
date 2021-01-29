@@ -24,8 +24,8 @@ fi
 
 # command to run on my simulated dataset using ukb (pedigree strucutre is the same as described in the DRUID paper)
 prefix="/fs/cbsubscb09/storage/yilei/simulate/DRUID_cpp"
-#./DRUID -i $prefix/ped.seg --bim $prefix/ped.bim -o test --max 10 
+./DRUID -i $prefix/ped.seg --bim $prefix/ped.bim -o test --max 10 -t 2
 
 # command to run on simulated pedigree to test unpolarized PC pairs
 # files are in the same directory as the above
-./DRUID -i $prefix/pcpair.seg --bim $prefix/ped.bim -o test --max 10
+#./DRUID -i $prefix/pcpair.seg --bim $prefix/ped.bim -o test --max 10

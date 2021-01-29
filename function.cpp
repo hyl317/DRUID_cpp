@@ -472,6 +472,8 @@ void run_druid(Pedigree &pedigree,
                             PCpairVSpedigree(pc, con1, visited1, allsegs, results, pedigree, bkg_sharing, tot_genome, maxDeg);
                         }
                     }else{
+                        //printConnInfo(con1, pedigree);
+                        //printConnInfo(con2, pedigree);
                         pedigreeVSpedigree(con1, con2, visited1, visited2, allsegs, snpmap, results, pedigree, bkg_sharing, tot_genome, maxDeg);
                     }
 
@@ -1151,7 +1153,8 @@ void pedigreeVSpedigree(const ConnInfo &con1, const ConnInfo &con2,
     double Tg2 = getTg(numAV2, numSib2);
     double k1 = (UnionIbdOverTwoSets(set1, set2, allsegs)/tot_genome)/(Tg1*Tg2);
     double bkg = calc_bkg_sharing(numAV1, numSib1, numAV2, numSib2, bkg_sharing);
-    //fprintf(stdout, "estimated IBD1 rate: %lf\n", k1);    
+    //fprintf(stdout, "estimated IBD1 rate: %lf\n", k1);
+    //fprintf(stdout, "estimated bkg sharing rate: %lf\n", bkg/tot_genome);    
     int deg = getRelfromK(std::max(0.0, (k1 - bkg/tot_genome)/4.0), maxDeg);
     if (deg >= 0 && deg <= 3){
         // need to account for IBD2 in the grandparent/parent generation
@@ -1168,7 +1171,11 @@ void pedigreeVSpedigree(const ConnInfo &con1, const ConnInfo &con2,
         t2 = 1.0 - pow(0.5, right.size());
         k2 = (IBD0011(left, right, snpmap, allsegs)/tot_genome)/(t1*t2);
         k1 -= k2;
-        deg = getRelfromK(std::max(0.0, k1/4.0 + k2/2.0 - bkg/4.0), maxDeg);
+        //printConnInfo(con1, pedigree);
+        //printConnInfo(con2, pedigree);
+        //fprintf(stdout, "k1=%lf, k2=%lf, bkg_sharing=%lf\n", k1, k2, bkg);
+        deg = getRelfromK(std::max(0.0, k1/4.0 + k2/2.0 - bkg/(tot_genome*4.0)), maxDeg);
+        //fprintf(stdout, "deg is %d\n", deg);
     }
 
     if (p1_chosen){visited1.insert(p1);}

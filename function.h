@@ -182,7 +182,7 @@ inline double getTg(int numAV, int numSib){
 
 inline double calc_bkg_sharing(int numAV, int numSibs, double bkg_sharing)
 {
-    return 2.0*bkg_sharing*(1.0 - pow(0.5, numAV) + pow(0.5, numAV+1)*(1.0 - pow(0.5, numSibs+1))) + bkg_sharing*(1.0 - pow(0.5, numSibs)); 
+    return 2.0*bkg_sharing*(1.0 - pow(0.5, numAV) + pow(0.5, numAV+1)*(1.0 - pow(0.5, numSibs))) + bkg_sharing*(1.0 - pow(0.5, numSibs)); 
 }
 
 inline double calc_bkg_sharing(int numAV1, int numSib1, int numAV2, int numSib2, double bkg_sharing)

@@ -99,7 +99,7 @@ int main(int argc, char **argv){
         //fprintf(stdout, "%d: %s\n", *vi, vertex_property_map[*vi].c_str());
     }
 
-    std::map<std::pair<Vertex, Vertex>, Pair*> allsegs_v;
+    PairIBD allsegs_v;
     for(auto it = allsegs.begin(); it != allsegs.end(); it++){
         std::pair<std::string, std::string> p = it->first;
         assert(id2Vertex.find(p.first) != id2Vertex.end());
@@ -223,7 +223,6 @@ int main(int argc, char **argv){
 
     // writing output, finishing up
     logFile.printf("Writitng to output file: %s\n", std::string(prefix + ".DRUID").c_str());
-    //logFile.printf("\tNumber of edges: %d\n", boost::num_edges(pedigree));
     write_output(results, prefix, pedigree, twins);
     logFile.close();
 

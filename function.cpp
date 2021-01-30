@@ -15,8 +15,7 @@ int getRelfromK(double K, int maxDeg){
     else{return -1;}
 }
 
-void build_graph(Pedigree &pedigree, 
-    const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs,
+void build_graph(Pedigree &pedigree, const PairIBD &allsegs,
     const std::map<std::string, std::map<int, double>*> &snpmap,
     std::map<std::pair<Vertex, Vertex>, int> &results,
     std::map<Vertex, Vertex> &twins,
@@ -303,8 +302,7 @@ void build_graph(Pedigree &pedigree,
 
 }
 
-bool is_avunc(const Vertex fs1, const Vertex fs2, const Vertex avunc, 
-        const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs, 
+bool is_avunc(const Vertex fs1, const Vertex fs2, const Vertex avunc, const PairIBD &allsegs, 
         const std::map<std::string, std::map<int, double>*> &snpmap)
 {
     auto fs_p = allsegs.find(make_pair_v(fs1, fs2));
@@ -363,8 +361,7 @@ bool is_avunc(const Vertex fs1, const Vertex fs2, const Vertex avunc,
 }
 
 bool checkAvunc(const std::vector<Vertex> &full_sibs, const Vertex avunc, 
-    const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs,
-    const std::map<std::string, std::map<int, double>*> &snpmap)
+    const PairIBD &allsegs, const std::map<std::string, std::map<int, double>*> &snpmap)
 {
     // check if avunc is the avunc of the given set of full_sibs
     int num_sibs = full_sibs.size();
@@ -376,12 +373,10 @@ bool checkAvunc(const std::vector<Vertex> &full_sibs, const Vertex avunc,
     return false;
 }
 
-void run_druid(Pedigree &pedigree, 
-    const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs,
+void run_druid(Pedigree &pedigree, const PairIBD &allsegs,
     const std::map<std::string, std::map<int, double>*> &snpmap,
     std::map<std::pair<Vertex, Vertex>, int> &results,
-    FileOrGZ<FILE *> &logFile,
-    double tot_genome, double bkg_sharing, int maxDeg)
+    FileOrGZ<FILE *> &logFile, double tot_genome, double bkg_sharing, int maxDeg)
 {   
     logFile.printf("Start the primary DRUID algorithm...\n");
     std::vector<int> components(boost::num_vertices(pedigree));
@@ -622,8 +617,7 @@ bool isSingleton(const ConnInfo &con)
     con.fs.size() == 1);
 }
 
-double UnionIbdOverTwoSets(const std::vector<Vertex> &set1, const std::vector<Vertex> &set2,
-    const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs)
+double UnionIbdOverTwoSets(const std::vector<Vertex> &set1, const std::vector<Vertex> &set2, const PairIBD &allsegs)
 {
     ibdMapType currUnion;
     for(auto s1 : set1){
@@ -671,8 +665,7 @@ double UnionIbdOverTwoSets(const std::vector<Vertex> &set1, const std::vector<Ve
     return tot_length;
 }
 
-double averageKinship(Vertex u, const std::vector<Vertex> &set, 
-    const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs)
+double averageKinship(Vertex u, const std::vector<Vertex> &set, const PairIBD &allsegs)
 {   
     assert(!set.empty());
     double average = 0.0;
@@ -683,8 +676,7 @@ double averageKinship(Vertex u, const std::vector<Vertex> &set,
     return average/((double) set.size());
 }
 
-double averageKinshipBetweenTwoSets(const std::vector<Vertex> &set1, const std::vector<Vertex> &set2,
-    const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs)
+double averageKinshipBetweenTwoSets(const std::vector<Vertex> &set1, const std::vector<Vertex> &set2, const PairIBD &allsegs)
 {
     assert(!set1.empty());
     assert(!set2.empty());
@@ -699,8 +691,7 @@ double averageKinshipBetweenTwoSets(const std::vector<Vertex> &set1, const std::
 }
 
 void inferFStoSingleDistantRelative(Vertex d, const std::vector<Vertex> &fs,
-    std::unordered_set<Vertex> &visited,
-    const std::map<std::pair<Vertex, Vertex>, Pair*> allsegs, 
+    std::unordered_set<Vertex> &visited, const PairIBD allsegs, 
     std::map<std::pair<Vertex, Vertex>, int> &results,
     double bkg_sharing, double tot_genome, int maxDeg)
 {
@@ -719,8 +710,7 @@ void inferFStoSingleDistantRelative(Vertex d, const std::vector<Vertex> &fs,
 }
 
 void oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &visited,
-    const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs,
-    std::map<std::pair<Vertex, Vertex>, int> &results, 
+    const PairIBD &allsegs, std::map<std::pair<Vertex, Vertex>, int> &results, 
     const Pedigree &pedigree, double bkg_sharing, double tot_genome, int maxDeg)
 {   
     if(con.av1.empty() && con.av2.empty() && con.p.empty()){
@@ -843,8 +833,7 @@ void oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &vi
 }
 
 
-bool includeAunts(const std::vector<Vertex> &aunts, const std::vector<Vertex> &sibs,
-    Vertex d, const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs)
+bool includeAunts(const std::vector<Vertex> &aunts, const std::vector<Vertex> &sibs, Vertex d, const PairIBD &allsegs)
 {
     // include the set of aunts if max k{a,d} > min k{s,d}
     // this is used for oneVSpedigree
@@ -874,8 +863,7 @@ bool includeAunts(const std::vector<Vertex> &aunts, const std::vector<Vertex> &s
     return max_kad > min_ksd;
 }
 
-double minKinshipBetweenTwoSibset(const std::vector<Vertex> &sib1, 
-    const std::vector<Vertex> &sib2, const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs)
+double minKinshipBetweenTwoSibset(const std::vector<Vertex> &sib1, const std::vector<Vertex> &sib2, const PairIBD &allsegs)
 {
     // find min k_{s1, s2}
     double min_ks1s2 = 1.0;
@@ -891,7 +879,7 @@ double minKinshipBetweenTwoSibset(const std::vector<Vertex> &sib1,
 }
 
 double maxKinshipBetweenTwoSibset(const std::vector<Vertex> &sib1,
-    const std::vector<Vertex> &sib2, const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs)
+    const std::vector<Vertex> &sib2, const PairIBD &allsegs)
 {
     // find max k_{s1, s2}
     double max_ks1s2 = 0.0;
@@ -905,7 +893,7 @@ double maxKinshipBetweenTwoSibset(const std::vector<Vertex> &sib1,
 }
 
 bool includeAunts(const std::vector<Vertex> &aunts, const std::vector<Vertex> &sibs,
-    double min_ks1s2, const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs)
+    double min_ks1s2, const PairIBD &allsegs)
 {
     double max_kas2 = 0.0;
     for(Vertex a : aunts){
@@ -919,8 +907,7 @@ bool includeAunts(const std::vector<Vertex> &aunts, const std::vector<Vertex> &s
 }
 
 int whichAV2Include(const std::vector<Vertex> &av11, const std::vector<Vertex> &av12, 
-    const std::vector<Vertex> &sib1, const std::vector<Vertex> &sib2,
-    const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs)
+    const std::vector<Vertex> &sib1, const std::vector<Vertex> &sib2, const PairIBD &allsegs)
 {
     if (av11.empty() && av12.empty()){return -1;}
     else{
@@ -944,8 +931,7 @@ int whichAV2Include(const std::vector<Vertex> &av11, const std::vector<Vertex> &
     }
 }
 
-bool includeParent(Vertex p, double max_ks1s2, 
-    const std::vector<Vertex> &sibs, const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs)
+bool includeParent(Vertex p, double max_ks1s2, const std::vector<Vertex> &sibs, const PairIBD &allsegs)
 {  
     // return true if max k_{p, s2} > max_ks1s2
     for(Vertex s2 : sibs){
@@ -957,8 +943,7 @@ bool includeParent(Vertex p, double max_ks1s2,
 
 
 int whichParent2Include(const std::vector<Vertex> &parents, 
-    const std::vector<Vertex> &sib1, const std::vector<Vertex> &sib2,
-    const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs)
+    const std::vector<Vertex> &sib1, const std::vector<Vertex> &sib2, const PairIBD &allsegs)
 {
     // parents is the parents of sib1
     if (parents.size() == 0){return -1;}
@@ -988,8 +973,7 @@ void updateSibsetByTheirParent(int index,
     const std::vector<Vertex> &fs, const std::vector<Vertex> &parents, 
     const ConnInfo &con2,
     std::unordered_set<Vertex> &visited1, std::unordered_set<Vertex> &visited2,
-    const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs,
-    std::map<std::pair<Vertex, Vertex>, int> &results,
+    const PairIBD &allsegs, std::map<std::pair<Vertex, Vertex>, int> &results,
     const Pedigree &pedigree, double bkg_sharing, double tot_genome, int maxDeg)
 {
     //fprintf(stdout, "updateSibsetByTheirParent\n");
@@ -1048,7 +1032,7 @@ void updateSibsetByTheirParent(int index,
 
 void pedigreeVSpedigree(const ConnInfo &con1, const ConnInfo &con2,
     std::unordered_set<Vertex> &visited1, std::unordered_set<Vertex> &visited2,
-    const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs,
+    const PairIBD &allsegs,
     const std::map<std::string, std::map<int, double>*> &snpmap,
     std::map<std::pair<Vertex, Vertex>, int> &results,
     const Pedigree &pedigree, double bkg_sharing, double tot_genome, int maxDeg)
@@ -1231,8 +1215,7 @@ void pedigreeVSpedigree(const ConnInfo &con1, const ConnInfo &con2,
 void updateSibsetByTheirGrandParent(int index_gp, int index_av,
     const ConnInfo &con1, const ConnInfo &con2,
     std::unordered_set<Vertex> &visited1, std::unordered_set<Vertex> &visited2,
-    const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs,
-    std::map<std::pair<Vertex, Vertex>, int> &results,
+    const PairIBD &allsegs, std::map<std::pair<Vertex, Vertex>, int> &results,
     const Pedigree &pedigree, double bkg_sharing, double tot_genome, int maxDeg)
 {
     const std::vector<Vertex> &avset2use = index_av == 1 ? con1.av1 : con1.av2;
@@ -1312,8 +1295,7 @@ void updateSibsetByTheirGrandParent(int index_gp, int index_av,
 }
 
 double IBD0011(const std::vector<Vertex> &set1, const std::vector<Vertex> &set2,
-    const std::map<std::string, std::map<int, double>*> &snpmap,
-    const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs)
+    const std::map<std::string, std::map<int, double>*> &snpmap, const PairIBD &allsegs)
 {
     ibdMapType currUnion; // stores IBD0011 region for each of the chromosome
     int numSib1 = set1.size();
@@ -1584,8 +1566,7 @@ void setRelationshipBetweenOneSampleAndSet(Vertex u, const std::vector<Vertex> &
     }
 }
 
-void PCpairVSone(Vertex d, const std::pair<Vertex, Vertex> &pc, 
-    const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs,
+void PCpairVSone(Vertex d, const std::pair<Vertex, Vertex> &pc, const PairIBD &allsegs,
     std::map<std::pair<Vertex, Vertex>, int> &results, int maxDeg)
 {
     // deal with an unpolarized PC pair with a single putative distant relative
@@ -1626,10 +1607,18 @@ std::pair<bool, Vertex> polarizeUnpolarPC(Vertex v1, int d1, double k1, Vertex v
 }
 
 void PCpairVSpedigree(const std::pair<Vertex, Vertex> &pc, const ConnInfo &con,
-    std::unordered_set<Vertex> &visited, const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs,
+    std::unordered_set<Vertex> &visited, const PairIBD &allsegs,
     std::map<std::pair<Vertex, Vertex>, int> &results, const Pedigree &pedigree,
     double bkg_sharing, double tot_genome, int maxDeg)
 {
+    // test
+    fprintf(stdout, "PCpairVSpedigree\n");
+    auto vertex_property_map = boost::get(&sample::id, pedigree);
+    fprintf(stdout, "%s\n", vertex_property_map[pc.first].c_str());
+    fprintf(stdout, "%s\n", vertex_property_map[pc.second].c_str());
+    // end of test
+
+
     bool aunt11 = includeAunts(con.av1, con.fs, pc.first, allsegs);
     bool aunt12 = includeAunts(con.av1, con.fs, pc.second, allsegs);
     bool aunt21 = includeAunts(con.av2, con.fs, pc.first, allsegs);

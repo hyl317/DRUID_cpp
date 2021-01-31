@@ -2,10 +2,10 @@ Running DRUID...
 Reading bimFile: /fs/cbsubscb09/storage/yilei/simulate/DRUID_cpp/ped.bim
 	Number of chromosomes: 22
 	total genome length: 3537.507599cM
-Reading IBD segment file: /fs/cbsubscb09/storage/yilei/simulate/DRUID_cpp/ped.seg
-	Finished reading segments from 328 samples for analysis
+Reading IBD segment file: /fs/cbsubscb09/storage/yilei/simulate/DRUID_cpp/pcpair.seg
+	Finished reading segments from 143 samples for analysis
 Maximum Relatedness Reported: degree 10
 Identifying clusters of close relatives...
-Start the primary DRUID algorithm with 2 threads...
-	number of connected components: 58
+Start the primary DRUID algorithm...
+	number of connected components: 44
 Writitng to output file: test.DRUID

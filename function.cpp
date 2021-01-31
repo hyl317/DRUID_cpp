@@ -401,17 +401,18 @@ void run_druid(Pedigree &pedigree, const PairIBD &allsegs,
     }
 
     // test
-    //  for(int i = 0; i < num_components; i++){
-    //      ConnInfo con;
-    //      Vertex u = (*comp_map[i])[0];
-    //      grabCloseRelatives(u, con, pedigree);
-    //      if(!isSingleton(con)){printConnInfo(con, pedigree);}
-    //  }
+     for(int i = 0; i < num_components; i++){
+         ConnInfo con;
+         Vertex u = (*comp_map[i])[0];
+         grabCloseRelatives(u, con, pedigree);
+         if(!isSingleton(con)){printConnInfo(con, pedigree);}
+     }
     //  return;
     //end of test
 
     for(int i = 0; i < num_components; i++){
         for(int j = i+1; j < num_components; j++){
+            std::cout << "analyzing " << i << " and " << j << std::endl;
             std::unordered_set<Vertex> visited1;
             //std::unordered_set<Vertex> visited2;
             for(Vertex u : *comp_map[i]){
@@ -691,7 +692,7 @@ double averageKinshipBetweenTwoSets(const std::vector<Vertex> &set1, const std::
 }
 
 void inferFStoSingleDistantRelative(Vertex d, const std::vector<Vertex> &fs,
-    std::unordered_set<Vertex> &visited, const PairIBD allsegs, 
+    std::unordered_set<Vertex> &visited, const PairIBD &allsegs, 
     std::map<std::pair<Vertex, Vertex>, int> &results,
     double bkg_sharing, double tot_genome, int maxDeg)
 {

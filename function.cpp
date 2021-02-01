@@ -38,7 +38,6 @@ void build_graph(Pedigree &pedigree, const PairIBD &allsegs,
             double K = std::max((ibd1/4.0 + ibd2/2.0 - bkg_sharing/4.0)/tot_genome, 0.0);
             p.kin = K;
             int deg = getRelfromK(K, maxDeg);
-            //std::cout << id1 << "\t" << id2 << "\t" << K << "\t" << deg << std::endl;
             results.insert(std::make_pair(std::make_pair(*vi1, *vi2), deg));
             // store first and second degree pairs' sample names for later use
             if (deg == 1 || deg == 2){
@@ -47,7 +46,6 @@ void build_graph(Pedigree &pedigree, const PairIBD &allsegs,
                     if (ibd2/tot_genome >= FULL_SIB_MIN_IBD2){
                         boost::add_edge(*vi1, *vi2, pedigree);
                         pedigree[boost::edge(*vi1, *vi2, pedigree).first].rel = FS;
-                        //std::cout << id1 << " and " << id2  << " is inferred to be FS" << std::endl;
                     }else{
                         isFS = false;
                         pcs.insert(std::make_pair(*vi1, *vi2));
@@ -401,20 +399,18 @@ void run_druid(Pedigree &pedigree, const PairIBD &allsegs,
     }
 
     // test
-     for(int i = 0; i < num_components; i++){
-         ConnInfo con;
-         Vertex u = (*comp_map[i])[0];
-         grabCloseRelatives(u, con, pedigree);
-         if(!isSingleton(con)){printConnInfo(con, pedigree);}
-     }
-    //  return;
+    //for(int i = 0; i < num_components; i++){
+    //    ConnInfo con;
+    //    Vertex u = (*comp_map[i])[0];
+    //    grabCloseRelatives(u, con, pedigree);
+    //    if(!isSingleton(con)){printConnInfo(con, pedigree);}
+    //}
+    //return;
     //end of test
 
     for(int i = 0; i < num_components; i++){
         for(int j = i+1; j < num_components; j++){
-            std::cout << "analyzing " << i << " and " << j << std::endl;
             std::unordered_set<Vertex> visited1;
-            //std::unordered_set<Vertex> visited2;
             for(Vertex u : *comp_map[i]){
                 if (visited1.find(u) != visited1.end()){continue;}
                 ConnInfo con1;

@@ -1,28 +1,10 @@
 #include <string>
+#include <chrono>
 #include "tools.h"
 #include "function.h"
 #include "function_t.h"
 
 int main(int argc, char **argv){
-
-    // test interval union
-    // ibdSegments set1;
-    // set1.push_back(std::make_pair(0.079263, 17.0939));
-    // set1.push_back(std::make_pair(36.9644, 53.8065));
-    // set1.push_back(std::make_pair(54.3264, 80.3289));
-    // set1.push_back(std::make_pair(83.5778, 197.2790));
-
-    // ibdSegments set2;
-    // set2.push_back(std::make_pair(36.9644, 53.8065));
-    // set2.push_back(std::make_pair(54.3264, 83.6337));
-    // set2.push_back(std::make_pair(194.4780, 203.9290));
-
-    // ibdSegments set3;
-    // interval_union(set1, set2, set3);
-    // std::for_each(set3.begin(), set3.end(), [&](const std::pair<double, double> interval){fprintf(stdout, "[%lf, %lf]\n", interval.first, interval.second);});
-    // return 0;
-
-    //end of test
 
     if (argc <= 1){
         print_help();
@@ -51,6 +33,7 @@ int main(int argc, char **argv){
     Eigen::VectorXd chrLens = readBimFile(bimFile, snpmap, logFile);
 
     logFile.printf("Reading IBD segment file: %s\n", ibdFile.c_str());
+    auto t1 = std::chrono::high_resolution_clock::now();
     auto allsegs = std::map<std::pair<std::string, std::string>, Pair*>();
     std::set<std::string> inds;
     if (exSamples.length() == 0){
@@ -60,7 +43,9 @@ int main(int argc, char **argv){
         readIBDFile_ex(ibdFile, allsegs, inds, exSamples, logFile);
     }
     int numSample = inds.size();
-    logFile.printf("\tFinished reading segments from %d samples for analysis\n", numSample);
+    auto t2 = std::chrono::high_resolution_clock::now();
+    auto d = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+    logFile.printf("\tFinished reading segments from %d samples for analysis, takes %lfs\n", numSample, d/1e6);
 
     double bkg_sharing = 0.0;
     if (NeFile.length() > 0){
@@ -77,6 +62,7 @@ int main(int argc, char **argv){
 
     logFile.printf("Maximum Relatedness Reported: degree %d\n", maxDeg);
     logFile.printf("Identifying clusters of close relatives...\n");
+    t1 = std::chrono::high_resolution_clock::now();
     // make a graph and add vertices properties to it
     Pedigree pedigree = Pedigree(numSample);
     auto pair = boost::vertices(pedigree);
@@ -91,34 +77,41 @@ int main(int argc, char **argv){
     assert(it2 == inds.end());
 
     auto vertex_property_map = boost::get(&sample::id, pedigree);
-    // make a map from sampleID(string) to Vertex
-    std::map<std::string, Vertex> id2Vertex;
+    // make a map from sampleID(std::string) to Vertex
+    std::unordered_map<std::string, Vertex> id2Vertex(numSample);
     boost::graph_traits<Pedigree>::vertex_iterator vi, vi_end;
     for(boost::tie(vi, vi_end) = boost::vertices(pedigree); vi != vi_end; vi++){
         id2Vertex.insert(std::make_pair(vertex_property_map[*vi], *vi));
         //fprintf(stdout, "%d: %s\n", *vi, vertex_property_map[*vi].c_str());
     }
 
-    PairIBD allsegs_v;
+    unsigned long long int numPairs = numSample*(numSample-1)/2;
+    PairIBD allsegs_v(numPairs);
     for(auto it = allsegs.begin(); it != allsegs.end(); it++){
         std::pair<std::string, std::string> p = it->first;
-        assert(id2Vertex.find(p.first) != id2Vertex.end());
-        assert(id2Vertex.find(p.second) != id2Vertex.end());
-        Vertex u = id2Vertex[p.first];
-        Vertex v = id2Vertex[p.second];
-        allsegs_v[make_pair_v(u,v)] = it->second;
+        auto it1 = id2Vertex.find(p.first);
+        auto it2 = id2Vertex.find(p.second);
+        assert(it1 != id2Vertex.end());
+        assert(it2 != id2Vertex.end());
+        allsegs_v.insert(std::make_pair(make_pair_v(it1->second, it2->second), it->second));
     }
 
     // add edges between close relatives
     std::map<std::pair<Vertex, Vertex>, int> results;
     std::map<Vertex, Vertex> twins;
     build_graph(pedigree, allsegs_v, snpmap, results, twins, chrLens.sum(), bkg_sharing, maxDeg);
+    t2 = std::chrono::high_resolution_clock::now();
+    d = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+    logFile.printf("Building graph done, takes %lfs\n", d/1e6);
+    t1 = std::chrono::high_resolution_clock::now();
     if (threads == 1){
         run_druid(pedigree, allsegs_v, snpmap, results, logFile, chrLens.sum(), bkg_sharing, maxDeg);
     }else{
         run_druid_t(pedigree, allsegs_v, snpmap, results, threads, logFile, chrLens.sum(), bkg_sharing, maxDeg);
     }
-
+    t2 = std::chrono::high_resolution_clock::now();
+    d = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+    logFile.printf("Anaylzing pairwise connected components done, takes %lfs\n", d/1e6);
     // test UnionIBDover2sets
     // std::vector<Vertex> set1;
     // set1.push_back(id2Vertex["ped2_D3_1_g3-b1-i1"]);
@@ -133,17 +126,6 @@ int main(int argc, char **argv){
     // set2.push_back(id2Vertex["ped2_D3_1_g3-b8-i1"]);
     // set2.push_back(id2Vertex["ped2_D3_1_g3-b9-i1"]);
     // set2.push_back(id2Vertex["ped2_D3_1_g3-b10-i1"]);
-
-    // double tmp = UnionIbdOverTwoSets(set1, set2, allsegs_v);
-    // fprintf(stdout, "combined ibd1 length: %lf\n", tmp);
-    // double t1 = getTg(0, 5);
-    // double t2 = getTg(0, 5);
-    // double k1 = (tmp/chrLens.sum())/(t1*t2);
-    // fprintf(stdout, "k1 is %lf\n", k1);
-    // double k2 = (IBD0011(set1, set2, snpmap, allsegs_v)/chrLens.sum())/(t1*t2);
-    // fprintf(stdout, "k2 is %lf\n", k2);
-    // int deg = getRelfromK(k1/4.0, maxDeg);
-    // fprintf(stdout, "Unioned IBD length for ped2_D3: %lf, estimated deg is %d\n", tmp, deg);
 
 
     // for (int i = 0; i < 100; i++){
@@ -223,7 +205,11 @@ int main(int argc, char **argv){
 
     // writing output, finishing up
     logFile.printf("Writitng to output file: %s\n", std::string(prefix + ".DRUID").c_str());
+    t1 = std::chrono::high_resolution_clock::now();
     write_output(results, prefix, pedigree, twins);
+    t2 = std::chrono::high_resolution_clock::now();
+    d = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+    logFile.printf("Writing to output done, takes %lfs\n", d/1e6);
     logFile.close();
 
     // clean up

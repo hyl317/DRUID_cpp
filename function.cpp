@@ -2,6 +2,7 @@
 #include <memory>
 #include <numeric>
 #include <queue>
+#include <chrono>
 #include "function.h"
 #include "constants.h"
 #include <boost/graph/connected_components.hpp>
@@ -15,70 +16,79 @@ int getRelfromK(double K, int maxDeg){
     else{return -1;}
 }
 
-void build_graph(Pedigree &pedigree, const PairIBD &allsegs,
-    const std::map<std::string, std::map<int, double>*> &snpmap,
+void build_graph(Pedigree &pedigree, const std::map<std::pair<std::string, std::string>, Pair*> &allsegs_s,
+    PairIBD &allsegs, const std::map<std::string, std::map<int, double>*> &snpmap,
     std::map<std::pair<Vertex, Vertex>, int> &results,
     std::map<Vertex, Vertex> &twins,
     double tot_genome, double bkg_sharing, int maxDeg)
-{
-    boost::graph_traits<Pedigree>::vertex_iterator vi1, vi_end1;
-    boost::graph_traits<Pedigree>::vertex_iterator vi2, vi_end2;
+{   
+    auto vertex_property_map = boost::get(&sample::id, pedigree);
+    // make a map from sampleID(std::string) to Vertex
+    std::map<std::string, Vertex> id2Vertex;
+    boost::graph_traits<Pedigree>::vertex_iterator vi, vi_end;
+    for(boost::tie(vi, vi_end) = boost::vertices(pedigree); vi != vi_end; vi++){
+        id2Vertex.insert(std::make_pair(vertex_property_map[*vi], *vi));
+    }
+
+    auto t1 = std::chrono::high_resolution_clock::now();
     std::set<std::pair<Vertex, Vertex>> pcs;
     std::map<Vertex, std::shared_ptr<std::unordered_set<Vertex>>> fs_degs;
     std::map<Vertex, std::shared_ptr<std::unordered_set<Vertex>>> second_degs;
-    for(boost::tie(vi1, vi_end1) = boost::vertices(pedigree); vi1 != vi_end1; vi1++){
-        for(boost::tie(vi2, vi_end2) = boost::vertices(pedigree); vi2 != vi_end2; vi2++){
-            if (*vi1 >= *vi2){continue;} // avoid analyzing pairs twice
-            auto it = allsegs.find(make_pair_v(*vi1, *vi2)); 
-            // some pairs may not have ibd segments, so need to check here
-            if(it == allsegs.end()){continue;};
-            Pair &p = *(it->second);
-            double ibd1 = p.ibd1_tot;
-            double ibd2 = p.ibd2_tot;
-            double K = std::max((ibd1/4.0 + ibd2/2.0 - bkg_sharing/4.0)/tot_genome, 0.0);
-            p.kin = K;
-            int deg = getRelfromK(K, maxDeg);
-            results.insert(std::make_pair(std::make_pair(*vi1, *vi2), deg));
-            // store first and second degree pairs' sample names for later use
-            if (deg == 1 || deg == 2){
-                bool isFS = true;
-                if (deg == 1){
-                    if (ibd2/tot_genome >= FULL_SIB_MIN_IBD2){
-                        boost::add_edge(*vi1, *vi2, pedigree);
-                        pedigree[boost::edge(*vi1, *vi2, pedigree).first].rel = FS;
-                    }else{
-                        isFS = false;
-                        pcs.insert(std::make_pair(*vi1, *vi2));
-                    }
-                }else if(deg == 2){
-                    // check for possibility of DC, if so, no need to consider this pair for AV
-                    // therefore no need to add them to second_deg
-                    if (ibd2/tot_genome >= DC_MIN_IBD2){continue;}
+    for(auto it = allsegs_s.begin(); it != allsegs_s.end(); it++){
+        std::string s1, s2;
+        boost::tie(s1, s2) = it->first;
+        auto tmp1 = id2Vertex.find(s1);
+        auto tmp2 = id2Vertex.find(s2);
+        assert(tmp1 != id2Vertex.end() && tmp2 != id2Vertex.end());
+        Vertex u = tmp1->second;
+        Vertex v = tmp2->second;
+        Pair &p = *(it->second);
+        double ibd1 = p.ibd1_tot;
+        double ibd2 = p.ibd2_tot;
+        double K = std::max((ibd1/4.0 + ibd2/2.0 - bkg_sharing/4.0)/tot_genome, 0.0);
+        p.kin = K;
+        int deg = getRelfromK(K, maxDeg);
+        results.insert(std::make_pair(make_pair_v(u, v), deg));
+        allsegs.insert(std::make_pair(make_pair_v(u, v), it->second));
+        // store first and second degree pairs' sample names for later use
+        if (deg == 1 || deg == 2){
+            bool isFS = true;
+            if (deg == 1){
+                if (ibd2/tot_genome >= FULL_SIB_MIN_IBD2){
+                    boost::add_edge(u, v, pedigree);
+                    pedigree[boost::edge(u, v, pedigree).first].rel = FS;
+                }else{
+                    isFS = false;
+                    pcs.insert(std::make_pair(u, v));
                 }
-
-                auto &map = deg == 1? fs_degs : second_degs;
-                if (isFS || deg == 2){
-                    if(map.find(*vi1) == map.end()){
-                        map[*vi1] = std::unique_ptr<std::unordered_set<Vertex>>(new std::unordered_set<Vertex>());
-                    }
-                    map[*vi1]->insert(*vi2);
-                    if(map.find(*vi2) == map.end()){
-                        map[*vi2] = std::unique_ptr<std::unordered_set<Vertex>>(new std::unordered_set<Vertex>());
-                    }
-                    map[*vi2]->insert(*vi1);
-                }
-                
-            }else if (deg == 0){
-                twins.insert(std::make_pair(*vi1, *vi2));
+            }else if(deg == 2){
+                // check for possibility of DC, if so, no need to consider this pair for AV
+                // therefore no need to add them to second_deg
+                if (ibd2/tot_genome >= DC_MIN_IBD2){continue;}
             }
-        }
-    }
 
+            auto &map = deg == 1? fs_degs : second_degs;
+            if (isFS || deg == 2){
+                if(map.find(u) == map.end()){
+                    map[u] = std::unique_ptr<std::unordered_set<Vertex>>(new std::unordered_set<Vertex>());
+                }
+                map[u]->insert(v);
+                if(map.find(v) == map.end()){
+                    map[v] = std::unique_ptr<std::unordered_set<Vertex>>(new std::unordered_set<Vertex>());
+                }
+                map[v]->insert(u);
+            }
+        }else if (deg == 0){twins.insert(std::make_pair(u, v));}
+    }
+    auto t2 = std::chrono::high_resolution_clock::now();
+    auto d = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+    fprintf(stdout, "settingn up allsegs_v takes %lf\n", d/1e6);
+
+    t1 = std::chrono::high_resolution_clock::now();
     // add missing full-sib edges (and break incorrect ones)
     std::vector<int> components(boost::num_vertices(pedigree));
     int num_components = boost::connected_components(pedigree, &components[0]);
     std::map<int, std::shared_ptr<std::vector<Vertex>>> connected_comp_map;
-    boost::graph_traits<Pedigree>::vertex_iterator vi, vi_end;
     for(boost::tie(vi, vi_end) = boost::vertices(pedigree); vi != vi_end; vi++){
         int comp_index = components[*vi];
         if (connected_comp_map.find(comp_index) == connected_comp_map.end()){
@@ -135,8 +145,11 @@ void build_graph(Pedigree &pedigree, const PairIBD &allsegs,
             }
         }
     }
+    t2 = std::chrono::high_resolution_clock::now();
+    d = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+    fprintf(stdout, "setting up FS edges takes %lf\n", d/1e6);
 
-    //auto vertex_property_map = boost::get(&sample::id, pedigree);
+    t1 = std::chrono::high_resolution_clock::now();
     // add PC edges
     for(auto pc: pcs){
         boost::add_edge(pc.first, pc.second, pedigree);
@@ -231,8 +244,12 @@ void build_graph(Pedigree &pedigree, const PairIBD &allsegs,
         // }
         assert(!(v1IsParent && v2IsParent));
     }
+    t2 = std::chrono::high_resolution_clock::now();
+    d = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+    fprintf(stdout, "setting up Parent-offspring edges takes %lf\n", d/1e6);
 
     // construct second-degree edges
+    t1 = std::chrono::high_resolution_clock::now();
     std::unordered_set<Vertex> checked_sibs;
     for(auto it = second_degs.begin(); it != second_degs.end(); it++){
         // here we assume that it->first is the younger generation and test if it forms AV relationship with its putative sescond relaatives
@@ -281,6 +298,9 @@ void build_graph(Pedigree &pedigree, const PairIBD &allsegs,
         }
 
     }
+    t2 = std::chrono::high_resolution_clock::now();
+    d = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+    fprintf(stdout, "setting up AV edges takes %lf\n", d/1e6);
 
     // remove all edges coming out of one of the twins
     // don't want to remove its vertex cuz otherwise it would mess up with vertex index of all others
@@ -1595,10 +1615,10 @@ std::pair<bool, Vertex> polarizeUnpolarPC(Vertex v1, int d1, double k1, Vertex v
     // return (true, v1/v2) if v1, v2 is inferred to be the parent
     // return (false, 0) if neither satisfies the criterion
 
-    if (d1 != -1 && k1 > 0.0 && (0.75 - 0.025*d1)*k1 > k2){
+    if (d1 != -1 && k1 > 0.0 && (0.75 - 0.025*d1)*k1 > k2 && k1 < MAX_PARENT_CHILD_KINSHIP_RATIO*k2){
         // test if v1 is the parent
         return std::make_pair(true, v1);
-    }else if (d2 != -1 && k2 > 0.0 && (0.75 - 0.025*d2)*k2 > k1){
+    }else if (d2 != -1 && k2 > 0.0 && (0.75 - 0.025*d2)*k2 > k1 && k2 < MAX_PARENT_CHILD_KINSHIP_RATIO*k1){
         return std::make_pair(true, v2);
     }else{return std::make_pair(false, 0);}
 }
@@ -1609,12 +1629,11 @@ void PCpairVSpedigree(const std::pair<Vertex, Vertex> &pc, const ConnInfo &con,
     double bkg_sharing, double tot_genome, int maxDeg)
 {
     // test
-    fprintf(stdout, "PCpairVSpedigree\n");
-    auto vertex_property_map = boost::get(&sample::id, pedigree);
-    fprintf(stdout, "%s\n", vertex_property_map[pc.first].c_str());
-    fprintf(stdout, "%s\n", vertex_property_map[pc.second].c_str());
+    //fprintf(stdout, "PCpairVSpedigree\n");
+    //auto vertex_property_map = boost::get(&sample::id, pedigree);
+    //fprintf(stdout, "%s\n", vertex_property_map[pc.first].c_str());
+    //fprintf(stdout, "%s\n", vertex_property_map[pc.second].c_str());
     // end of test
-
 
     bool aunt11 = includeAunts(con.av1, con.fs, pc.first, allsegs);
     bool aunt12 = includeAunts(con.av1, con.fs, pc.second, allsegs);

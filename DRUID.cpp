@@ -76,30 +76,11 @@ int main(int argc, char **argv){
     }
     assert(it2 == inds.end());
 
-    auto vertex_property_map = boost::get(&sample::id, pedigree);
-    // make a map from sampleID(std::string) to Vertex
-    std::unordered_map<std::string, Vertex> id2Vertex(numSample);
-    boost::graph_traits<Pedigree>::vertex_iterator vi, vi_end;
-    for(boost::tie(vi, vi_end) = boost::vertices(pedigree); vi != vi_end; vi++){
-        id2Vertex.insert(std::make_pair(vertex_property_map[*vi], *vi));
-        //fprintf(stdout, "%d: %s\n", *vi, vertex_property_map[*vi].c_str());
-    }
-
-    unsigned long long int numPairs = numSample*(numSample-1)/2;
-    PairIBD allsegs_v(numPairs);
-    for(auto it = allsegs.begin(); it != allsegs.end(); it++){
-        std::pair<std::string, std::string> p = it->first;
-        auto it1 = id2Vertex.find(p.first);
-        auto it2 = id2Vertex.find(p.second);
-        assert(it1 != id2Vertex.end());
-        assert(it2 != id2Vertex.end());
-        allsegs_v.insert(std::make_pair(make_pair_v(it1->second, it2->second), it->second));
-    }
-
+    PairIBD allsegs_v(allsegs.size());
     // add edges between close relatives
     std::map<std::pair<Vertex, Vertex>, int> results;
     std::map<Vertex, Vertex> twins;
-    build_graph(pedigree, allsegs_v, snpmap, results, twins, chrLens.sum(), bkg_sharing, maxDeg);
+    build_graph(pedigree, allsegs, allsegs_v, snpmap, results, twins, chrLens.sum(), bkg_sharing, maxDeg);
     t2 = std::chrono::high_resolution_clock::now();
     d = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
     logFile.printf("Building graph done, takes %lfs\n", d/1e6);

@@ -50,8 +50,8 @@ inline std::pair<Vertex, Vertex> make_pair_v
 
 int getRelfromK(double K, int maxDeg);
 
-void build_graph(Pedigree &pedigree, 
-    const PairIBD &allsegs, const std::map<std::string, std::map<int, double>*> &snpmap,
+void build_graph(Pedigree &pedigree, const std::map<std::pair<std::string, std::string>, Pair*> &allsegs_s,
+    PairIBD &allsegs, const std::map<std::string, std::map<int, double>*> &snpmap,
     std::map<std::pair<Vertex, Vertex>, int> &results,
     std::map<Vertex, Vertex> &twins, double tot_genome, double bkg_sharing, int maxDeg);
 

@@ -73,13 +73,12 @@ Eigen::VectorXd readBimFile(const std::string &bimFile,
   std::map<std::string, std::map<int, double>*> &snpmap, FileOrGZ<FILE *> &logFile);
 
 void readIBDFile(const std::string &ibdFile, 
-  std::map<std::pair<std::string, std::string>, Pair*> &allsegs, 
-  std::set<std::string> &inds);
+  std::map<std::pair<unsigned long, unsigned long>, Pair*> &allsegs,
+  std::map<std::string, unsigned long> &id2Vertex);
 
 void readIBDFile_ex(const std::string &ibdFile, 
-  std::map<std::pair<std::string, std::string>, Pair*> &allsegs, 
-  std::set<std::string> &inds, const std::string &exSamples,
-  FileOrGZ<FILE *> &logFile);
+  std::map<std::pair<unsigned long, unsigned long>, Pair*> &allsegs,
+  std::map<std::string, unsigned long> &id2Vertex, const std::string &exSamples, FileOrGZ<FILE *> &logFile);
 
 double calc_bkg_sharing(const std::string &NeFile, const Eigen::VectorXd &chrLens, const double &minIBD);
 void cumsum_eigen_colvector(const Eigen::VectorXd &source, Eigen::VectorXd &dest);
@@ -94,6 +93,12 @@ inline std::pair<std::string, std::string> make_pair_str
 (const std::string &s1, const std::string &s2){
   return s1 < s2? std::make_pair(s1, s2) : std::make_pair(s2, s1);
 }
+
+inline std::pair<unsigned long, unsigned long> make_pair_v
+(unsigned long u, unsigned long v){
+  return u < v? std::make_pair(u, v) : std::make_pair(v, u);
+}
+
 
 // this function finds the intersection of intervls in set1 and set2
 // and push_back the intersection in set3

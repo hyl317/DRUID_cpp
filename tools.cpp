@@ -87,16 +87,17 @@ Eigen::VectorXd readBimFile(const std::string &bimFile,
 }
 
 void readIBDFile(const std::string &ibdFile, 
-  std::map<std::pair<std::string, std::string>, Pair*> &allsegs, 
-  std::set<std::string> &inds){
-
+  std::map<std::pair<unsigned long, unsigned long>, Pair*> &allsegs,
+  std::map<std::string, unsigned long> &id2Vertex)
+{
   FileOrGZ<gzFile> in;
   bool ret = in.open(ibdFile.c_str(), "r");
   if (!ret){
     fprintf(stderr, "cannot open %s\n", ibdFile.c_str());
     exit(1);
   }
-
+  
+  unsigned long count = 0;
   while(in.getline() >= 0){
     char id1_[50];
     char id2_[50];
@@ -110,9 +111,21 @@ void readIBDFile(const std::string &ibdFile,
     std::string chr = chr_;
     std::string ibd12 = ibd12_;
     double segLen = end - start;
-    std::pair<std::string, std::string> pair = make_pair_str(id1, id2);
-    inds.insert(id1);
-    inds.insert(id2);
+
+    auto it1 = id2Vertex.find(id1);
+    auto it2 = id2Vertex.find(id2);
+    unsigned long u, v;
+    if (it1 == id2Vertex.end()){
+      u = count++;
+      id2Vertex.insert(std::make_pair(id1, u));
+    }else{u = it1->second;}
+
+    if (it2 == id2Vertex.end()){
+      v = count++;
+      id2Vertex.insert(std::make_pair(id2, v));
+    }else{v = it2->second;}
+
+    std::pair<unsigned long, unsigned long> pair = make_pair_v(u, v);
     if (allsegs.find(pair) == allsegs.end()){
       allsegs.insert(std::make_pair(pair, new Pair()));
     }
@@ -138,8 +151,8 @@ void readIBDFile(const std::string &ibdFile,
 
 
 void readIBDFile_ex(const std::string &ibdFile, 
-  std::map<std::pair<std::string, std::string>, Pair*> &allsegs, 
-  std::set<std::string> &inds, const std::string &exSamples, FileOrGZ<FILE *> &logFile){
+  std::map<std::pair<unsigned long, unsigned long>, Pair*> &allsegs,
+  std::map<std::string, unsigned long> &id2Vertex, const std::string &exSamples, FileOrGZ<FILE *> &logFile){
   
   // first read in samples to exclude
   FileOrGZ<FILE *> in_ex;
@@ -164,6 +177,7 @@ void readIBDFile_ex(const std::string &ibdFile,
     exit(1);
   }
 
+  unsigned long count = 0;
   while(in.getline() >= 0){
     char id1_[50];
     char id2_[50];
@@ -175,12 +189,23 @@ void readIBDFile_ex(const std::string &ibdFile,
     std::string id1 = id1_;
     std::string id2 = id2_;
     if (ex.find(id1) != ex.end() || ex.find(id2) != ex.end()){continue;}
+    auto it1 = id2Vertex.find(id1);
+    auto it2 = id2Vertex.find(id2);
+    unsigned long u, v;
+    if (it1 == id2Vertex.end()){
+      u = count++;
+      id2Vertex.insert(std::make_pair(id1, u));
+    }else{u = it1->second;}
+
+    if (it2 == id2Vertex.end()){
+      v = count++;
+      id2Vertex.insert(std::make_pair(id2, v));
+    }else{v = it2->second;}
+
     std::string chr = chr_;
     std::string ibd12 = ibd12_;
     double segLen = end - start;
-    std::pair<std::string, std::string> pair = make_pair_str(id1, id2);
-    inds.insert(id1);
-    inds.insert(id2);
+    std::pair<unsigned long, unsigned long> pair = make_pair_v(u, v);
     if (allsegs.find(pair) == allsegs.end()){
       allsegs.insert(std::make_pair(pair, new Pair()));
     }
@@ -203,15 +228,6 @@ void readIBDFile_ex(const std::string &ibdFile,
   }
 
 }
-
-
-
-
-
-
-
-
-
 
 double calc_bkg_sharing(const std::string &NeFile, const Eigen::VectorXd &chrLens, const double &minIBD){
   // read the Ne File first; Don't know G yet, so need to store in a vector first

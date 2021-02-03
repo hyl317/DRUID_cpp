@@ -16,32 +16,26 @@ int getRelfromK(double K, int maxDeg){
     else{return -1;}
 }
 
-void build_graph(Pedigree &pedigree, const std::map<std::pair<std::string, std::string>, Pair*> &allsegs_s,
-    PairIBD &allsegs, const std::map<std::string, std::map<int, double>*> &snpmap,
-    std::map<std::pair<Vertex, Vertex>, int> &results,
-    std::map<Vertex, Vertex> &twins,
+void build_graph(Pedigree &pedigree, PairIBD &allsegs, 
+    const std::map<std::string, std::map<int, double>*> &snpmap,
+    std::map<std::pair<Vertex, Vertex>, int> &results, std::map<Vertex, Vertex> &twins,
     double tot_genome, double bkg_sharing, int maxDeg)
 {   
-    auto vertex_property_map = boost::get(&sample::id, pedigree);
-    // make a map from sampleID(std::string) to Vertex
-    std::map<std::string, Vertex> id2Vertex;
-    boost::graph_traits<Pedigree>::vertex_iterator vi, vi_end;
-    for(boost::tie(vi, vi_end) = boost::vertices(pedigree); vi != vi_end; vi++){
-        id2Vertex.insert(std::make_pair(vertex_property_map[*vi], *vi));
-    }
+    // auto vertex_property_map = boost::get(&sample::id, pedigree);
+    // // make a map from sampleID(std::string) to Vertex
+    // std::map<std::string, Vertex> id2Vertex;
+    // boost::graph_traits<Pedigree>::vertex_iterator vi, vi_end;
+    // for(boost::tie(vi, vi_end) = boost::vertices(pedigree); vi != vi_end; vi++){
+    //     id2Vertex.insert(std::make_pair(vertex_property_map[*vi], *vi));
+    // }
 
     auto t1 = std::chrono::high_resolution_clock::now();
     std::set<std::pair<Vertex, Vertex>> pcs;
     std::map<Vertex, std::shared_ptr<std::unordered_set<Vertex>>> fs_degs;
     std::map<Vertex, std::shared_ptr<std::unordered_set<Vertex>>> second_degs;
-    for(auto it = allsegs_s.begin(); it != allsegs_s.end(); it++){
-        std::string s1, s2;
-        boost::tie(s1, s2) = it->first;
-        auto tmp1 = id2Vertex.find(s1);
-        auto tmp2 = id2Vertex.find(s2);
-        assert(tmp1 != id2Vertex.end() && tmp2 != id2Vertex.end());
-        Vertex u = tmp1->second;
-        Vertex v = tmp2->second;
+    for(auto it = allsegs.begin(); it != allsegs.end(); it++){
+        Vertex u, v;
+        boost::tie(u, v) = it->first;
         Pair &p = *(it->second);
         double ibd1 = p.ibd1_tot;
         double ibd2 = p.ibd2_tot;
@@ -89,6 +83,7 @@ void build_graph(Pedigree &pedigree, const std::map<std::pair<std::string, std::
     std::vector<int> components(boost::num_vertices(pedigree));
     int num_components = boost::connected_components(pedigree, &components[0]);
     std::map<int, std::shared_ptr<std::vector<Vertex>>> connected_comp_map;
+    boost::graph_traits<Pedigree>::vertex_iterator vi, vi_end;
     for(boost::tie(vi, vi_end) = boost::vertices(pedigree); vi != vi_end; vi++){
         int comp_index = components[*vi];
         if (connected_comp_map.find(comp_index) == connected_comp_map.end()){

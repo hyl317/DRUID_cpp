@@ -34,15 +34,15 @@ int main(int argc, char **argv){
 
     logFile.printf("Reading IBD segment file: %s\n", ibdFile.c_str());
     auto t1 = std::chrono::high_resolution_clock::now();
-    auto allsegs = std::map<std::pair<std::string, std::string>, Pair*>();
-    std::set<std::string> inds;
+    PairIBD allsegs;
+    std::map<std::string, Vertex> id2Vertex;
     if (exSamples.length() == 0){
-        readIBDFile(ibdFile, allsegs, inds);
+        readIBDFile(ibdFile, allsegs, id2Vertex);
     }else{
         // exclude some samples
-        readIBDFile_ex(ibdFile, allsegs, inds, exSamples, logFile);
+        readIBDFile_ex(ibdFile, allsegs, id2Vertex, exSamples, logFile);
     }
-    int numSample = inds.size();
+    int numSample = id2Vertex.size();
     auto t2 = std::chrono::high_resolution_clock::now();
     auto d = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
     logFile.printf("\tFinished reading segments from %d samples for analysis, takes %lfs\n", numSample, d/1e6);
@@ -65,30 +65,22 @@ int main(int argc, char **argv){
     t1 = std::chrono::high_resolution_clock::now();
     // make a graph and add vertices properties to it
     Pedigree pedigree = Pedigree(numSample);
-    auto pair = boost::vertices(pedigree);
-    Pedigree::vertex_descriptor v_head = *(pair.first);
-    Pedigree::vertex_descriptor v_tail = *(pair.second);
-    auto it2 = inds.begin();
-    for(auto it = v_head; it != v_tail; it++){
-        assert(it2 != inds.end());
-        pedigree[it].id = *it2;
-        it2++;
+    for(auto it = id2Vertex.begin(); it != id2Vertex.end(); it++){
+        pedigree[it->second].id = it->first;
     }
-    assert(it2 == inds.end());
 
-    PairIBD allsegs_v;
     // add edges between close relatives
     std::map<std::pair<Vertex, Vertex>, int> results;
     std::map<Vertex, Vertex> twins;
-    build_graph(pedigree, allsegs, allsegs_v, snpmap, results, twins, chrLens.sum(), bkg_sharing, maxDeg);
+    build_graph(pedigree, allsegs, snpmap, results, twins, chrLens.sum(), bkg_sharing, maxDeg);
     t2 = std::chrono::high_resolution_clock::now();
     d = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
     logFile.printf("Building graph done, takes %lfs\n", d/1e6);
     t1 = std::chrono::high_resolution_clock::now();
     if (threads == 1){
-        run_druid(pedigree, allsegs_v, snpmap, results, logFile, chrLens.sum(), bkg_sharing, maxDeg);
+        run_druid(pedigree, allsegs, snpmap, results, logFile, chrLens.sum(), bkg_sharing, maxDeg);
     }else{
-        run_druid_t(pedigree, allsegs_v, snpmap, results, threads, logFile, chrLens.sum(), bkg_sharing, maxDeg);
+        run_druid_t(pedigree, allsegs, snpmap, results, threads, logFile, chrLens.sum(), bkg_sharing, maxDeg);
     }
     t2 = std::chrono::high_resolution_clock::now();
     d = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();

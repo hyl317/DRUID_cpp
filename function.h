@@ -41,7 +41,8 @@ struct HashPair{
     {return std::hash<Vertex>()(key.first) ^ std::hash<Vertex>()(key.second);}
 };
 
-using PairIBD = std::unordered_map<std::pair<Vertex, Vertex>, Pair*, HashPair, EqPair>;
+using PairIBD = std::map<std::pair<Vertex, Vertex>, Pair*>;
+//using PairIBD = std::unordered_map<std::pair<Vertex, Vertex>, Pair*, HashPair, EqPair>;
 
 inline std::pair<Vertex, Vertex> make_pair_v
 (Vertex u, Vertex v){

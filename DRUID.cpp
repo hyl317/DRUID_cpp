@@ -76,7 +76,7 @@ int main(int argc, char **argv){
     }
     assert(it2 == inds.end());
 
-    PairIBD allsegs_v(allsegs.size());
+    PairIBD allsegs_v;
     // add edges between close relatives
     std::map<std::pair<Vertex, Vertex>, int> results;
     std::map<Vertex, Vertex> twins;

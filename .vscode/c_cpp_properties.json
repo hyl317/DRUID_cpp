@@ -3,8 +3,6 @@
         {
             "name": "Linux",
             "includePath": [
-                "C:\\eigen-3.3.9\\eigen-3.3.9\\*",
-                "C:\\boost_1_75_0\\boost_1_75_0\\*",
                 "${workspaceFolder}/**",
                 "/fs/cbsubscb09/storage/yilei/tools/lib/boost_1_66_0/",
                 "/fs/cbsubscb09/storage/yilei/tools/lib/eigen-3.3.7/**"

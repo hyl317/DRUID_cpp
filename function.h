@@ -5,6 +5,7 @@
 #include <string>
 #include <math.h>
 #include <boost/graph/adjacency_list.hpp>
+#include <boost/pool/poolfwd.hpp>
 #include "tools.h"
 
 

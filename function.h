@@ -138,6 +138,19 @@ void setRelationshipBetweenTwoSets(const std::vector<Vertex> &set1, const std::v
 void setRelationshipBetweenOneSampleAndSet(Vertex u, const std::vector<Vertex> &set,
     std::map<std::pair<Vertex, Vertex>, int> &results, int deg);
 
+inline void setDeg(Vertex u, Vertex v, int deg, std::map<std::pair<Vertex, Vertex>, int> &results)
+{
+    if (deg == -1){return;}
+    else{results[make_pair_v(u, v)] = deg;}
+}
+
+inline int getDeg(Vertex u, Vertex v, const std::map<std::pair<Vertex, Vertex>, int> &results)
+{
+    auto it = results.find(make_pair_v(u, v));
+    if (it == results.end()){return -1;}
+    else{return it->second;}
+}
+
 double averageKinship(Vertex u, const std::vector<Vertex> &set, 
     const std::map<std::pair<Vertex, Vertex>, Pair*> &allsegs);
 

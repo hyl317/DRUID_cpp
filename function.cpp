@@ -33,7 +33,8 @@ void build_graph(Pedigree &pedigree, PairIBD &allsegs,
         double K = std::max((ibd1/4.0 + ibd2/2.0 - bkg_sharing/4.0)/tot_genome, 0.0);
         p.kin = K;
         int deg = getRelfromK(K, maxDeg);
-        results.insert(std::make_pair(make_pair_v(u, v), deg));
+        //results.insert(std::make_pair(make_pair_v(u, v), deg));
+        setDeg(u, v, deg, results);
         // store first and second degree pairs' sample names for later use
         if (deg == 1 || deg == 2){
             bool isFS = true;
@@ -801,7 +802,8 @@ void inferFStoSingleDistantRelative(Vertex d, const std::vector<Vertex> &fs,
     double K = ((unionLength/tot_genome)/Tp)/4.0;
     int deg = resetRelationship(getRelfromK(K, maxDeg), 1, maxDeg);
     for(Vertex v : fs){
-        results[make_pair_v(d, v)] = deg;
+        //results[make_pair_v(d, v)] = deg;
+        setDeg(d, v, deg, results);
         visited.insert(v);
     }
 }
@@ -825,7 +827,8 @@ void oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &vi
             if (it != allsegs.end() && it->second->kin > maxK){
                 int deg = resetRelationship(getRelfromK(it->second->kin, maxDeg), 1, maxDeg);
                 for(Vertex v : con.fs){
-                    results[make_pair_v(u,v)] = deg;
+                    //results[make_pair_v(u,v)] = deg;
+                    setDeg(u, v, deg, results);
                     visited.insert(v);
                 }
                 visited.insert(con.p[0]);
@@ -839,7 +842,8 @@ void oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &vi
             if (index != -1){
                 int deg = resetRelationship(getRelfromK(allsegs.find(make_pair_v(con.p[index], u))->second->kin, maxDeg), 1, maxDeg);
                 for(Vertex v : con.fs){
-                    results[make_pair_v(u, v)] = deg;
+                    //results[make_pair_v(u, v)] = deg;
+                    setDeg(u, v, deg, results);
                     visited.insert(v);
                 }
                 visited.insert(con.p[index]);
@@ -879,11 +883,13 @@ void oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &vi
                 int deg_av = resetRelationship(deg_gp, 1, maxDeg);
                 int deg_fs = resetRelationship(deg_gp, 2, maxDeg);
                 for(Vertex a : av2use){
-                    results[make_pair_v(a, u)] = deg_av;
+                    //results[make_pair_v(a, u)] = deg_av;
+                    setDeg(a, u, deg_av, results);
                     visited.insert(a);
                 }
                 for(Vertex fs : con.fs){
-                    results[make_pair_v(fs, u)] = deg_fs;
+                    //results[make_pair_v(fs, u)] = deg_fs;
+                    setDeg(fs, u, deg_fs, results);
                     visited.insert(fs);
                 }
                 visited.insert(gp2check[index_gp]);
@@ -903,12 +909,14 @@ void oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &vi
                 int deg_gp = getRelfromK(K, maxDeg);
                 int deg_av = resetRelationship(deg_gp, 1, maxDeg);
                 for(Vertex a : av2use){
-                    results[make_pair_v(a, u)] = deg_av;
+                    //results[make_pair_v(a, u)] = deg_av;
+                    setDeg(a, u, deg_av, results);
                     visited.insert(a);
                 }
                 int deg_fs = resetRelationship(deg_gp, 2, maxDeg);
                 for(Vertex fs : con.fs){
-                    results[make_pair_v(fs, u)] = deg_fs;
+                    //results[make_pair_v(fs, u)] = deg_fs;
+                    setDeg(fs, u, deg_fs, results);
                     visited.insert(fs);
                 }
             }
@@ -916,7 +924,8 @@ void oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &vi
             // if we have parents of this sibling set, set the parent that belong to this parent to be of the same degree as AV set
             for(Vertex p : con.p){
                 if(isFS2Everyone(p, av2use, pedigree)){
-                    results[make_pair_v(p, u)] = results[make_pair_v(av2use[0], u)];
+                    //results[make_pair_v(p, u)] = results[make_pair_v(av2use[0], u)];
+                    setDeg(p, u, getDeg(av2use[0], u, results), results);
                     visited.insert(p);
                 }
             }
@@ -1081,7 +1090,8 @@ void updateSibsetByTheirParent(int index,
     // update fs's relationship to con2
     if (!con2.gp1.empty()){
         for(Vertex gp : con2.gp1){
-            int base_deg = results[make_pair_v(p2use, gp)];
+            //int base_deg = results[make_pair_v(p2use, gp)];
+            int base_deg = getDeg(p2use, gp, results);
             int reset_deg = resetRelationship(base_deg, 1, maxDeg);
             setRelationshipBetweenOneSampleAndSet(gp, fs, results, reset_deg);
         }
@@ -1089,7 +1099,8 @@ void updateSibsetByTheirParent(int index,
 
     if (!con2.gp2.empty()){
         for(Vertex gp : con2.gp2){
-            int base_deg = results[make_pair_v(p2use, gp)];
+            //int base_deg = results[make_pair_v(p2use, gp)];
+            int base_deg = getDeg(p2use, gp, results);
             int reset_deg = resetRelationship(base_deg, 1, maxDeg);
             setRelationshipBetweenOneSampleAndSet(gp, fs, results, reset_deg);
         }
@@ -1097,7 +1108,8 @@ void updateSibsetByTheirParent(int index,
 
     if (!con2.av1.empty()){
         for(Vertex av : con2.av1){
-            int base_deg = results[make_pair_v(p2use, av)];
+            //int base_deg = results[make_pair_v(p2use, av)];
+            int base_deg = getDeg(p2use, av, results);
             int reset_deg = resetRelationship(base_deg, 1, maxDeg);
             setRelationshipBetweenOneSampleAndSet(av, fs, results, reset_deg);
         }
@@ -1105,7 +1117,8 @@ void updateSibsetByTheirParent(int index,
 
     if (!con2.av2.empty()){
         for(Vertex av : con2.av2){
-            int base_deg = results[make_pair_v(p2use, av)];
+            //int base_deg = results[make_pair_v(p2use, av)];
+            int base_deg = getDeg(p2use, av, results);
             int reset_deg = resetRelationship(base_deg, 1, maxDeg);
             setRelationshipBetweenOneSampleAndSet(av, fs, results, reset_deg);
         }
@@ -1113,14 +1126,16 @@ void updateSibsetByTheirParent(int index,
 
     if (!con2.p.empty()){
         for(Vertex p : con2.p){
-            int base_deg = results[make_pair_v(p2use, p)];
+            //int base_deg = results[make_pair_v(p2use, p)];
+            int base_deg = getDeg(p2use, p, results);
             int reset_deg = resetRelationship(base_deg, 1, maxDeg);
             setRelationshipBetweenOneSampleAndSet(p, fs, results, reset_deg);
         }
     }
 
     for(Vertex sib2 : con2.fs){
-        int base_deg = results[make_pair_v(p2use, sib2)];
+        //int base_deg = results[make_pair_v(p2use, sib2)];
+        int base_deg = getDeg(p2use, sib2, results);
         int reset_deg = resetRelationship(base_deg, 1, maxDeg);
         setRelationshipBetweenOneSampleAndSet(sib2, fs, results, reset_deg);
     }
@@ -1166,7 +1181,6 @@ void pedigreeVSpedigree(const ConnInfo &con1, const ConnInfo &con2,
             }
         }
 
-        //fprintf(stdout, "size of the aunt/uncle set being chosen: %d\n", numAV1);
         std::for_each(av2use.begin(), av2use.end(), [&](const Vertex a){visited1.insert(a);});
         // check if we can use grandparents
         const std::vector<Vertex> &gp2use = index_av1 == 1 ? con1.gp1 : con1.gp2;
@@ -1252,11 +1266,13 @@ void pedigreeVSpedigree(const ConnInfo &con1, const ConnInfo &con2,
         t2 = 1.0 - pow(0.5, right.size());
         k2 = (IBD0011(left, right, snpmap, allsegs)/tot_genome)/(t1*t2);
         k1 -= k2;
-        //printConnInfo(con1, pedigree);
-        //printConnInfo(con2, pedigree);
-        //fprintf(stdout, "k1=%lf, k2=%lf, bkg_sharing=%lf\n", k1, k2, bkg);
+        fprintf(stdout, "old deg is %d\n", deg);
+        printConnInfo(con1, pedigree);
+        printConnInfo(con2, pedigree);
+        fprintf(stdout, "k1=%lf, k2=%lf, bkg_sharing=%lf\n", k1, k2, bkg);
         deg = getRelfromK(std::max(0.0, k1/4.0 + k2/2.0 - bkg/(tot_genome*4.0)), maxDeg);
-        //fprintf(stdout, "deg is %d\n", deg);
+        //deg = getRelfromK(k1/4.0 + k2/2.0, maxDeg);
+        fprintf(stdout, "updated deg is %d\n\n\n", deg);
     }
 
     if (p1_chosen){visited1.insert(p1);}
@@ -1281,7 +1297,10 @@ void pedigreeVSpedigree(const ConnInfo &con1, const ConnInfo &con2,
             setRelationshipBetweenOneSampleAndSet(p2, con1.fs, results, deg_av2fs);
             setRelationshipBetweenOneSampleAndSet(p2, av2use1, results, deg_av2av);
         }
-        if (p1_chosen && p2_chosen){results[make_pair_v(p1, p2)] = deg_av2av;}
+        if (p1_chosen && p2_chosen){
+            //results[make_pair_v(p1, p2)] = deg_av2av;
+            setDeg(p1, p2, deg_av2av, results);
+        }
 
     }else if (index_av1 != -1 && index_av2 == -1){
         // the inferred deg is between pedigree 1's gp to pedigree 2's parents
@@ -1333,59 +1352,83 @@ void updateSibsetByTheirGrandParent(int index_gp, int index_av,
     if (useP){visited1.insert(p);}
     if (!con2.gp1.empty()){
         for(Vertex gp : con2.gp1){
-            int base_deg = results[make_pair_v(gp2use, gp)];
+            //int base_deg = results[make_pair_v(gp2use, gp)];
+            int base_deg = getDeg(gp2use, gp, results);
             int deg2av = resetRelationship(base_deg, 1, maxDeg);
             setRelationshipBetweenOneSampleAndSet(gp, avset2use, results, deg2av);
-            if (useP){results[make_pair_v(p, gp)] = deg2av;}
+            if (useP){
+                //results[make_pair_v(p, gp)] = deg2av;
+                setDeg(p, gp, deg2av, results);
+            }
             setRelationshipBetweenOneSampleAndSet(gp, con1.fs, results, resetRelationship(base_deg, 2, maxDeg));
         }
     }
 
     if (!con2.gp2.empty()){
         for(Vertex gp : con2.gp2){
-            int base_deg = results[make_pair_v(gp2use, gp)];
+            //int base_deg = results[make_pair_v(gp2use, gp)];
+            int base_deg = getDeg(gp2use, gp, results);
             int deg2av = resetRelationship(base_deg, 1, maxDeg);
             setRelationshipBetweenOneSampleAndSet(gp, avset2use, results, deg2av);
-            if (useP){results[make_pair_v(p, gp)] = deg2av;}
+            if (useP){
+                //results[make_pair_v(p, gp)] = deg2av;
+                setDeg(p, gp, deg2av, results);
+            }
             setRelationshipBetweenOneSampleAndSet(gp, con1.fs, results, resetRelationship(base_deg, 2, maxDeg));
         }
     }
 
     if (!con2.av1.empty()){
         for(Vertex av : con2.av1){
-            int base_deg = results[make_pair_v(gp2use, av)];
+            //int base_deg = results[make_pair_v(gp2use, av)];
+            int base_deg = getDeg(gp2use, av, results);
             int deg2av = resetRelationship(base_deg, 1, maxDeg);
             setRelationshipBetweenOneSampleAndSet(av, avset2use, results, deg2av);
-            if (useP){results[make_pair_v(p, av)] = deg2av;}
+            if (useP){
+                //results[make_pair_v(p, av)] = deg2av;
+                setDeg(p, av, deg2av, results);
+            }
             setRelationshipBetweenOneSampleAndSet(av, con1.fs, results, resetRelationship(base_deg, 2, maxDeg));
         }
     }
 
     if (!con2.av2.empty()){
         for(Vertex av : con2.av2){
-            int base_deg = results[make_pair_v(gp2use, av)];
+            //int base_deg = results[make_pair_v(gp2use, av)];
+            int base_deg = getDeg(gp2use, av, results);
             int deg2av = resetRelationship(base_deg, 1, maxDeg);
             setRelationshipBetweenOneSampleAndSet(av, avset2use, results, deg2av);
-            if (useP){results[make_pair_v(p, av)] = deg2av;}
+            if (useP){
+                //results[make_pair_v(p, av)] = deg2av;
+                setDeg(p, av, deg2av, results);
+            }
             setRelationshipBetweenOneSampleAndSet(av, con1.fs, results, resetRelationship(base_deg, 2, maxDeg));
         }
     }
 
     if (!con2.p.empty()){
         for(Vertex _p : con2.p){
-            int base_deg = results[make_pair_v(gp2use, _p)];
+            //int base_deg = results[make_pair_v(gp2use, _p)];
+            int base_deg = getDeg(gp2use, _p, results);
             int deg2av = resetRelationship(base_deg, 1, maxDeg);
             setRelationshipBetweenOneSampleAndSet(_p, avset2use, results, deg2av);
-            if (useP){results[make_pair_v(p, _p)] = deg2av;}
+            if (useP){
+                //results[make_pair_v(p, _p)] = deg2av;
+                setDeg(p, _p, deg2av, results);
+            }
             setRelationshipBetweenOneSampleAndSet(_p, con1.fs, results, resetRelationship(base_deg, 2, maxDeg));
         }
     }
 
     for(Vertex sib2 : con2.fs){
-        int base_deg = results[make_pair_v(gp2use, sib2)];
+        //int base_deg = results[make_pair_v(gp2use, sib2)];
+        int base_deg = getDeg(gp2use, sib2, results);
         int deg2av = resetRelationship(base_deg, 1, maxDeg);
         setRelationshipBetweenOneSampleAndSet(sib2, avset2use, results, deg2av);
-        if (useP){results[make_pair_v(p, sib2)] = deg2av;}
+        if (useP){
+            //results[make_pair_v(p, sib2)] = deg2av;
+            setDeg(p, sib2, deg2av, results);
+        }
         setRelationshipBetweenOneSampleAndSet(sib2, con1.fs, results, resetRelationship(base_deg, 2, maxDeg));
     }
 
@@ -1532,7 +1575,7 @@ void printConnInfo(const ConnInfo &con, const Pedigree &pedigree)
         }
     }
 
-    fprintf(stdout, "\n\n");
+    fprintf(stdout, "\n");
 
 }
 
@@ -1649,7 +1692,8 @@ void setRelationshipBetweenTwoSets(const std::vector<Vertex> &set1, const std::v
     if (set1.empty() || set2.empty()){return;}
     for(Vertex u : set1){
         for(Vertex v : set2){
-            results[make_pair_v(u, v)] = deg;
+            //results[make_pair_v(u, v)] = deg;
+            setDeg(u, v, deg, results);
         }
     }
 }
@@ -1659,7 +1703,8 @@ void setRelationshipBetweenOneSampleAndSet(Vertex u, const std::vector<Vertex> &
 {   
     if (set.empty()){return;}
     for(Vertex v : set){
-        results[make_pair_v(u, v)] = deg;
+        //results[make_pair_v(u, v)] = deg;
+        setDeg(u, v, deg, results);
     }
 }
 
@@ -1680,7 +1725,8 @@ void PCpairVSone(Vertex d, const std::pair<Vertex, Vertex> &pc, const PairIBD &a
     if (tuple.first){
         Vertex p = tuple.second;
         Vertex c = p == pc.first ? pc.second : pc.first;
-        results[make_pair_v(c, d)] = resetRelationship(results[make_pair_v(p, d)], 1, maxDeg);
+        //results[make_pair_v(c, d)] = resetRelationship(results[make_pair_v(p, d)], 1, maxDeg);
+        setDeg(c, d, resetRelationship(getDeg(p, d, results), 1, maxDeg), results);
     }
 
 }
@@ -1747,10 +1793,12 @@ void PCpairVSpedigree(const std::pair<Vertex, Vertex> &pc, const ConnInfo &con,
         if (p2use != -1){
             Vertex p = con.p[p2use];
             visited.insert(p);
-            auto it = results.find(make_pair_v(pc.first, p));
-            d1 = it == results.end() ? -1 : results[make_pair_v(pc.first, p)];
-            it = results.find(make_pair_v(pc.second, p));
-            d2 = it == results.end() ? -1 : results[make_pair_v(pc.second, p)];
+            //auto it = results.find(make_pair_v(pc.first, p));
+            //d1 = it == results.end() ? -1 : results[make_pair_v(pc.first, p)];
+            d1 = getDeg(pc.first, p, results);
+            //it = results.find(make_pair_v(pc.second, p));
+            //d2 = it == results.end() ? -1 : results[make_pair_v(pc.second, p)];
+            d2 = getDeg(pc.second, p, results);
             auto it2 = allsegs.find(make_pair_v(pc.first, p));
             k1 = it2 == allsegs.end()? 0.0 : it2->second->kin;
             it2 = allsegs.find(make_pair_v(pc.second, p));
@@ -1775,8 +1823,10 @@ void PCpairVSpedigree(const std::pair<Vertex, Vertex> &pc, const ConnInfo &con,
             Vertex c = p == pc.first ? pc.second : pc.first;
             int deg_pp = pc.first == p ? d1 : d2;
             for(auto fs : con.fs){
-                results[make_pair_v(fs, p)] = resetRelationship(deg_pp, 1, maxDeg);
-                results[make_pair_v(fs, c)] = resetRelationship(deg_pp, 2, maxDeg);
+                //results[make_pair_v(fs, p)] = resetRelationship(deg_pp, 1, maxDeg);
+                //results[make_pair_v(fs, c)] = resetRelationship(deg_pp, 2, maxDeg);
+                setDeg(fs, p, resetRelationship(deg_pp, 1, maxDeg), results);
+                setDeg(fs, c, resetRelationship(deg_pp, 2, maxDeg), results);
                 visited.insert(fs);
             }
         }
@@ -1793,10 +1843,12 @@ void PCpairVSpedigree(const std::pair<Vertex, Vertex> &pc, const ConnInfo &con,
         if (index_gp != -1){
             Vertex gp = gp2check[index_gp];
             visited.insert(gp);
-            auto it = results.find(make_pair_v(pc.first, gp));
-            d1 = it == results.end() ? -1 : results[make_pair_v(pc.first, gp)];
-            it = results.find(make_pair_v(pc.second, gp));
-            d2 = it == results.end() ? -1 : results[make_pair_v(pc.second, gp)];
+            //auto it = results.find(make_pair_v(pc.first, gp));
+            //d1 = it == results.end() ? -1 : results[make_pair_v(pc.first, gp)];
+            d1 = getDeg(pc.first, gp, results);
+            //it = results.find(make_pair_v(pc.second, gp));
+            //d2 = it == results.end() ? -1 : results[make_pair_v(pc.second, gp)];
+            d2 = getDeg(pc.second, gp, results);
             auto it2 = allsegs.find(make_pair_v(pc.first, gp));
             k1 = it2 == allsegs.end()? 0.0 : it2->second->kin;
             it2 = allsegs.find(make_pair_v(pc.second, gp));
@@ -1824,14 +1876,18 @@ void PCpairVSpedigree(const std::pair<Vertex, Vertex> &pc, const ConnInfo &con,
             Vertex c = p == pc.first ? pc.second : pc.first;
             int deg_pvsgp = pc.first == p ? d1 : d2;
             for(auto av : av2use){
-                results[make_pair_v(av, p)] = resetRelationship(deg_pvsgp, 1, maxDeg);
-                results[make_pair_v(av, c)] = resetRelationship(deg_pvsgp, 2, maxDeg);
+                //results[make_pair_v(av, p)] = resetRelationship(deg_pvsgp, 1, maxDeg);
+                //results[make_pair_v(av, c)] = resetRelationship(deg_pvsgp, 2, maxDeg);
+                setDeg(av, p, resetRelationship(deg_pvsgp, 1, maxDeg), results);
+                setDeg(av, c, resetRelationship(deg_pvsgp, 2, maxDeg), results);
                 visited.insert(av);
             }
             
             for(auto fs : con.fs){
-                results[make_pair_v(fs, p)] = resetRelationship(deg_pvsgp, 2, maxDeg);
-                results[make_pair_v(fs, c)] = resetRelationship(deg_pvsgp, 3, maxDeg);
+                //results[make_pair_v(fs, p)] = resetRelationship(deg_pvsgp, 2, maxDeg);
+                //results[make_pair_v(fs, c)] = resetRelationship(deg_pvsgp, 3, maxDeg);
+                setDeg(fs, p, resetRelationship(deg_pvsgp, 2, maxDeg), results);
+                setDeg(fs, c, resetRelationship(deg_pvsgp, 3, maxDeg), results);
                 visited.insert(fs);
             }
         }

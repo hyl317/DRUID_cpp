@@ -5,7 +5,6 @@
 #include <string>
 #include <math.h>
 #include <boost/graph/adjacency_list.hpp>
-#include <boost/pool/poolfwd.hpp>
 #include "tools.h"
 
 
@@ -75,6 +74,8 @@ struct ConnInfo{
 };
 
 void postorder(const std::vector<Vertex> &components, const Pedigree &pedigree, std::vector<Vertex> &ordered);
+void preorder(const std::vector<Vertex> &components, const Pedigree &pedigree, std::vector<Vertex> &ordered);
+void grabCloseRelatives_o(const Vertex u, ConnInfo &con, const Pedigree &pedigree);
 void grabCloseRelatives(const Vertex &u, ConnInfo &con, const Pedigree &pedigree);
 bool isFS2Everyone(const Vertex &u, const std::vector<Vertex> &fs, const Pedigree &pedigree);
 void combineIBD(const ConnInfo &con1, const ConnInfo &con2, std::unordered_set<Vertex> &checked1,

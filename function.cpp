@@ -21,14 +21,6 @@ void build_graph(Pedigree &pedigree, PairIBD &allsegs,
     std::map<std::pair<Vertex, Vertex>, int> &results, std::map<Vertex, Vertex> &twins,
     double tot_genome, double bkg_sharing, int maxDeg)
 {   
-    // auto vertex_property_map = boost::get(&sample::id, pedigree);
-    // // make a map from sampleID(std::string) to Vertex
-    // std::map<std::string, Vertex> id2Vertex;
-    // boost::graph_traits<Pedigree>::vertex_iterator vi, vi_end;
-    // for(boost::tie(vi, vi_end) = boost::vertices(pedigree); vi != vi_end; vi++){
-    //     id2Vertex.insert(std::make_pair(vertex_property_map[*vi], *vi));
-    // }
-
     auto t1 = std::chrono::high_resolution_clock::now();
     std::set<std::pair<Vertex, Vertex>> pcs;
     std::map<Vertex, std::shared_ptr<std::unordered_set<Vertex>>> fs_degs;
@@ -43,7 +35,6 @@ void build_graph(Pedigree &pedigree, PairIBD &allsegs,
         p.kin = K;
         int deg = getRelfromK(K, maxDeg);
         results.insert(std::make_pair(make_pair_v(u, v), deg));
-        allsegs.insert(std::make_pair(make_pair_v(u, v), it->second));
         // store first and second degree pairs' sample names for later use
         if (deg == 1 || deg == 2){
             bool isFS = true;
@@ -406,21 +397,28 @@ void run_druid(Pedigree &pedigree, const PairIBD &allsegs,
         comp_map[comp_index]->push_back(*vi);
     }
 
-    //auto vertex_property_map = boost::get(&sample::id, pedigree);
+    auto vertex_property_map = boost::get(&sample::id, pedigree);
     for(int i = 0; i < num_components; i++){
         auto ordered = std::shared_ptr<std::vector<Vertex>>(new std::vector<Vertex>());
-        postorder(*(comp_map.find(i)->second), pedigree, *ordered);
+        preorder(*(comp_map.find(i)->second), pedigree, *ordered);
         comp_map[i] = ordered;
+        // test ordering
+        //for(auto it = ordered->begin(); it != ordered->end(); it++){
+        //    fprintf(stdout, "%s\n", vertex_property_map[*it].c_str());
+        //}
+        //fprintf(stdout, "\n\n");
     }
+    //return;
 
     // test
-    //for(int i = 0; i < num_components; i++){
+    // for(int i = 0; i < num_components; i++){
     //    ConnInfo con;
     //    Vertex u = (*comp_map[i])[0];
-    //    grabCloseRelatives(u, con, pedigree);
+    //    fprintf(stdout, "focal ind: %s\n", vertex_property_map[u].c_str());
+    //    grabCloseRelatives_o(u, con, pedigree);
     //    if(!isSingleton(con)){printConnInfo(con, pedigree);}
-    //}
-    //return;
+    // }
+    // return;
     //end of test
 
     for(int i = 0; i < num_components; i++){
@@ -429,7 +427,7 @@ void run_druid(Pedigree &pedigree, const PairIBD &allsegs,
             for(Vertex u : *comp_map[i]){
                 if (visited1.find(u) != visited1.end()){continue;}
                 ConnInfo con1;
-                grabCloseRelatives(u, con1, pedigree);
+                grabCloseRelatives_o(u, con1, pedigree);
                 bool isSingleton1 = isSingleton(con1);
                 bool hasPC1 = false;
                 Vertex w1;
@@ -441,7 +439,7 @@ void run_druid(Pedigree &pedigree, const PairIBD &allsegs,
                 for(Vertex v : *comp_map[j]){
                     if(visited2.find(v) != visited2.end()){continue;}
                     ConnInfo con2;
-                    grabCloseRelatives(v, con2, pedigree);
+                    grabCloseRelatives_o(v, con2, pedigree);
                     //fprintf(stdout, "con2:\n");
                     //printConnInfo(con2, pedigree);
                     // analyzing the two ConnInfo component
@@ -531,6 +529,42 @@ void postorder(const std::vector<Vertex> &components, const Pedigree &pedigree, 
     assert(components.size() == ordered.size());
 }
 
+void preorder(const std::vector<Vertex> &components, const Pedigree &pedigree, std::vector<Vertex> &ordered)
+{
+    // find the oldest generation
+    std::queue<Vertex> oldest;
+    for(Vertex u : components){
+        bool isOlder = true;
+        auto out_edge_iter_pair = boost::out_edges(u, pedigree);
+        for(auto it = out_edge_iter_pair.first; it != out_edge_iter_pair.second; it++){
+            Edge e = *it;
+            if(pedigree[e].polarized && pedigree[e].older != u){isOlder = false;}
+        }
+        if(isOlder){oldest.push(u);}
+    }
+
+    std::unordered_set<Vertex> checked;
+    while(!oldest.empty()){
+        Vertex u = oldest.front();
+        oldest.pop();
+        if (checked.find(u) != checked.end()){continue;}
+        ordered.push_back(u);
+        auto out_edge_iter_pair = boost::out_edges(u, pedigree);
+        for(auto it = out_edge_iter_pair.first; it != out_edge_iter_pair.second; it++){
+            Edge e = *it;
+            if(pedigree[e].polarized && pedigree[e].older == u){
+                Vertex s = boost::source(e, pedigree);
+                Vertex t = boost::target(e, pedigree);
+                Vertex v = u == s? t : s;
+                oldest.push(v);
+            }
+        }
+        checked.insert(u);
+    }
+
+    assert(components.size() == ordered.size());
+}
+
 bool isFS2Everyone(const Vertex &u, const std::vector<Vertex> &fs, const Pedigree &pedigree)
 {
     for(Vertex v : fs){
@@ -544,6 +578,59 @@ bool isFS2Everyone(const Vertex &u, const std::vector<Vertex> &fs, const Pedigre
     return true;
 }
 
+void grabCloseRelatives_o(const Vertex u, ConnInfo &con, const Pedigree &pedigree)
+{
+    auto vertex_property_map = boost::get(&sample::id, pedigree);
+    std::vector<Vertex> children;
+    std::vector<Vertex> fs;
+    auto out_edge_iter_pair = boost::out_edges(u, pedigree);
+    for(auto it = out_edge_iter_pair.first; it != out_edge_iter_pair.second; it++){
+        Edge e = *it;
+        Vertex s = boost::source(e, pedigree);
+        Vertex t = boost::target(e, pedigree);
+        Vertex other = s == u ? t : s;
+        if (pedigree[e].rel == PC && pedigree[e].polarized && pedigree[e].older == u){    
+            children.push_back(other);
+        }else if (pedigree[e].rel == FS){fs.push_back(other);}
+    }
+    if (children.empty()){
+        // check if u's full-sib has children
+        for(Vertex sib : fs){
+            //fprintf(stdout, "checking full-sib %s\n", vertex_property_map[sib].c_str());
+            out_edge_iter_pair = boost::out_edges(sib, pedigree);
+            for(auto it = out_edge_iter_pair.first; it != out_edge_iter_pair.second; it++){
+                Edge e = *it;
+                Vertex s = boost::source(e, pedigree);
+                Vertex t = boost::target(e, pedigree);
+                Vertex other = s == sib ? t : s;
+                //fprintf(stdout, "the other end is %s, edge type is %d\n", vertex_property_map[other].c_str(), pedigree[e].rel);
+                if (pedigree[e].rel == PC && pedigree[e].polarized && pedigree[e].older == sib){
+                    grabCloseRelatives(other, con, pedigree);
+                    //assert(con.av1.contains(u) || con.av2.contains(u));
+                    return;
+                }
+            }
+        }
+        grabCloseRelatives(u, con, pedigree);
+    }else{
+        for(Vertex c : children){
+            out_edge_iter_pair = boost::out_edges(c, pedigree);
+            for(auto it = out_edge_iter_pair.first; it != out_edge_iter_pair.second; it++){
+                Edge e = *it;
+                if (pedigree[e].rel == PC && pedigree[e].polarized && pedigree[e].older == c){
+                    Vertex s = boost::source(e, pedigree);
+                    Vertex t = boost::target(e, pedigree);
+                    Vertex other = s == c ? t : s;
+                    grabCloseRelatives(other, con, pedigree);
+                    //assert(con.gp1.contains(u) || con.gp2.contains(u));
+                    return;
+                }
+            }
+        }
+        grabCloseRelatives(children[0], con, pedigree);
+        //assert(con.p.contains(u));
+    }
+}
 
 void grabCloseRelatives(const Vertex &u, ConnInfo &con, const Pedigree &pedigree)
 {   

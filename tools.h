@@ -8,6 +8,7 @@
 #include <set>
 #include <unordered_set>
 #include "Eigen/Dense"
+#include <boost/pool/object_pool.hpp>
 #include "zlib.h"
 
 // wrappers for file I/O
@@ -59,8 +60,8 @@ struct Pair{
   double ibd1_tot;
   double ibd2_tot;
   double kin;
-  ibdMapType *ibd1_map = new ibdMapType();
-  ibdMapType *ibd2_map = new ibdMapType();
+  ibdMapType *ibd1_map;
+  ibdMapType *ibd2_map;
 };
 
 
@@ -74,7 +75,8 @@ Eigen::VectorXd readBimFile(const std::string &bimFile,
 
 void readIBDFile(const std::string &ibdFile, 
   std::map<std::pair<unsigned long, unsigned long>, Pair*> &allsegs,
-  std::map<std::string, unsigned long> &id2Vertex);
+  std::map<std::string, unsigned long> &id2Vertex,
+  boost::object_pool<Pair> &p_pair, boost::object_pool<ibdMapType> &p_ibdmap);
 
 void readIBDFile_ex(const std::string &ibdFile, 
   std::map<std::pair<unsigned long, unsigned long>, Pair*> &allsegs,

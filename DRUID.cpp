@@ -36,8 +36,10 @@ int main(int argc, char **argv){
     auto t1 = std::chrono::high_resolution_clock::now();
     PairIBD allsegs;
     std::map<std::string, Vertex> id2Vertex;
+    boost::object_pool<Pair> p_pair;
+    boost::object_pool<ibdMapType> p_ibdmap;
     if (exSamples.length() == 0){
-        readIBDFile(ibdFile, allsegs, id2Vertex);
+        readIBDFile(ibdFile, allsegs, id2Vertex, p_pair, p_ibdmap);
     }else{
         // exclude some samples
         readIBDFile_ex(ibdFile, allsegs, id2Vertex, exSamples, logFile);
@@ -183,9 +185,9 @@ int main(int argc, char **argv){
     t2 = std::chrono::high_resolution_clock::now();
     d = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
     logFile.printf("Writing to output done, takes %lfs\n", d/1e6);
-    logFile.close();
 
     // clean up
+    t1 = std::chrono::high_resolution_clock::now();
     for(auto it = snpmap.begin(); it != snpmap.end(); it++){
         delete it->second;
     }
@@ -203,6 +205,11 @@ int main(int argc, char **argv){
         delete p;
 
     }
+    t2 = std::chrono::high_resolution_clock::now();
+    d = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+    logFile.printf("Clean up heap space takes %lfs\n", d/1e6);
+    logFile.close();
+
 
     return 0;
 }

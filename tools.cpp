@@ -88,7 +88,8 @@ Eigen::VectorXd readBimFile(const std::string &bimFile,
 
 void readIBDFile(const std::string &ibdFile, 
   std::map<std::pair<unsigned long, unsigned long>, Pair*> &allsegs,
-  std::map<std::string, unsigned long> &id2Vertex)
+  std::map<std::string, unsigned long> &id2Vertex, 
+  boost::object_pool<Pair> &p_pair, boost::object_pool<ibdMapType> &p_ibdmap)
 {
   FileOrGZ<gzFile> in;
   bool ret = in.open(ibdFile.c_str(), "r");
@@ -127,7 +128,12 @@ void readIBDFile(const std::string &ibdFile,
 
     std::pair<unsigned long, unsigned long> pair = make_pair_v(u, v);
     if (allsegs.find(pair) == allsegs.end()){
-      allsegs.insert(std::make_pair(pair, new Pair()));
+      Pair *p_ptr = new Pair();
+      p_ptr->ibd1_map = new ibdMapType();
+      p_ptr->ibd2_map = new ibdMapType();
+      //p_ptr->ibd1_map = p_ibdmap.malloc();
+      //p_ptr->ibd2_map = p_ibdmap.malloc();
+      allsegs.insert(std::make_pair(pair, p_ptr));
     }
 
     Pair *p = allsegs[pair];
@@ -207,7 +213,10 @@ void readIBDFile_ex(const std::string &ibdFile,
     double segLen = end - start;
     std::pair<unsigned long, unsigned long> pair = make_pair_v(u, v);
     if (allsegs.find(pair) == allsegs.end()){
-      allsegs.insert(std::make_pair(pair, new Pair()));
+      Pair *p_ptr = new Pair();
+      p_ptr->ibd1_map = new ibdMapType();
+      p_ptr->ibd2_map = new ibdMapType();
+      allsegs.insert(std::make_pair(pair, p_ptr));
     }
 
     Pair *p = allsegs[pair];

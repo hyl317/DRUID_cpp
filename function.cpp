@@ -9,7 +9,6 @@
 
 
 int getRelfromK(double K, int maxDeg){
-    //double K = std::max((ibd1/4.0 + ibd2/2.0 - bkg/4.0)/tot_genome, 0.0); 
     if (K == 0){return -1;}
     int deg = (int)(-log2(K) + 0.5) - 1; // 四舍五入
     if (deg <= maxDeg){return deg;}
@@ -111,7 +110,6 @@ void build_graph(Pedigree &pedigree, PairIBD &allsegs,
                         if (second_degs.find(v) != second_degs.end()){second_degs[v]->erase(u);}
                         if (pcs.find(std::make_pair(u, v)) != pcs.end()){pcs.erase(std::make_pair(u,v));}
                         if (pcs.find(std::make_pair(v, u)) != pcs.end()){pcs.erase(std::make_pair(v,u));}
-                        // let's update the results map when we actually write the output, or shall we?
                         results[make_pair_v(u, v)] = 1;
                         //std::cout << vertex_property_map[u] << " and " << vertex_property_map[v] << " is now a FS pair" << std::endl;
                     }
@@ -1839,4 +1837,61 @@ void PCpairVSpedigree(const std::pair<Vertex, Vertex> &pc, const ConnInfo &con,
         }
     }
     
+}
+
+void grabChildren(Vertex p, std::vector<Vertex> &children, const Pedigree &pedigree)
+{
+    // store all children of p in the children vector
+    auto out_edge_iter_pair = boost::out_edges(p, pedigree);
+    for(auto it = out_edge_iter_pair.first; it != out_edge_iter_pair.second; it++){
+        Edge e = *it;
+        Vertex s = boost::source(e, pedigree);
+        Vertex t = boost::target(e, pedigree);
+        Vertex other = s == p ? t : s;
+        if (pedigree[e].rel == PC && pedigree[e].polarized && pedigree[e].older == p){    
+            children.push_back(other);
+        }
+    }
+
+}
+
+void propagate(Vertex u, Vertex v, std::unordered_set<Vertex> &visited1, 
+    std::unordered_set<Vertex> &visited2, int baseDeg, int maxDeg, const Pedigree &pedigree, 
+    std::map<std::pair<Vertex, Vertex>, int> &results)
+{
+    // set relationship between u and v's descendents given that u,v are baseDeg degrees related
+    //if (baseDeg >= maxDeg){return;} Don't return here because I want to add all u,v's descendants to visited1, visited2
+    std::vector<Vertex> children_u;
+    std::vector<Vertex> children_v;
+    grabChildren(u, children_u, pedigree);
+    grabChildren(v, children_v, pedigree);
+    setRelationshipBetweenOneSampleAndSet(u, children_v, results, resetRelationship(baseDeg, 1, maxDeg));
+    setRelationshipBetweenOneSampleAndSet(v, children_u, results, resetRelationship(baseDeg, 1, maxDeg));
+    setRelationshipBetweenTwoSets(children_u, children_v, results, resetRelationship(baseDeg, 2, maxDeg));
+    for(Vertex child_u : children_u){
+        for(Vertex child_v : children_v){
+            propagate(child_u, child_v, visited1, visited2, resetRelationship(baseDeg, 2, maxDeg), maxDeg, pedigree, results);
+            visited1.insert(child_u);
+            visited2.insert(child_v);
+        }
+    }  
+
+}
+
+void propagateAlongPedigree(const ConnInfo &con1, const ConnInfo &con2, 
+    std::unordered_set<Vertex> &visited1, std::unordered_set<Vertex> &visited2,
+    const Pedigree &pedigree, std::map<std::pair<Vertex, Vertex>, int> &results, int maxDeg)
+{
+    for(Vertex fs1 : con1.fs){
+        for(Vertex fs2 : con2.fs){
+            propagate(fs1, fs2, visited1, visited2, results[make_pair_v(fs1, fs2)], maxDeg, pedigree, results);
+        }
+    }
+
+    // no need to check con1.p and con2.p because their descendants are just con1.fs, con2.fs
+    // and no need to check the gp generation since their descendants are just the AVs 
+    // check AV
+
+
+
 }

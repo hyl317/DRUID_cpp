@@ -166,6 +166,12 @@ bool includeParent(Vertex p, double max_ks1s2, const std::vector<Vertex> &sibs, 
 double IBD0011(const std::vector<Vertex> &set1, const std::vector<Vertex> &set2,
     const std::map<std::string, std::map<int, double>*> &snpmap, const PairIBD &allsegs);
 
+void grabChildren(Vertex p, std::vector<Vertex> &children, const Pedigree &pedigree);
+
+void propagate(Vertex u, Vertex v, std::unordered_set<Vertex> &visited1, 
+    std::unordered_set<Vertex> &visited2, int baseDeg, int maxDeg, const Pedigree &pedigree, 
+    std::map<std::pair<Vertex, Vertex>, int> &results);
+
 inline double getTg(int numAV, int numSib){
     if(numAV == 0){return 1.0 - pow(0.5, numSib);}
     else{

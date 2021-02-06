@@ -390,8 +390,6 @@ void interval_union(const ibdSegments &set1, const ibdSegments &set2, ibdSegment
                       const std::pair<double, double> &interval2)
                       {return interval1.first < interval2.first;};
   std::sort(tmp.begin(), tmp.end(), sortLambda);
-  //fprintf(stdout, "before merged: \n");
-  //std::for_each(tmp.begin(), tmp.end(), [&](const std::pair<double, double> interval){fprintf(stdout, "[%lf, %lf]\n", interval.first, interval.second);});
   double prev_s = tmp[0].first;
   double prev_e = tmp[0].second;
   int numInterval = tmp.size();
@@ -405,11 +403,8 @@ void interval_union(const ibdSegments &set1, const ibdSegments &set2, ibdSegment
       set3.push_back(std::make_pair(curr_s, curr_e));
       prev_s = curr_s;
     }
-    prev_e = curr_e;
+    prev_e = std::max(curr_e, prev_e);
   }
-  //fprintf(stdout, "after unioned: \n");
-  //std::for_each(set3.begin(), set3.end(), [&](const std::pair<double, double> interval){fprintf(stdout, "[%lf, %lf]\n", interval.first, interval.second);});
-  //fprintf(stdout, "\n\n");
 }
 
 // void interval_union(const ibdSegments &set1, const ibdSegments &set2, ibdSegments &set3)

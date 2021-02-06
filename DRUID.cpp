@@ -101,14 +101,15 @@ int main(int argc, char **argv){
     // set2.push_back(id2Vertex["ped2_D3_1_g3-b8-i1"]);
     // set2.push_back(id2Vertex["ped2_D3_1_g3-b9-i1"]);
     // set2.push_back(id2Vertex["ped2_D3_1_g3-b10-i1"]);
-
+    // UnionIbdOverTwoSets(set1, set2, allsegs);
 
     // for (int i = 0; i < 100; i++){
     //    std::random_shuffle(set1.begin(), set1.end());
     //    std::random_shuffle(set2.begin(), set2.end());
-    //    double tmp = UnionIbdOverTwoSets(set1, set2, allsegs_v);
+    //    double tmp = UnionIbdOverTwoSets(set1, set2, allsegs);
     //    fprintf(stdout, "Unioned IBD length: %lf\n", tmp);
     // }
+    // return 0;
     // end of test
     
     // testing IBD0011

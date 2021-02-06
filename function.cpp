@@ -731,7 +731,9 @@ double UnionIbdOverTwoSets(const std::vector<Vertex> &set1, const std::vector<Ve
                     }
                     ibdSegments *dest = new ibdSegments();
                     //fprintf(stdout, "union the following two intervals in chr%s\n", chrName.c_str());
+                    //fprintf(stdout, "set1:\n");
                     //std::for_each(it->second->begin(), it->second->end(), [&](const std::pair<double, double> interval){fprintf(stdout, "[%lf, %lf]\n", interval.first, interval.second);});
+                    //fprintf(stdout, "set2:\n");
                     //std::for_each(currUnion.find(chrName)->second->begin(), currUnion.find(chrName)->second->end(), [&](const std::pair<double, double> interval){fprintf(stdout, "[%lf, %lf]\n", interval.first, interval.second);});
                     interval_union(*(it->second), *(currUnion.find(chrName)->second), *dest);
                     //fprintf(stdout, "after combining: \n");

@@ -382,71 +382,120 @@ void interval_union(const ibdSegments &set1, const ibdSegments &set2, ibdSegment
     return;
   }
   if (set1.size() == 0 && set2.size() == 0){return;}
-  // sort set1 and set2
+
+  ibdSegments tmp;
+  copy(set1.begin(), set1.end(), std::back_inserter(tmp));
+  copy(set2.begin(), set2.end(), std::back_inserter(tmp));
   auto sortLambda = [](const std::pair<double, double> &interval1, 
                       const std::pair<double, double> &interval2)
                       {return interval1.first < interval2.first;};
-  ibdSegments set1_sorted = set1; // make a copy
-  std::sort(set1_sorted.begin(), set1_sorted.end(), sortLambda);
-  ibdSegments set2_sorted = set2;
-  std::sort(set2_sorted.begin(), set2_sorted.end(), sortLambda);
-
-  ibdSegments tmp;
-  auto it2 = set2_sorted.begin();
-  for(auto it1 = set1_sorted.begin(); it1 != set1_sorted.end(); it1++){
-    double start1 = it1->first;
-    double end1 = it1->second;
-    while (it2 != set2_sorted.end() && it2->second < start1){
-      tmp.push_back(std::make_pair(it2->first, it2->second));
-      it2++;
-    }
-    if (it2 == set2_sorted.end()){
-      // push back set1's remaining segments
-      for(; it1 != set1_sorted.end(); it1++){
-        tmp.push_back(std::make_pair(it1->first, it1->second));
-      }
-      break;
-    }
-
-    double start2 = it2->first;
-    double end2 = it2->second;
-    if (start2 <= end1){
-      while ( it2 != set2_sorted.end() && it2->first <= end1){
-        end2 = it2->second;
-        it2++;
-      }
-      tmp.push_back(std::make_pair(std::min(start1, start2), std::max(end1, end2)));
+  std::sort(tmp.begin(), tmp.end(), sortLambda);
+  //fprintf(stdout, "before merged: \n");
+  //std::for_each(tmp.begin(), tmp.end(), [&](const std::pair<double, double> interval){fprintf(stdout, "[%lf, %lf]\n", interval.first, interval.second);});
+  double prev_s = tmp[0].first;
+  double prev_e = tmp[0].second;
+  int numInterval = tmp.size();
+  set3.push_back(std::make_pair(prev_s, prev_e));
+  for(int i = 1; i < numInterval; i++){
+    double curr_s = tmp[i].first;
+    double curr_e = tmp[i].second;
+    if (curr_s <= prev_e){
+      (*(--set3.end())).second = std::max(curr_e, prev_e);
     }else{
-      // no segments from set2 overlap this segment in set1
-      tmp.push_back(std::make_pair(start1, end1));
+      set3.push_back(std::make_pair(curr_s, curr_e));
+      prev_s = curr_s;
     }
+    prev_e = curr_e;
   }
-
-  if (it2 != set2_sorted.end()){
-    // push back set2's remaining segments if any
-    for(; it2 != set2_sorted.end(); it2++){
-      tmp.push_back(std::make_pair(it2->first, it2->second));
-    }
-  }
-
-  // concatenate neighboring regions
-  bool first = true;
-  double prev_start, prev_end;
-  for(auto seg : tmp){
-    if (first){
-      prev_start = seg.first;
-      prev_end = seg.second;
-      first = false;
-    }else if(seg.first > prev_end){
-      set3.push_back(std::make_pair(prev_start, prev_end));
-      prev_start = seg.first;
-      prev_end = seg.second;
-    }else{
-      prev_end = seg.second;
-    }
-  }
-  set3.push_back(std::make_pair(prev_start, prev_end));
+  //fprintf(stdout, "after unioned: \n");
+  //std::for_each(set3.begin(), set3.end(), [&](const std::pair<double, double> interval){fprintf(stdout, "[%lf, %lf]\n", interval.first, interval.second);});
+  //fprintf(stdout, "\n\n");
 }
+
+// void interval_union(const ibdSegments &set1, const ibdSegments &set2, ibdSegments &set3)
+// {
+//   if (set1.size() == 0 && set2.size() != 0){
+//     copy(set2.begin(), set2.end(), std::back_inserter(set3)); 
+//     return;
+//   }
+//   if (set1.size() != 0 && set2.size() == 0){
+//     copy(set1.begin(), set1.end(), std::back_inserter(set3));
+//     return;
+//   }
+//   if (set1.size() == 0 && set2.size() == 0){return;}
+//   // sort set1 and set2
+//   auto sortLambda = [](const std::pair<double, double> &interval1, 
+//                       const std::pair<double, double> &interval2)
+//                       {return interval1.first < interval2.first;};
+//   ibdSegments set1_sorted = set1; // make a copy
+//   std::sort(set1_sorted.begin(), set1_sorted.end(), sortLambda);
+//   ibdSegments set2_sorted = set2;
+//   std::sort(set2_sorted.begin(), set2_sorted.end(), sortLambda);
+//   //fprintf(stdout, "set1:\n");
+//   //std::for_each(set1_sorted.begin(), set1_sorted.end(), [&](const std::pair<double, double> interval){fprintf(stdout, "[%lf, %lf]\n", interval.first, interval.second);});
+//   //fprintf(stdout, "set2:\n");
+//   //std::for_each(set2_sorted.begin(), set2_sorted.end(), [&](const std::pair<double, double> interval){fprintf(stdout, "[%lf, %lf]\n", interval.first, interval.second);});
+  
+//   ibdSegments tmp;
+//   auto it2 = set2_sorted.begin();
+//   for(auto it1 = set1_sorted.begin(); it1 != set1_sorted.end(); it1++){
+//     double start1 = it1->first;
+//     double end1 = it1->second;
+//     while (it2 != set2_sorted.end() && it2->second < start1){
+//       tmp.push_back(std::make_pair(it2->first, it2->second));
+//       it2++;
+//     }
+//     if (it2 == set2_sorted.end()){
+//       // push back set1's remaining segments
+//       for(; it1 != set1_sorted.end(); it1++){
+//         tmp.push_back(std::make_pair(it1->first, it1->second));
+//       }
+//       break;
+//     }
+
+//     double start2 = it2->first;
+//     double end2 = it2->second;
+//     if (start2 <= end1){
+//       while ( it2 != set2_sorted.end() && it2->first <= end1){
+//         end2 = it2->second;
+//         it2++;
+//       }
+//       tmp.push_back(std::make_pair(std::min(start1, start2), std::max(end1, end2)));
+//     }else{
+//       // no segments from set2 overlap this segment in set1
+//       tmp.push_back(std::make_pair(start1, end1));
+//     }
+//   }
+
+//   if (it2 != set2_sorted.end()){
+//     // push back set2's remaining segments if any
+//     for(; it2 != set2_sorted.end(); it2++){
+//       tmp.push_back(std::make_pair(it2->first, it2->second));
+//     }
+//   }
+
+//   // concatenate neighboring regions
+//   bool first = true;
+//   double prev_start, prev_end;
+//   for(auto seg : tmp){
+//     if (first){
+//       prev_start = seg.first;
+//       prev_end = seg.second;
+//       first = false;
+//     }else if(seg.first > prev_end){
+//       set3.push_back(std::make_pair(prev_start, prev_end));
+//       prev_start = seg.first;
+//       prev_end = seg.second;
+//     }else{
+//       prev_end = seg.second;
+//     }
+//   }
+//   set3.push_back(std::make_pair(prev_start, prev_end));
+
+//   //fprintf(stdout, "merged interval:\n");
+//   //std::for_each(set3.begin(), set3.end(), [&](const std::pair<double, double> interval){fprintf(stdout, "[%lf, %lf]\n", interval.first, interval.second);});
+//   //fprintf(stdout, "\n\n");
+// }
 
 void interval_complement(const ibdSegments &set1, ibdSegments &set2, 
     double boundary_start, double boundary_end)

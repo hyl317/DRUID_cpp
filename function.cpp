@@ -461,20 +461,26 @@ void run_druid(Pedigree &pedigree, const PairIBD &allsegs,
                         }
                     }
                     else if(isSingleton1 && !isSingleton2){
+                        int av2 = -1;
                         visited1.insert(u);
-                        if (!hasPC1){oneVSpedigree(u, con2, visited2, allsegs, results, pedigree, bkg_sharing, tot_genome, maxDeg);}
-                        else{
+                        if (!hasPC1){
+                            av2 = oneVSpedigree(u, con2, visited2, allsegs, results, pedigree, bkg_sharing, tot_genome, maxDeg);
+                        }else{
                             auto pc = std::make_pair(u, w1);
                             visited1.insert(w1);
-                            PCpairVSpedigree(pc, con2, visited2, allsegs, results, pedigree, bkg_sharing, tot_genome, maxDeg);
+                            av2 = PCpairVSpedigree(pc, con2, visited2, allsegs, results, pedigree, bkg_sharing, tot_genome, maxDeg);
                         }
+                        propagateAlongPedigree(con1, con2, -1, av2, visited1, visited2, pedigree, results, maxDeg);
                     }else if(!isSingleton1 && isSingleton2){
+                        int av1 = -1;
                         visited2.insert(v);
-                        if (!hasPC2){oneVSpedigree(v, con1, visited1, allsegs, results, pedigree, bkg_sharing, tot_genome, maxDeg);}
-                        else{
+                        if (!hasPC2){
+                            av1 = oneVSpedigree(v, con1, visited1, allsegs, results, pedigree, bkg_sharing, tot_genome, maxDeg);
+                        }else{
                             auto pc = std::make_pair(v, w2);
-                            PCpairVSpedigree(pc, con1, visited1, allsegs, results, pedigree, bkg_sharing, tot_genome, maxDeg);
+                            av1 = PCpairVSpedigree(pc, con1, visited1, allsegs, results, pedigree, bkg_sharing, tot_genome, maxDeg);
                         }
+                        propagateAlongPedigree(con1, con2, av1, -1, visited1, visited2, pedigree, results, maxDeg);
                     }else{
                         //printConnInfo(con1, pedigree);
                         //printConnInfo(con2, pedigree);
@@ -730,14 +736,7 @@ double UnionIbdOverTwoSets(const std::vector<Vertex> &set1, const std::vector<Ve
                         currUnion.insert(std::make_pair(chrName, new ibdSegments()));
                     }
                     ibdSegments *dest = new ibdSegments();
-                    //fprintf(stdout, "union the following two intervals in chr%s\n", chrName.c_str());
-                    //fprintf(stdout, "set1:\n");
-                    //std::for_each(it->second->begin(), it->second->end(), [&](const std::pair<double, double> interval){fprintf(stdout, "[%lf, %lf]\n", interval.first, interval.second);});
-                    //fprintf(stdout, "set2:\n");
-                    //std::for_each(currUnion.find(chrName)->second->begin(), currUnion.find(chrName)->second->end(), [&](const std::pair<double, double> interval){fprintf(stdout, "[%lf, %lf]\n", interval.first, interval.second);});
                     interval_union(*(it->second), *(currUnion.find(chrName)->second), *dest);
-                    //fprintf(stdout, "after combining: \n");
-                    //std::for_each(dest->begin(), dest->end(), [&](const std::pair<double, double> interval){fprintf(stdout, "[%lf, %lf]\n", interval.first, interval.second);});
                     ibdSegments *prev_ptr = currUnion.find(chrName)->second;
                     currUnion[chrName] = dest;
                     delete prev_ptr;
@@ -797,11 +796,10 @@ void inferFStoSingleDistantRelative(Vertex d, const std::vector<Vertex> &fs,
 {
     std::vector<Vertex> set1;
     set1.push_back(d);
-    double unionLength = UnionIbdOverTwoSets(set1, fs, allsegs);
     int numSibs = fs.size();
-    unionLength = std::max(0.0, unionLength - calc_bkg_sharing(0, numSibs, bkg_sharing));
-    double Tp = getTg(0, numSibs);
-    double K = ((unionLength/tot_genome)/Tp)/4.0;
+    double Tg = getTg(0, numSibs);
+    double k1 = (UnionIbdOverTwoSets(set1, fs, allsegs)/Tg)/tot_genome;
+    double K = std::max(0.0, (k1 - calc_bkg_sharing(0, numSibs, bkg_sharing)/tot_genome)/4.0);
     int deg = resetRelationship(getRelfromK(K, maxDeg), 1, maxDeg);
     for(Vertex v : fs){
         //results[make_pair_v(d, v)] = deg;
@@ -810,12 +808,13 @@ void inferFStoSingleDistantRelative(Vertex d, const std::vector<Vertex> &fs,
     }
 }
 
-void oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &visited,
+int oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &visited,
     const PairIBD &allsegs, std::map<std::pair<Vertex, Vertex>, int> &results, 
     const Pedigree &pedigree, double bkg_sharing, double tot_genome, int maxDeg)
 {   
     if(con.av1.empty() && con.av2.empty() && con.p.empty()){
         inferFStoSingleDistantRelative(u, con.fs, visited, allsegs, results, bkg_sharing, tot_genome, maxDeg);
+        return -1;
     }else if(con.av1.empty() && con.av2.empty() && !con.p.empty()){
         // use full-sibs's parents if applicable
         double maxK = 0.0;
@@ -856,9 +855,9 @@ void oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &vi
                 std::for_each(con.fs.begin(), con.fs.end(), [&](Vertex fs){visited.insert(fs);});
                 visited.insert(con.p[0]);
                 visited.insert(con.p[1]);
-                return;
             }
         }
+        return -1;
     }else if(!con.av1.empty() || !con.av2.empty()){
         bool includeAunts1 = includeAunts(con.av1, con.fs, u, allsegs); // if con.av1 is empty this still works
         bool includeAunts2 = includeAunts(con.av2, con.fs, u, allsegs);
@@ -905,9 +904,9 @@ void oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &vi
                 double unionLength = UnionIbdOverTwoSets(set1, set2, allsegs);
                 int numAV = av2use.size();
                 int numSibs = con.fs.size();
-                unionLength = std::max(0.0, unionLength - calc_bkg_sharing(numAV, numSibs, bkg_sharing));
-                double T_g = getTg(numAV, numSibs);
-                double K = ((unionLength/tot_genome)/T_g)/4.0;
+                double Tg = getTg(numAV, numSibs);
+                double k1 = (unionLength/tot_genome)/Tg;
+                double K = std::max(0.0, (k1 - calc_bkg_sharing(numAV, numSibs, bkg_sharing)/tot_genome)/4.0);
                 int deg_gp = getRelfromK(K, maxDeg);
                 int deg_av = resetRelationship(deg_gp, 1, maxDeg);
                 for(Vertex a : av2use){
@@ -937,6 +936,7 @@ void oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &vi
             //fprintf(stdout, "no AV satisfy the criterion, use fs only\n");
             inferFStoSingleDistantRelative(u, con.fs, visited, allsegs, results, bkg_sharing, tot_genome, maxDeg);
         }
+        return index_av;
     }
 }
 
@@ -1222,7 +1222,6 @@ void pedigreeVSpedigree(const ConnInfo &con1, const ConnInfo &con2,
             }
         }
 
-        //fprintf(stdout, "size of the aunt/uncle set being chosen: %d\n", numAV2);
         std::for_each(av2use.begin(), av2use.end(), [&](const Vertex a){visited2.insert(a);});
         // check if we can use grandparents
         const std::vector<Vertex> &gp2use = index_av2 == 1 ? con2.gp1 : con2.gp2;
@@ -1250,8 +1249,6 @@ void pedigreeVSpedigree(const ConnInfo &con1, const ConnInfo &con2,
     double Tg2 = getTg(numAV2, numSib2);
     double k1 = (UnionIbdOverTwoSets(set1, set2, allsegs)/tot_genome)/(Tg1*Tg2);
     double bkg = calc_bkg_sharing(numAV1, numSib1, numAV2, numSib2, bkg_sharing);
-    //fprintf(stdout, "estimated IBD1 rate: %lf\n", k1);
-    //fprintf(stdout, "estimated bkg sharing rate: %lf\n", bkg/tot_genome);    
     int deg = getRelfromK(std::max(0.0, (k1 - bkg/tot_genome)/4.0), maxDeg);
     if (deg >= 0 && deg <= 3){
         // need to account for IBD2 in the grandparent/parent generation
@@ -1268,13 +1265,7 @@ void pedigreeVSpedigree(const ConnInfo &con1, const ConnInfo &con2,
         t2 = 1.0 - pow(0.5, right.size());
         k2 = (IBD0011(left, right, snpmap, allsegs)/tot_genome)/(t1*t2);
         k1 -= k2;
-        fprintf(stdout, "old deg is %d\n", deg);
-        printConnInfo(con1, pedigree);
-        printConnInfo(con2, pedigree);
-        fprintf(stdout, "k1=%lf, k2=%lf, bkg_sharing=%lf\n", k1, k2, bkg);
         deg = getRelfromK(std::max(0.0, k1/4.0 + k2/2.0 - bkg/(tot_genome*4.0)), maxDeg);
-        //deg = getRelfromK(k1/4.0 + k2/2.0, maxDeg);
-        fprintf(stdout, "updated deg is %d\n\n\n", deg);
     }
 
     if (p1_chosen){visited1.insert(p1);}
@@ -1751,7 +1742,7 @@ std::pair<bool, Vertex> polarizeUnpolarPC(Vertex v1, int d1, double k1, Vertex v
     }else{return std::make_pair(false, 0);}
 }
 
-void PCpairVSpedigree(const std::pair<Vertex, Vertex> &pc, const ConnInfo &con,
+int PCpairVSpedigree(const std::pair<Vertex, Vertex> &pc, const ConnInfo &con,
     std::unordered_set<Vertex> &visited, const PairIBD &allsegs,
     std::map<std::pair<Vertex, Vertex>, int> &results, const Pedigree &pedigree,
     double bkg_sharing, double tot_genome, int maxDeg)
@@ -1795,11 +1786,7 @@ void PCpairVSpedigree(const std::pair<Vertex, Vertex> &pc, const ConnInfo &con,
         if (p2use != -1){
             Vertex p = con.p[p2use];
             visited.insert(p);
-            //auto it = results.find(make_pair_v(pc.first, p));
-            //d1 = it == results.end() ? -1 : results[make_pair_v(pc.first, p)];
             d1 = getDeg(pc.first, p, results);
-            //it = results.find(make_pair_v(pc.second, p));
-            //d2 = it == results.end() ? -1 : results[make_pair_v(pc.second, p)];
             d2 = getDeg(pc.second, p, results);
             auto it2 = allsegs.find(make_pair_v(pc.first, p));
             k1 = it2 == allsegs.end()? 0.0 : it2->second->kin;
@@ -1845,11 +1832,7 @@ void PCpairVSpedigree(const std::pair<Vertex, Vertex> &pc, const ConnInfo &con,
         if (index_gp != -1){
             Vertex gp = gp2check[index_gp];
             visited.insert(gp);
-            //auto it = results.find(make_pair_v(pc.first, gp));
-            //d1 = it == results.end() ? -1 : results[make_pair_v(pc.first, gp)];
             d1 = getDeg(pc.first, gp, results);
-            //it = results.find(make_pair_v(pc.second, gp));
-            //d2 = it == results.end() ? -1 : results[make_pair_v(pc.second, gp)];
             d2 = getDeg(pc.second, gp, results);
             auto it2 = allsegs.find(make_pair_v(pc.first, gp));
             k1 = it2 == allsegs.end()? 0.0 : it2->second->kin;
@@ -1894,6 +1877,7 @@ void PCpairVSpedigree(const std::pair<Vertex, Vertex> &pc, const ConnInfo &con,
             }
         }
     }
+    return index_av;
     
 }
 
@@ -1914,9 +1898,10 @@ void grabChildren(Vertex p, std::vector<Vertex> &children, const Pedigree &pedig
 }
 
 void propagate(Vertex u, Vertex v, std::unordered_set<Vertex> &visited1, 
-    std::unordered_set<Vertex> &visited2, int baseDeg, int maxDeg, const Pedigree &pedigree, 
+    std::unordered_set<Vertex> &visited2, int maxDeg, const Pedigree &pedigree, 
     std::map<std::pair<Vertex, Vertex>, int> &results)
 {
+    int baseDeg = getDeg(u, v, results);
     // set relationship between u and v's descendents given that u,v are baseDeg degrees related
     //if (baseDeg >= maxDeg){return;} Don't return here because I want to add all u,v's descendants to visited1, visited2
     std::vector<Vertex> children_u;
@@ -1928,7 +1913,7 @@ void propagate(Vertex u, Vertex v, std::unordered_set<Vertex> &visited1,
     setRelationshipBetweenTwoSets(children_u, children_v, results, resetRelationship(baseDeg, 2, maxDeg));
     for(Vertex child_u : children_u){
         for(Vertex child_v : children_v){
-            propagate(child_u, child_v, visited1, visited2, resetRelationship(baseDeg, 2, maxDeg), maxDeg, pedigree, results);
+            propagate(child_u, child_v, visited1, visited2, maxDeg, pedigree, results);
             visited1.insert(child_u);
             visited2.insert(child_v);
         }
@@ -1936,20 +1921,30 @@ void propagate(Vertex u, Vertex v, std::unordered_set<Vertex> &visited1,
 
 }
 
-void propagateAlongPedigree(const ConnInfo &con1, const ConnInfo &con2, 
+void propagateAlongPedigree(const ConnInfo &con1, const ConnInfo &con2, int av1, int av2,
     std::unordered_set<Vertex> &visited1, std::unordered_set<Vertex> &visited2,
     const Pedigree &pedigree, std::map<std::pair<Vertex, Vertex>, int> &results, int maxDeg)
-{
-    for(Vertex fs1 : con1.fs){
-        for(Vertex fs2 : con2.fs){
-            propagate(fs1, fs2, visited1, visited2, results[make_pair_v(fs1, fs2)], maxDeg, pedigree, results);
-        }
-    }
-
+{   
     // no need to check con1.p and con2.p because their descendants are just con1.fs, con2.fs
     // and no need to check the gp generation since their descendants are just the AVs 
     // check AV
+    std::vector<Vertex> set1;
+    std::vector<Vertex> set2;
+    copy(con1.fs.begin(), con1.fs.end(), std::back_inserter(set1));
+    copy(con2.fs.begin(), con2.fs.end(), std::back_inserter(set2));
+    if (av1 != -1){
+        const std::vector<Vertex> av2use = av1 == 1 ? con1.av1 : con1.av2;
+        copy(av2use.begin(), av2use.end(), std::back_inserter(set1));
+    }
+    if (av2 != -1){
+        const std::vector<Vertex> av2use = av2 == 1 ? con2.av1 : con2.av2;
+        copy(av2use.begin(), av2use.end(), std::back_inserter(set2));
+    }
 
-
+    for(Vertex u : set1){
+        for(Vertex v : set2){
+            propagate(u, v, visited1, visited2, maxDeg, pedigree, results);
+        }
+    }
 
 }

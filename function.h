@@ -88,7 +88,7 @@ void printConnInfo(const ConnInfo &con, const Pedigree &pedigree); // for debugg
 double UnionIbdOverTwoSets(const std::vector<Vertex> &set1, const std::vector<Vertex> &set2,
     const PairIBD &allsegs); // return the total length of combined IBD
 
-void oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &visited,
+int oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &visited,
     const PairIBD &allsegs, std::map<std::pair<Vertex, Vertex>, int> &results,
     const Pedigree &pedigree, double bkg_sharing, double tot_genome, int max_deg);
 
@@ -103,7 +103,7 @@ std::pair<bool, Vertex> polarizeUnpolarPC(Vertex v1, int d1, double k1, Vertex v
 void PCpairVSone(Vertex d, const std::pair<Vertex, Vertex> &pc, 
     const PairIBD &allsegs, std::map<std::pair<Vertex, Vertex>, int> &results, int maxDeg);
 
-void PCpairVSpedigree(const std::pair<Vertex, Vertex> &pc, const ConnInfo &con,
+int PCpairVSpedigree(const std::pair<Vertex, Vertex> &pc, const ConnInfo &con,
     std::unordered_set<Vertex> &visited, const PairIBD &allsegs,
     std::map<std::pair<Vertex, Vertex>, int> &results, const Pedigree &pedigree,
     double bkg_sharing, double tot_genome, int maxDeg);
@@ -182,8 +182,12 @@ double IBD0011(const std::vector<Vertex> &set1, const std::vector<Vertex> &set2,
 void grabChildren(Vertex p, std::vector<Vertex> &children, const Pedigree &pedigree);
 
 void propagate(Vertex u, Vertex v, std::unordered_set<Vertex> &visited1, 
-    std::unordered_set<Vertex> &visited2, int baseDeg, int maxDeg, const Pedigree &pedigree, 
+    std::unordered_set<Vertex> &visited2, int maxDeg, const Pedigree &pedigree, 
     std::map<std::pair<Vertex, Vertex>, int> &results);
+
+void propagateAlongPedigree(const ConnInfo &con1, const ConnInfo &con2, int av1, int av2,
+    std::unordered_set<Vertex> &visited1, std::unordered_set<Vertex> &visited2,
+    const Pedigree &pedigree, std::map<std::pair<Vertex, Vertex>, int> &results, int maxDeg);
 
 inline double getTg(int numAV, int numSib){
     if(numAV == 0){return 1.0 - pow(0.5, numSib);}

@@ -33,7 +33,6 @@ void build_graph(Pedigree &pedigree, PairIBD &allsegs,
         double K = std::max((ibd1/4.0 + ibd2/2.0 - bkg_sharing/4.0)/tot_genome, 0.0);
         p.kin = K;
         int deg = getRelfromK(K, maxDeg);
-        //results.insert(std::make_pair(make_pair_v(u, v), deg));
         setDeg(u, v, deg, results);
         // store first and second degree pairs' sample names for later use
         if (deg == 1 || deg == 2){
@@ -484,7 +483,8 @@ void run_druid(Pedigree &pedigree, const PairIBD &allsegs,
                     }else{
                         //printConnInfo(con1, pedigree);
                         //printConnInfo(con2, pedigree);
-                        pedigreeVSpedigree(con1, con2, visited1, visited2, allsegs, snpmap, results, pedigree, bkg_sharing, tot_genome, maxDeg);
+                        std::pair<int, int> aunts = pedigreeVSpedigree(con1, con2, visited1, visited2, allsegs, snpmap, results, pedigree, bkg_sharing, tot_genome, maxDeg);
+                        //propagateAlongPedigree(con1, con2, aunts.first, aunts.second, visited1, visited2, pedigree, results, maxDeg);
                     }
 
                 }
@@ -798,7 +798,7 @@ void inferFStoSingleDistantRelative(Vertex d, const std::vector<Vertex> &fs,
     set1.push_back(d);
     int numSibs = fs.size();
     double Tg = getTg(0, numSibs);
-    double k1 = (UnionIbdOverTwoSets(set1, fs, allsegs)/Tg)/tot_genome;
+    double k1 = UnionIbdOverTwoSets(set1, fs, allsegs)/(Tg*tot_genome);
     double K = std::max(0.0, (k1 - calc_bkg_sharing(0, numSibs, bkg_sharing)/tot_genome)/4.0);
     int deg = resetRelationship(getRelfromK(K, maxDeg), 1, maxDeg);
     for(Vertex v : fs){
@@ -858,7 +858,7 @@ int oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &vis
             }
         }
         return -1;
-    }else if(!con.av1.empty() || !con.av2.empty()){
+    }else{
         bool includeAunts1 = includeAunts(con.av1, con.fs, u, allsegs); // if con.av1 is empty this still works
         bool includeAunts2 = includeAunts(con.av2, con.fs, u, allsegs);
         int index_av = -1;
@@ -901,12 +901,11 @@ int oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &vis
                 std::vector<Vertex> set2;
                 set2.insert(set2.end(), con.fs.begin(), con.fs.end());
                 set2.insert(set2.end(), av2use.begin(), av2use.end());
-                double unionLength = UnionIbdOverTwoSets(set1, set2, allsegs);
                 int numAV = av2use.size();
                 int numSibs = con.fs.size();
                 double Tg = getTg(numAV, numSibs);
-                double k1 = (unionLength/tot_genome)/Tg;
-                double K = std::max(0.0, (k1 - calc_bkg_sharing(numAV, numSibs, bkg_sharing)/tot_genome)/4.0);
+                double k1 = UnionIbdOverTwoSets(set1, set2, allsegs)/(Tg*tot_genome);
+                double K = std::max(0.0, (k1 - calc_bkg_sharing(numAV, numSibs, tot_genome)/tot_genome)/4.0);
                 int deg_gp = getRelfromK(K, maxDeg);
                 int deg_av = resetRelationship(deg_gp, 1, maxDeg);
                 for(Vertex a : av2use){
@@ -946,6 +945,7 @@ bool includeAunts(const std::vector<Vertex> &aunts, const std::vector<Vertex> &s
     // include the set of aunts if max k{a,d} > min k{s,d}
     // this is used for oneVSpedigree
     // Vertex d is the distant relative of interest
+    // this return FALSE if the aunts vector is empty
     double min_ksd = 1.0;
     for(Vertex v : sibs){
         auto it = allsegs.find(make_pair_v(v, d));
@@ -1144,7 +1144,7 @@ void updateSibsetByTheirParent(int index,
 }
 
 
-void pedigreeVSpedigree(const ConnInfo &con1, const ConnInfo &con2,
+std::pair<int, int> pedigreeVSpedigree(const ConnInfo &con1, const ConnInfo &con2,
     std::unordered_set<Vertex> &visited1, std::unordered_set<Vertex> &visited2,
     const PairIBD &allsegs,
     const std::map<std::string, std::map<int, double>*> &snpmap,
@@ -1190,14 +1190,14 @@ void pedigreeVSpedigree(const ConnInfo &con1, const ConnInfo &con2,
         if (index != -1){
             //fprintf(stdout, "grandparent to use: %d\n", index);
             updateSibsetByTheirGrandParent(index, index_av1, con1, con2, visited1, visited2, allsegs, results, pedigree, bkg_sharing, tot_genome, maxDeg);
-            return;
+            return std::make_pair(index_av1, index_av2);
         }
     }else{
         int index = whichParent2Include(con1.p, con1.fs, con2.fs, allsegs);
         if (index != -1){
             //fprintf(stdout, "use parents from con1\n");
             updateSibsetByTheirParent(index, con1.fs, con1.p, con2, visited1, visited2, allsegs, results, pedigree, bkg_sharing, tot_genome, maxDeg);
-            return;
+            return std::make_pair(index_av1, index_av2);
         }else if (index == -1 && con1.p.size() == 2){
             // these two connected components are most likely unrelated
             // we don't add con2.p to visited2 here because
@@ -1206,7 +1206,6 @@ void pedigreeVSpedigree(const ConnInfo &con1, const ConnInfo &con2,
             visited1.insert(con1.p[0]);
             visited1.insert(con1.p[1]);
             //fprintf(stdout, "neither parents of con1 fits. Abandon this branch\n");
-            return;
         }
     }
 
@@ -1229,19 +1228,18 @@ void pedigreeVSpedigree(const ConnInfo &con1, const ConnInfo &con2,
         if (index != -1){
             //fprintf(stdout, "grandparent to use: %d\n", index);
             updateSibsetByTheirGrandParent(index, index_av2, con2, con1, visited2, visited1, allsegs, results, pedigree, bkg_sharing, tot_genome, maxDeg);
-            return;
+            return std::make_pair(index_av1, index_av2);
         }
     }else{
         int index = whichParent2Include(con2.p, con2.fs, con1.fs, allsegs);
         if (index != -1){
             //fprintf(stdout, "use parents from con2\n");
             updateSibsetByTheirParent(index, con2.fs, con2.p, con1, visited2, visited1, allsegs, results, pedigree, bkg_sharing, tot_genome, maxDeg);
-            return;
+            return std::make_pair(index_av1, index_av2);
         }else if (index == -1 && con2.p.size() == 2){
             visited2.insert(con2.p[0]);
             visited2.insert(con2.p[1]);
             //fprintf(stdout, "neither parents of con2 fits. Abandon this branch\n");
-            return;
         }
     }
 
@@ -1319,6 +1317,7 @@ void pedigreeVSpedigree(const ConnInfo &con1, const ConnInfo &con2,
         int deg_fs2fs = resetRelationship(deg, 2, maxDeg);
         setRelationshipBetweenTwoSets(con1.fs, con2.fs, results, deg_fs2fs);
     }
+    return std::make_pair(index_av1, index_av2);
 }
 
 void updateSibsetByTheirGrandParent(int index_gp, int index_av,

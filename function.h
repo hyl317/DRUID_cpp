@@ -92,7 +92,7 @@ int oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &vis
     const PairIBD &allsegs, std::map<std::pair<Vertex, Vertex>, int> &results,
     const Pedigree &pedigree, double bkg_sharing, double tot_genome, int max_deg);
 
-void pedigreeVSpedigree(const ConnInfo &con1, const ConnInfo &con2,
+std::pair<int, int> pedigreeVSpedigree(const ConnInfo &con1, const ConnInfo &con2,
     std::unordered_set<Vertex> &visited1, std::unordered_set<Vertex> &visited2,
     const PairIBD &allsegs, const std::map<std::string, std::map<int, double>*> &snpmap,
     std::map<std::pair<Vertex, Vertex>, int> &results,

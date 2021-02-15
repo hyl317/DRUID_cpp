@@ -20,6 +20,7 @@ void build_graph(Pedigree &pedigree, PairIBD &allsegs,
     std::map<std::pair<Vertex, Vertex>, int> &results, std::map<Vertex, Vertex> &twins,
     double tot_genome, double bkg_sharing, int maxDeg)
 {   
+    auto vertex_property_map = boost::get(&sample::id, pedigree);
     auto t1 = std::chrono::high_resolution_clock::now();
     std::set<std::pair<Vertex, Vertex>> pcs;
     std::map<Vertex, std::shared_ptr<std::unordered_set<Vertex>>> fs_degs;
@@ -138,7 +139,7 @@ void build_graph(Pedigree &pedigree, PairIBD &allsegs,
     for(auto pc: pcs){
         boost::add_edge(pc.first, pc.second, pedigree);
         pedigree[boost::edge(pc.first, pc.second, pedigree).first].rel = PC;
-        //std::cout << "add a PC edge between " << vertex_property_map[pc.first] << " and " << vertex_property_map[pc.second] << std::endl;
+        std::cout << "add a PC edge between " << vertex_property_map[pc.first] << " and " << vertex_property_map[pc.second] << std::endl;
     }
 
     // polarize Parent-child relationship when we can
@@ -588,6 +589,7 @@ void grabCloseRelatives_o(const Vertex u, ConnInfo &con, const Pedigree &pedigre
     auto vertex_property_map = boost::get(&sample::id, pedigree);
     std::vector<Vertex> children;
     std::vector<Vertex> fs;
+    std::vector<Vertex> av;
     auto out_edge_iter_pair = boost::out_edges(u, pedigree);
     for(auto it = out_edge_iter_pair.first; it != out_edge_iter_pair.second; it++){
         Edge e = *it;
@@ -597,9 +599,13 @@ void grabCloseRelatives_o(const Vertex u, ConnInfo &con, const Pedigree &pedigre
         if (pedigree[e].rel == PC && pedigree[e].polarized && pedigree[e].older == u){    
             children.push_back(other);
         }else if (pedigree[e].rel == FS){fs.push_back(other);}
+        else if (pedigree[e].rel == AV && pedigree[e].polarized && pedigree[e].older == u){av.push_back(other);}
     }
     if (children.empty()){
-        // check if u's full-sib has children
+        // check if u's full-sib has children 
+        // (this is the same as checking u's AV, 
+        // but I believe fulls ib and PC are less error-prone than AV detection, 
+        // so I prefer to check fs's children first)
         for(Vertex sib : fs){
             //fprintf(stdout, "checking full-sib %s\n", vertex_property_map[sib].c_str());
             out_edge_iter_pair = boost::out_edges(sib, pedigree);
@@ -616,7 +622,9 @@ void grabCloseRelatives_o(const Vertex u, ConnInfo &con, const Pedigree &pedigre
                 }
             }
         }
-        grabCloseRelatives(u, con, pedigree);
+
+        if (!av.empty()){grabCloseRelatives(av[0], con, pedigree);}
+        else {grabCloseRelatives(u, con, pedigree);}
     }else{
         for(Vertex c : children){
             out_edge_iter_pair = boost::out_edges(c, pedigree);
@@ -798,8 +806,8 @@ void inferFStoSingleDistantRelative(Vertex d, const std::vector<Vertex> &fs,
     set1.push_back(d);
     int numSibs = fs.size();
     double Tg = getTg(0, numSibs);
-    double k1 = UnionIbdOverTwoSets(set1, fs, allsegs)/(Tg*tot_genome);
-    double K = std::max(0.0, (k1 - calc_bkg_sharing(0, numSibs, bkg_sharing)/tot_genome)/4.0);
+    double k1 = (UnionIbdOverTwoSets(set1, fs, allsegs) - calc_bkg_sharing(0, numSibs, bkg_sharing))/(Tg*tot_genome);
+    double K = std::max(0.0, k1/4.0);
     int deg = resetRelationship(getRelfromK(K, maxDeg), 1, maxDeg);
     for(Vertex v : fs){
         //results[make_pair_v(d, v)] = deg;
@@ -904,8 +912,8 @@ int oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &vis
                 int numAV = av2use.size();
                 int numSibs = con.fs.size();
                 double Tg = getTg(numAV, numSibs);
-                double k1 = UnionIbdOverTwoSets(set1, set2, allsegs)/(Tg*tot_genome);
-                double K = std::max(0.0, (k1 - calc_bkg_sharing(numAV, numSibs, tot_genome)/tot_genome)/4.0);
+                double k1 = (UnionIbdOverTwoSets(set1, set2, allsegs) - calc_bkg_sharing(numAV, numSibs, tot_genome))/(Tg*tot_genome);
+                double K = std::max(0.0, k1/4.0);
                 int deg_gp = getRelfromK(K, maxDeg);
                 int deg_av = resetRelationship(deg_gp, 1, maxDeg);
                 for(Vertex a : av2use){
@@ -1245,9 +1253,10 @@ std::pair<int, int> pedigreeVSpedigree(const ConnInfo &con1, const ConnInfo &con
 
     double Tg1 = getTg(numAV1, numSib1);
     double Tg2 = getTg(numAV2, numSib2);
-    double k1 = (UnionIbdOverTwoSets(set1, set2, allsegs)/tot_genome)/(Tg1*Tg2);
     double bkg = calc_bkg_sharing(numAV1, numSib1, numAV2, numSib2, bkg_sharing);
-    int deg = getRelfromK(std::max(0.0, (k1 - bkg/tot_genome)/4.0), maxDeg);
+    double unioned = UnionIbdOverTwoSets(set1, set2, allsegs);
+    double k1 = (unioned - bkg)/(tot_genome*Tg1*Tg2);
+    int deg = getRelfromK(std::max(0.0, k1/4.0), maxDeg);
     if (deg >= 0 && deg <= 3){
         // need to account for IBD2 in the grandparent/parent generation
         double t1, t2, k2;
@@ -1261,9 +1270,13 @@ std::pair<int, int> pedigreeVSpedigree(const ConnInfo &con1, const ConnInfo &con
         }else{right = con2.fs;}
         t1 = 1.0 - pow(0.5, left.size());
         t2 = 1.0 - pow(0.5, right.size());
-        k2 = (IBD0011(left, right, snpmap, allsegs)/tot_genome)/(t1*t2);
+        k2 = IBD0011(left, right, snpmap, allsegs)/(tot_genome*t1*t2);
+        k1 = unioned/(tot_genome*Tg1*Tg2) - bkg/tot_genome;
+        printConnInfo(con1, pedigree);
+        printConnInfo(con2, pedigree);
+        fprintf(stdout, "k1: %lf, k2: %lf\n", k1, k2);
         k1 -= k2;
-        deg = getRelfromK(std::max(0.0, k1/4.0 + k2/2.0 - bkg/(tot_genome*4.0)), maxDeg);
+        deg = getRelfromK(std::max(0.0, k1/4.0 + k2/2.0), maxDeg);
     }
 
     if (p1_chosen){visited1.insert(p1);}

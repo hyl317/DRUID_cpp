@@ -1263,18 +1263,20 @@ std::pair<int, int> pedigreeVSpedigree(const ConnInfo &con1, const ConnInfo &con
         std::vector<Vertex> left;
         std::vector<Vertex> right;
         if (index_av1 != -1){
-            left = index_av1 == 1 ? con1.av1 : con1.av2; 
+            left = index_av1 == 1 ? con1.av1 : con1.av2;
+            //fprintf(stdout, "select av set %d for IBD0011\n", index_av1);
         }else{left = con1.fs;}
         if (index_av2 != -1){
             right = index_av2 == 1 ? con2.av1 : con2.av2;
+            //fprintf(stdout, "select av set %d for IBD0011\n", index_av2);
         }else{right = con2.fs;}
         t1 = 1.0 - pow(0.5, left.size());
         t2 = 1.0 - pow(0.5, right.size());
         k2 = IBD0011(left, right, snpmap, allsegs)/(tot_genome*t1*t2);
         k1 = unioned/(tot_genome*Tg1*Tg2) - bkg/tot_genome;
-        printConnInfo(con1, pedigree);
-        printConnInfo(con2, pedigree);
-        fprintf(stdout, "k1: %lf, k2: %lf\n", k1, k2);
+        //printConnInfo(con1, pedigree);
+        //printConnInfo(con2, pedigree);
+        //fprintf(stdout, "k1: %lf, k2: %lf, k=%lf\n", k1, k2, k1/4.0 + k2/2.0);
         k1 -= k2;
         deg = getRelfromK(std::max(0.0, k1/4.0 + k2/2.0), maxDeg);
     }

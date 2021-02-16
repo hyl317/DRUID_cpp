@@ -129,6 +129,7 @@ void readIBDFile(const std::string &ibdFile,
     std::pair<unsigned long, unsigned long> pair = make_pair_v(u, v);
     if (allsegs.find(pair) == allsegs.end()){
       Pair *p_ptr = new Pair();
+      //Pair *p_ptr = p_pair.malloc();
       p_ptr->ibd1_map = new ibdMapType();
       p_ptr->ibd2_map = new ibdMapType();
       //p_ptr->ibd1_map = p_ibdmap.malloc();

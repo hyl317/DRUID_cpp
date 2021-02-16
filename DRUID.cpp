@@ -87,30 +87,6 @@ int main(int argc, char **argv){
     t2 = std::chrono::high_resolution_clock::now();
     d = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
     logFile.printf("Anaylzing pairwise connected components done, takes %lfs\n", d/1e6);
-    // test UnionIBDover2sets
-    // std::vector<Vertex> set1;
-    // set1.push_back(id2Vertex["ped2_D3_1_g3-b1-i1"]);
-    // set1.push_back(id2Vertex["ped2_D3_1_g3-b2-i1"]);
-    // set1.push_back(id2Vertex["ped2_D3_1_g3-b3-i1"]);
-    // set1.push_back(id2Vertex["ped2_D3_1_g3-b4-i1"]);
-    // set1.push_back(id2Vertex["ped2_D3_1_g3-b5-i1"]);
-
-    // std::vector<Vertex> set2;
-    // set2.push_back(id2Vertex["ped2_D3_1_g3-b6-i1"]);
-    // set2.push_back(id2Vertex["ped2_D3_1_g3-b7-i1"]);
-    // set2.push_back(id2Vertex["ped2_D3_1_g3-b8-i1"]);
-    // set2.push_back(id2Vertex["ped2_D3_1_g3-b9-i1"]);
-    // set2.push_back(id2Vertex["ped2_D3_1_g3-b10-i1"]);
-    // UnionIbdOverTwoSets(set1, set2, allsegs);
-
-    // for (int i = 0; i < 100; i++){
-    //    std::random_shuffle(set1.begin(), set1.end());
-    //    std::random_shuffle(set2.begin(), set2.end());
-    //    double tmp = UnionIbdOverTwoSets(set1, set2, allsegs);
-    //    fprintf(stdout, "Unioned IBD length: %lf\n", tmp);
-    // }
-    // return 0;
-    // end of test
     
     // testing IBD0011
     // std::vector<Vertex> set1;

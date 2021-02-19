@@ -1441,10 +1441,9 @@ void updateSibsetByTheirGrandParent(int index_gp, int index_av,
 
 }
 
-double IBD0011(const std::vector<Vertex> &set1, const std::vector<Vertex> &set2,
-    const std::map<std::string, std::map<int, double>*> &snpmap, const PairIBD &allsegs)
+void IBD0011_uniDirection(const std::vector<Vertex> &set1, const std::vector<Vertex> &set2,
+    ibdMapType &dest, const std::map<std::string, std::map<int, double>*> &snpmap, const PairIBD &allsegs)
 {
-    ibdMapType currUnion; // stores IBD0011 region for each of the chromosome
     int numSib1 = set1.size();
     int numSib2 = set2.size();
     for(int i = 0; i < numSib1; i++){
@@ -1496,41 +1495,66 @@ double IBD0011(const std::vector<Vertex> &set1, const std::vector<Vertex> &set2,
                         else{
                             ibdSegments ibd11;
                             interval_intersection(*(pair1->find(chrName)->second), *(pair2->find(chrName)->second), ibd11);
-                            if(currUnion.find(chrName) == currUnion.end()){
-                                currUnion.insert(std::make_pair(chrName, new ibdSegments));
+                            if(dest.find(chrName) == dest.end()){
+                                dest.insert(std::make_pair(chrName, new ibdSegments));
                             }
                             ibdSegments ibd0011;
                             interval_intersection(ibd11, *(ibd0Map.find(chrName)->second), ibd0011);
                             // add the new ibd0011 region to the big union
                             ibdSegments *updated_0011Union = new ibdSegments();
-                            interval_union(ibd0011, *(currUnion.find(chrName)->second), *updated_0011Union);
-                            ibdSegments *prev_ptr = currUnion.find(chrName)->second;
-                            currUnion[chrName] = updated_0011Union;
+                            interval_union(ibd0011, *(dest.find(chrName)->second), *updated_0011Union);
+                            ibdSegments *prev_ptr = dest.find(chrName)->second;
+                            dest[chrName] = updated_0011Union;
                             delete prev_ptr; 
                         }
-
-
                     }
-
                 }
             }
-
-        for(auto it = ibd0Map.begin(); it != ibd0Map.end(); it++){delete it->second;}
-
+            for(auto it = ibd0Map.begin(); it != ibd0Map.end(); it++){delete it->second;}
         }
     }
+}
 
+double IBD0011(const std::vector<Vertex> &set1, const std::vector<Vertex> &set2,
+    const std::map<std::string, std::map<int, double>*> &snpmap, const PairIBD &allsegs)
+{
+    ibdMapType union1; // stores IBD0011 region for each of the chromosome
+    IBD0011_uniDirection(set1, set2, union1, snpmap, allsegs);
+    ibdMapType union2;
+    IBD0011_uniDirection(set2, set1, union2, snpmap, allsegs);
 
     double ibd0011_tot = 0.0;
-    for(auto it = currUnion.begin(); it != currUnion.end(); it++){
+    for(auto it = snpmap.begin(); it != snpmap.end(); it++){
+        std::string chr = it->first;
+        auto iter1 = union1.find(chr);
+        auto iter2 = union2.find(chr);
         std::vector<double> segLengths;
-        std::for_each(it->second->begin(), it->second->end(), 
+        if (iter1 != union1.end() && iter2 != union2.end()){
+            ibdSegments dest;
+            interval_union(*(iter1->second), *(iter2->second), dest);
+            std::for_each(dest.begin(), dest.end(), 
                 [&](const std::pair<double, double> &p)
                 {segLengths.push_back(p.second - p.first);});
+        }else if (iter1 != union1.end() || iter2 != union2.end()){
+            ibdSegments &nonEmpty = iter1 != union1.end() ? *(iter1->second) : *(iter2->second);
+            std::for_each(nonEmpty.begin(), nonEmpty.end(), 
+                [&](const std::pair<double, double> &p)
+                {segLengths.push_back(p.second - p.first);});
+        }else{continue;}
         ibd0011_tot += std::accumulate(segLengths.begin(), segLengths.end(), decltype(segLengths)::value_type(0));
     }
+
+    // double ibd0011_tot = 0.0;
+    // for(auto it = union1.begin(); it != union1.end(); it++){
+    //     std::vector<double> segLengths;
+    //     std::for_each(it->second->begin(), it->second->end(), 
+    //             [&](const std::pair<double, double> &p)
+    //             {segLengths.push_back(p.second - p.first);});
+    //     ibd0011_tot += std::accumulate(segLengths.begin(), segLengths.end(), decltype(segLengths)::value_type(0));
+    // }
     // clean up
-    for(auto it = currUnion.begin(); it != currUnion.end(); it++){delete it->second;}
+    for(auto it = union1.begin(); it != union1.end(); it++){delete it->second;}
+    for(auto it = union2.begin(); it != union2.end(); it++){delete it->second;}
     return ibd0011_tot;
 }
 

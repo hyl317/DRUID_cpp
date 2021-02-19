@@ -9,36 +9,30 @@ void print_help(){
 }
 
 void parse_command_line(int argc, char **argv, std::string &ibdFile, std::string &bimFile, 
-    std::string &NeFile, std::string &exSamples, std::string &prefix, int &maxDeg, int &threads, double &minIBD){
+    std::string &NeFile, std::string &exSamples, std::string &prefix, int &maxDeg, int &threads, double &minIBD, int &blockSize){
     int i = 1;
     for(; i < argc; i++){
         char *token = argv[i];
         if (strcmp(token, "-h") == 0 || strcmp(token, "--help") == 0){
             print_help();
         }else if (strcmp(token, "-i") == 0){
-            ibdFile = argv[i+1];
-            i++;
+            ibdFile = argv[++i];
         }else if (strcmp(token, "--bim") == 0){
-            bimFile = argv[i+1];
-            i++;
+            bimFile = argv[++i];
         }else if (strcmp(token, "--Ne") == 0){
-            NeFile = argv[i+1];
-            i++;
+            NeFile = argv[++i];
         }else if (strcmp(token, "-o") == 0){
-            prefix = argv[i+1];
-            i++;
+            prefix = argv[++i];
         }else if (strcmp(token, "--minIBD") == 0){
-            minIBD = std::stod(argv[i+1]);
-            i++;
+            minIBD = std::stod(argv[++i]);
         }else if (strcmp(token, "--max") == 0){
-            maxDeg = std::stoi(argv[i+1]);
-            i++; 
+            maxDeg = std::stoi(argv[++i]);
         }else if (strcmp(token, "-e") == 0){
-            exSamples = argv[i+1];
-            i++;
+            exSamples = argv[++i];
         }else if (strcmp(token, "-t") == 0){
-            threads = std::stoi(argv[i+1]);
-            i++;
+            threads = std::stoi(argv[++i]);
+        }else if (strcmp(token, "-b") == 0){
+            blockSize = std::stoi(argv[++i]);
         }else{
             fprintf(stderr, "unrecognized token %s\n", token);
             print_help();
@@ -88,8 +82,7 @@ Eigen::VectorXd readBimFile(const std::string &bimFile,
 
 void readIBDFile(const std::string &ibdFile, 
   std::map<std::pair<unsigned long, unsigned long>, Pair*> &allsegs,
-  std::map<std::string, unsigned long> &id2Vertex, 
-  boost::object_pool<Pair> &p_pair, boost::object_pool<ibdMapType> &p_ibdmap)
+  std::map<std::string, unsigned long> &id2Vertex, int blockSize)
 {
   FileOrGZ<gzFile> in;
   bool ret = in.open(ibdFile.c_str(), "r");
@@ -99,6 +92,14 @@ void readIBDFile(const std::string &ibdFile,
   }
   
   unsigned long count = 0;
+
+  Pair *pairPool = new Pair[blockSize];
+  int pairIndex = 0;
+  ibdMapType *mapPool = new ibdMapType[2*blockSize];
+  int mapIndex = 0;
+  ibdSegments *segPool = new ibdSegments[10*blockSize];
+  int segIndex = 0;
+  
   while(in.getline() >= 0){
     char id1_[50];
     char id2_[50];
@@ -128,30 +129,40 @@ void readIBDFile(const std::string &ibdFile,
 
     std::pair<unsigned long, unsigned long> pair = make_pair_v(u, v);
     if (allsegs.find(pair) == allsegs.end()){
-      Pair *p_ptr = new Pair();
-      //Pair *p_ptr = p_pair.malloc();
-      p_ptr->ibd1_map = new ibdMapType();
-      p_ptr->ibd2_map = new ibdMapType();
-      //p_ptr->ibd1_map = p_ibdmap.malloc();
-      //p_ptr->ibd2_map = p_ibdmap.malloc();
+      //Pair *p_ptr = new Pair();
+      Pair *p_ptr = pairPool + pairIndex;
+      if (++pairIndex == blockSize){
+        pairIndex = 0;
+        pairPool = new Pair[blockSize];
+      }
+      //p_ptr->ibd1_map = new ibdMapType();
+      //p_ptr->ibd2_map = new ibdMapType();
+      p_ptr->ibd1_map = mapPool + mapIndex;
+      if (++mapIndex == 2*blockSize){
+        mapIndex = 0;
+        mapPool = new ibdMapType[2*blockSize];
+      }
+      p_ptr->ibd2_map = mapPool + mapIndex;
+      if (++mapIndex == 2*blockSize){
+        mapIndex = 0;
+        mapPool = new ibdMapType[2*blockSize];
+      }
       allsegs.insert(std::make_pair(pair, p_ptr));
     }
 
     Pair *p = allsegs[pair];
-    if (ibd12 == "IBD1"){
-      p->ibd1_tot += segLen;
-      if (p->ibd1_map->find(chr) == p->ibd1_map->end()){
-        (*(p->ibd1_map)).insert(std::make_pair(chr, new std::vector<std::pair<double, double>>()));
+    double &ibd_tot = ibd12 == "IBD1" ? p->ibd1_tot : p->ibd2_tot;
+    ibdMapType &ibdmap = ibd12 == "IBD1" ? *(p->ibd1_map) : *(p->ibd2_map);
+    ibd_tot += segLen;
+    if (ibdmap.find(chr) == ibdmap.end()){
+      ibdSegments *seg_ptr = segPool + segIndex;
+      if(++segIndex == 10*blockSize){
+        segPool = new ibdSegments[10*blockSize];
+        segIndex = 0;
       }
-      (*(p->ibd1_map))[chr]->push_back(std::make_pair(start, end));
+      ibdmap.insert(std::make_pair(chr, seg_ptr));
     }
-    else{
-      p->ibd2_tot += segLen;
-      if (p->ibd2_map->find(chr) == p->ibd2_map->end()){
-        (*(p->ibd2_map)).insert(std::make_pair(chr, new std::vector<std::pair<double, double>>()));
-      }
-      (*(p->ibd2_map))[chr]->push_back(std::make_pair(start, end));
-    }
+    ibdmap[chr]->push_back(std::make_pair(start, end));
   }
 
 }
@@ -162,6 +173,7 @@ void readIBDFile_ex(const std::string &ibdFile,
   std::map<std::string, unsigned long> &id2Vertex, const std::string &exSamples, FileOrGZ<FILE *> &logFile){
   
   // first read in samples to exclude
+  fprintf(stdout, "readIBDFile_ex\n");
   FileOrGZ<FILE *> in_ex;
   bool ret_ex = in_ex.open(exSamples.c_str(), "r");
   if(!ret_ex){

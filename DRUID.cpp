@@ -16,7 +16,8 @@ int main(int argc, char **argv){
     int maxDeg = 11;
     int threads = 1;
     double minIBD = 2.0;
-    parse_command_line(argc, argv, ibdFile, bimFile, NeFile, exSamples, prefix, maxDeg, threads, minIBD);
+    int blockSize = 10000;
+    parse_command_line(argc, argv, ibdFile, bimFile, NeFile, exSamples, prefix, maxDeg, threads, minIBD, blockSize);
 
     std::string logFileName = prefix + ".log";
     FileOrGZ<FILE *> logFile;
@@ -33,13 +34,12 @@ int main(int argc, char **argv){
     Eigen::VectorXd chrLens = readBimFile(bimFile, snpmap, logFile);
 
     logFile.printf("Reading IBD segment file: %s\n", ibdFile.c_str());
+    logFile.printf("\tMemory pool block size: %d\n", blockSize);
     auto t1 = std::chrono::high_resolution_clock::now();
     PairIBD allsegs;
     std::map<std::string, Vertex> id2Vertex;
-    boost::object_pool<Pair> p_pair;
-    boost::object_pool<ibdMapType> p_ibdmap;
     if (exSamples.length() == 0){
-        readIBDFile(ibdFile, allsegs, id2Vertex, p_pair, p_ibdmap);
+        readIBDFile(ibdFile, allsegs, id2Vertex, blockSize);
     }else{
         // exclude some samples
         readIBDFile_ex(ibdFile, allsegs, id2Vertex, exSamples, logFile);
@@ -164,27 +164,22 @@ int main(int argc, char **argv){
     logFile.printf("Writing to output done, takes %lfs\n", d/1e6);
 
     // clean up
-    t1 = std::chrono::high_resolution_clock::now();
     for(auto it = snpmap.begin(); it != snpmap.end(); it++){
         delete it->second;
     }
 
-    for(auto it = allsegs.begin(); it != allsegs.end(); it++){
-        Pair *p = it->second;
-        for (auto it2 = p->ibd1_map->begin(); it2 != p->ibd1_map->end(); it2++){
-            delete it2->second;
-        }
-        for(auto it3 = p->ibd2_map->begin(); it3 != p->ibd2_map->end(); it3++){
-            delete it3->second;
-        }
-	    delete p->ibd1_map;
-	    delete p->ibd2_map;
-        delete p;
-
-    }
-    t2 = std::chrono::high_resolution_clock::now();
-    d = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
-    logFile.printf("Clean up heap space takes %lfs\n", d/1e6);
+    // for(auto it = allsegs.begin(); it != allsegs.end(); it++){
+    //     Pair *p = it->second;
+    //     for (auto it2 = p->ibd1_map->begin(); it2 != p->ibd1_map->end(); it2++){
+    //         delete it2->second;
+    //     }
+    //     for(auto it3 = p->ibd2_map->begin(); it3 != p->ibd2_map->end(); it3++){
+    //         delete it3->second;
+    //     }
+	//     delete p->ibd1_map;
+	//     delete p->ibd2_map;
+    //     delete p;
+    // }
     logFile.close();
 
 

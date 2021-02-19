@@ -139,7 +139,7 @@ void build_graph(Pedigree &pedigree, PairIBD &allsegs,
     for(auto pc: pcs){
         boost::add_edge(pc.first, pc.second, pedigree);
         pedigree[boost::edge(pc.first, pc.second, pedigree).first].rel = PC;
-        std::cout << "add a PC edge between " << vertex_property_map[pc.first] << " and " << vertex_property_map[pc.second] << std::endl;
+        //std::cout << "add a PC edge between " << vertex_property_map[pc.first] << " and " << vertex_property_map[pc.second] << std::endl;
     }
 
     // polarize Parent-child relationship when we can
@@ -485,7 +485,7 @@ void run_druid(Pedigree &pedigree, const PairIBD &allsegs,
                         //printConnInfo(con1, pedigree);
                         //printConnInfo(con2, pedigree);
                         std::pair<int, int> aunts = pedigreeVSpedigree(con1, con2, visited1, visited2, allsegs, snpmap, results, pedigree, bkg_sharing, tot_genome, maxDeg);
-                        //propagateAlongPedigree(con1, con2, aunts.first, aunts.second, visited1, visited2, pedigree, results, maxDeg);
+                        propagateAlongPedigree(con1, con2, aunts.first, aunts.second, visited1, visited2, pedigree, results, maxDeg);
                     }
 
                 }

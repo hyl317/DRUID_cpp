@@ -57,9 +57,9 @@ template<> int FileOrGZ<gzFile>::close();
 using ibdSegments = std::vector<std::pair<double, double>>;
 using ibdMapType = std::map<std::string, ibdSegments*>;
 struct Pair{
-  double ibd1_tot;
-  double ibd2_tot;
-  double kin;
+  double ibd1_tot = 0.0;
+  double ibd2_tot = 0.0;
+  double kin = 0.0;
   ibdMapType *ibd1_map;
   ibdMapType *ibd2_map;
 };
@@ -68,15 +68,14 @@ struct Pair{
 void print_help();
 
 void parse_command_line(int argc, char **argv, std::string &ibdFile, std::string &bimFile, std::string &NeFile,
-        std::string &exSamples, std::string &prefix, int &maxDeg, int &threads, double &minIBD);
+        std::string &exSamples, std::string &prefix, int &maxDeg, int &threads, double &minIBD, int &blockSize);
 
 Eigen::VectorXd readBimFile(const std::string &bimFile, 
   std::map<std::string, std::map<int, double>*> &snpmap, FileOrGZ<FILE *> &logFile);
 
 void readIBDFile(const std::string &ibdFile, 
   std::map<std::pair<unsigned long, unsigned long>, Pair*> &allsegs,
-  std::map<std::string, unsigned long> &id2Vertex,
-  boost::object_pool<Pair> &p_pair, boost::object_pool<ibdMapType> &p_ibdmap);
+  std::map<std::string, unsigned long> &id2Vertex, int blockSize);
 
 void readIBDFile_ex(const std::string &ibdFile, 
   std::map<std::pair<unsigned long, unsigned long>, Pair*> &allsegs,

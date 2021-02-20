@@ -49,6 +49,8 @@ int main(int argc, char **argv){
     auto d = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
     logFile.printf("\tFinished reading segments from %d samples for analysis, takes %lfs\n", numSample, d/1e6);
 
+    //return 0;
+
     double bkg_sharing = 0.0;
     if (NeFile.length() > 0){
         logFile.printf("Correcting for recent demography...\n");

@@ -101,18 +101,25 @@ void readIBDFile(const std::string &ibdFile,
   int segIndex = 0;
   
   while(in.getline() >= 0){
-    char id1_[50];
-    char id2_[50];
-    char chr_[50];
-    char ibd12_[5];
+    char *id1_;
+    char *id2_;
+    char *chr_;
+    char *ibd12_;
     double start, end;
-    sscanf(in.buf, "%s %s %s %s %lf %lf", id1_, id2_, chr_, ibd12_, &start, &end);
+    char *saveptr;
+    id1_ = strtok_r(in.buf, "\t", &saveptr);
+    id2_ = strtok_r(NULL, "\t", &saveptr);
+    chr_ = strtok_r(NULL, "\t", &saveptr);
+    ibd12_ = strtok_r(NULL, "\t", &saveptr);
+    start = std::stod(strtok_r(NULL, "\t", &saveptr));
+    end = std::stod(strtok_r(NULL, "\t", &saveptr));
 
     std::string id1 = id1_;
     std::string id2 = id2_;
     std::string chr = chr_;
     std::string ibd12 = ibd12_;
     double segLen = end - start;
+    //continue;
 
     auto it1 = id2Vertex.find(id1);
     auto it2 = id2Vertex.find(id2);
@@ -198,12 +205,18 @@ void readIBDFile_ex(const std::string &ibdFile,
 
   unsigned long count = 0;
   while(in.getline() >= 0){
-    char id1_[50];
-    char id2_[50];
-    char chr_[50];
-    char ibd12_[5];
+    char *id1_;
+    char *id2_;
+    char *chr_;
+    char *ibd12_;
     double start, end;
-    sscanf(in.buf, "%s %s %s %s %lf %lf", id1_, id2_, chr_, ibd12_, &start, &end);
+    char *saveptr;
+    id1_ = strtok_r(in.buf, "\t", &saveptr);
+    id2_ = strtok_r(NULL, "\t", &saveptr);
+    chr_ = strtok_r(NULL, "\t", &saveptr);
+    ibd12_ = strtok_r(NULL, "\t", &saveptr);
+    start = std::stod(strtok_r(NULL, "\t", &saveptr));
+    end = std::stod(strtok_r(NULL, "\t", &saveptr));
 
     std::string id1 = id1_;
     std::string id2 = id2_;

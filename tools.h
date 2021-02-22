@@ -64,6 +64,14 @@ struct Pair{
   ibdMapType *ibd2_map;
 };
 
+struct cmp_str
+{
+   bool operator()(char const *a, char const *b) const
+   {
+      return std::strcmp(a, b) < 0;
+   }
+};
+
 
 void print_help();
 
@@ -75,7 +83,7 @@ Eigen::VectorXd readBimFile(const std::string &bimFile,
 
 void readIBDFile(const std::string &ibdFile, 
   std::map<std::pair<unsigned long, unsigned long>, Pair*> &allsegs,
-  std::map<std::string, unsigned long> &id2Vertex, int blockSize);
+  std::map<char*, unsigned long, cmp_str> &id2Vertex, int blockSize);
 
 void readIBDFile_ex(const std::string &ibdFile, 
   std::map<std::pair<unsigned long, unsigned long>, Pair*> &allsegs,
@@ -99,6 +107,7 @@ inline std::pair<unsigned long, unsigned long> make_pair_v
 (unsigned long u, unsigned long v){
   return u < v? std::make_pair(u, v) : std::make_pair(v, u);
 }
+
 
 
 // this function finds the intersection of intervls in set1 and set2

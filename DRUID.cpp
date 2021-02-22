@@ -37,19 +37,20 @@ int main(int argc, char **argv){
     logFile.printf("\tMemory pool block size: %d\n", blockSize);
     auto t1 = std::chrono::high_resolution_clock::now();
     PairIBD allsegs;
-    std::map<std::string, Vertex> id2Vertex;
+    //std::map<std::string, Vertex> id2Vertex;
+    std::map<char *, Vertex, cmp_str> id2Vertex;
     if (exSamples.length() == 0){
         readIBDFile(ibdFile, allsegs, id2Vertex, blockSize);
     }else{
         // exclude some samples
-        readIBDFile_ex(ibdFile, allsegs, id2Vertex, exSamples, logFile);
+        //readIBDFile_ex(ibdFile, allsegs, id2Vertex, exSamples, logFile);
     }
     int numSample = id2Vertex.size();
     auto t2 = std::chrono::high_resolution_clock::now();
     auto d = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
     logFile.printf("\tFinished reading segments from %d samples for analysis, takes %lfs\n", numSample, d/1e6);
 
-    //return 0;
+    return 0;
 
     double bkg_sharing = 0.0;
     if (NeFile.length() > 0){

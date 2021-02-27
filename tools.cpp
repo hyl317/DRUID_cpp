@@ -116,11 +116,6 @@ void readIBDFile(const std::string &ibdFile,
 
     std::string chr = chr_;
     double segLen = end - start;
-    
-    // for testing purpose only
-    std::cout << id1_ << id2_ << chr << ibd12_ << segLen << "\n";
-    continue;
-    // end of test
 
     auto it1 = id2Vertex.find(id1_);
     auto it2 = id2Vertex.find(id2_);
@@ -138,7 +133,6 @@ void readIBDFile(const std::string &ibdFile,
       strcpy(id2Copy, id2_);
       id2Vertex.insert(std::make_pair(id2Copy, v));
     }else{v = it2->second;}
-    //continue;
 
     std::pair<unsigned long, unsigned long> pair = make_pair_v(u, v);
     if (allsegs.find(pair) == allsegs.end()){
@@ -162,7 +156,7 @@ void readIBDFile(const std::string &ibdFile,
       }
       allsegs.insert(std::make_pair(pair, p_ptr));
     }
-
+    
     Pair *p = allsegs[pair];
     bool isIBD1 = strcmp(ibd12_, "IBD1") == 0;
     double &ibd_tot = isIBD1 ? p->ibd1_tot : p->ibd2_tot;

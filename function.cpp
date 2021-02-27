@@ -1544,14 +1544,6 @@ double IBD0011(const std::vector<Vertex> &set1, const std::vector<Vertex> &set2,
         ibd0011_tot += std::accumulate(segLengths.begin(), segLengths.end(), decltype(segLengths)::value_type(0));
     }
 
-    // double ibd0011_tot = 0.0;
-    // for(auto it = union1.begin(); it != union1.end(); it++){
-    //     std::vector<double> segLengths;
-    //     std::for_each(it->second->begin(), it->second->end(), 
-    //             [&](const std::pair<double, double> &p)
-    //             {segLengths.push_back(p.second - p.first);});
-    //     ibd0011_tot += std::accumulate(segLengths.begin(), segLengths.end(), decltype(segLengths)::value_type(0));
-    // }
     // clean up
     for(auto it = union1.begin(); it != union1.end(); it++){delete it->second;}
     for(auto it = union2.begin(); it != union2.end(); it++){delete it->second;}

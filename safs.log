@@ -1,7 +1,0 @@
-Running DRUID...
-Reading bimFile: /fs/cbsubscb09/storage/yilei/simulate/SAMAFS/safs.bim
-	Number of chromosomes: 22
-	total genome length: 3535.218240cM
-Reading IBD segment file: /fs/cbsubscb09/storage/yilei/simulate/SAMAFS/safs.seg
-	Memory pool block size: 10000
-	Finished reading segments from 0 samples for analysis, takes 37.410504s

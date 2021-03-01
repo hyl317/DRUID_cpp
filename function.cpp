@@ -1703,7 +1703,12 @@ void write_output(const std::map<std::pair<Vertex, Vertex>, int> &results,
                 outFile.printf("%s\t%s\t%s\n", id1.c_str(), id2.c_str(), "MZ");
             }
             else if (boost::edge(u, v, pedigree).second){
-                outFile.printf("%s\t%s\t%s\n", id1.c_str(), id2.c_str(), rel2string[pedigree[boost::edge(u, v, pedigree).first].rel].c_str());
+                if (!pedigree[boost::edge(u, v, pedigree).first].polarized){
+                    outFile.printf("%s\t%s\t%s\n", id1.c_str(), id2.c_str(), rel2string[pedigree[boost::edge(u, v, pedigree).first].rel].c_str());
+                }else{
+                    std::string older = vertex_property_map[pedigree[boost::edge(u, v, pedigree).first].older];
+                    outFile.printf("%s\t%s\t%s\t%s\n", id1.c_str(), id2.c_str(), rel2string[pedigree[boost::edge(u, v, pedigree).first].rel].c_str(), older.c_str());
+                }
             }else{
                 auto p = results.find(make_pair_v(u, v));
                 // pairs that don't have segments shared is not stored in the results map, so need to check this

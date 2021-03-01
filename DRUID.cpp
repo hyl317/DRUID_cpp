@@ -50,6 +50,7 @@ int main(int argc, char **argv){
     auto d = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
     logFile.printf("\tFinished reading segments from %d samples for analysis, takes %lfs\n", numSample, d/1e6);
 
+    //fprintf(stdout, "total number pairs: %lu\n", allsegs.size());
     //return 0;
 
     double bkg_sharing = 0.0;

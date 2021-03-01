@@ -7,7 +7,7 @@
 #include <boost/graph/adjacency_list.hpp>
 #include "tools.h"
 
-
+// US means unspecified, not United States :)
 enum close_relationship {PC, FS, GP, AV};
 
 struct sample{
@@ -17,7 +17,7 @@ struct sample{
 
 struct relationship{
     close_relationship rel;
-    std::size_t older;
+    unsigned long older;
     bool polarized = false; 
     // could add something else later
 };

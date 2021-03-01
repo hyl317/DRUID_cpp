@@ -2,7 +2,7 @@
 #include <chrono>
 #include "tools.h"
 #include "function.h"
-#include "function_t.h"
+//#include "function_t.h"
 
 int main(int argc, char **argv){
 
@@ -30,20 +30,20 @@ int main(int argc, char **argv){
     logFile.printf("Running DRUID...\n");
 
     logFile.printf("Reading bimFile: %s\n", bimFile.c_str());
-    auto snpmap = std::map<std::string, std::map<int, double>*>();
-    Eigen::VectorXd chrLens = readBimFile(bimFile, snpmap, logFile);
+    std::map<std::string, std::map<int, double>*> snpmap;
+    std::map<std::string, int> id2index;
+    Eigen::VectorXd chrLens = readBimFile(bimFile, snpmap, id2index, logFile);
 
     logFile.printf("Reading IBD segment file: %s\n", ibdFile.c_str());
     logFile.printf("\tMemory pool block size: %d\n", blockSize);
     auto t1 = std::chrono::high_resolution_clock::now();
     PairIBD allsegs;
-    //std::map<std::string, Vertex> id2Vertex;
     std::map<char *, Vertex, cmp_str> id2Vertex;
     if (exSamples.length() == 0){
-        readIBDFile(ibdFile, allsegs, id2Vertex, blockSize);
+        readIBDFile(ibdFile, allsegs, id2Vertex, id2index);
     }else{
         // exclude some samples
-        //readIBDFile_ex(ibdFile, allsegs, id2Vertex, exSamples, logFile);
+        readIBDFile_ex(ibdFile, allsegs, id2Vertex, id2index, exSamples, logFile);
     }
     int numSample = id2Vertex.size();
     auto t2 = std::chrono::high_resolution_clock::now();
@@ -77,15 +77,15 @@ int main(int argc, char **argv){
     // add edges between close relatives
     std::map<std::pair<Vertex, Vertex>, int> results;
     std::map<Vertex, Vertex> twins;
-    build_graph(pedigree, allsegs, snpmap, results, twins, chrLens.sum(), bkg_sharing, maxDeg);
+    build_graph(pedigree, allsegs, snpmap, results, twins, id2index, chrLens.sum(), bkg_sharing, maxDeg);
     t2 = std::chrono::high_resolution_clock::now();
     d = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
     logFile.printf("Building graph done, takes %lfs\n", d/1e6);
     t1 = std::chrono::high_resolution_clock::now();
     if (threads == 1){
-        run_druid(pedigree, allsegs, snpmap, results, logFile, chrLens.sum(), bkg_sharing, maxDeg);
+        run_druid(pedigree, allsegs, snpmap, results, id2index, logFile, chrLens.sum(), bkg_sharing, maxDeg);
     }else{
-        run_druid_t(pedigree, allsegs, snpmap, results, threads, logFile, chrLens.sum(), bkg_sharing, maxDeg);
+        // TODO
     }
     t2 = std::chrono::high_resolution_clock::now();
     d = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();

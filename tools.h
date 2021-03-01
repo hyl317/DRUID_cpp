@@ -56,12 +56,30 @@ template<> int FileOrGZ<gzFile>::close();
 
 using ibdSegments = std::vector<std::pair<double, double>>;
 using ibdMapType = std::map<std::string, ibdSegments*>;
-struct Pair{
-  double ibd1_tot = 0.0;
-  double ibd2_tot = 0.0;
-  double kin = 0.0;
-  ibdMapType *ibd1_map;
-  ibdMapType *ibd2_map;
+// struct Pair{
+//   double ibd1_tot = 0.0;
+//   double ibd2_tot = 0.0;
+//   double kin = 0.0;
+//   ibdMapType *ibd1_map;
+//   ibdMapType *ibd2_map;
+// };
+
+struct Pair {
+    double ibd1_tot;
+    double ibd2_tot;
+    double kin;
+    ibdSegments **ibd1_map;
+    ibdSegments **ibd2_map;
+
+    Pair(int numChrom){
+      ibd1_tot = 0.0;
+      ibd2_tot = 0.0;
+      kin = 0.0;
+      ibd1_map = new ibdSegments*[numChrom];
+      ibd2_map = new ibdSegments*[numChrom];
+      std::fill(ibd1_map, ibd1_map + numChrom, nullptr);
+      std::fill(ibd2_map, ibd2_map + numChrom, nullptr);
+    }
 };
 
 struct cmp_str
@@ -79,15 +97,17 @@ void parse_command_line(int argc, char **argv, std::string &ibdFile, std::string
         std::string &exSamples, std::string &prefix, int &maxDeg, int &threads, double &minIBD, int &blockSize);
 
 Eigen::VectorXd readBimFile(const std::string &bimFile, 
-  std::map<std::string, std::map<int, double>*> &snpmap, FileOrGZ<FILE *> &logFile);
+  std::map<std::string, std::map<int, double>*> &snpmap, 
+  std::map<std::string, int> &id2index, FileOrGZ<FILE *> &logFile);
 
 void readIBDFile(const std::string &ibdFile, 
   std::map<std::pair<unsigned long, unsigned long>, Pair*> &allsegs,
-  std::map<char*, unsigned long, cmp_str> &id2Vertex, int blockSize);
+  std::map<char*, unsigned long, cmp_str> &id2Vertex, const std::map<std::string, int> &id2index);
 
 void readIBDFile_ex(const std::string &ibdFile, 
   std::map<std::pair<unsigned long, unsigned long>, Pair*> &allsegs,
-  std::map<std::string, unsigned long> &id2Vertex, const std::string &exSamples, FileOrGZ<FILE *> &logFile);
+  std::map<char*, unsigned long, cmp_str> &id2Vertex, const std::map<std::string, int> &id2index,
+  const std::string &exSamples, FileOrGZ<FILE *> &logFile);
 
 double calc_bkg_sharing(const std::string &NeFile, const Eigen::VectorXd &chrLens, const double &minIBD);
 void cumsum_eigen_colvector(const Eigen::VectorXd &source, Eigen::VectorXd &dest);

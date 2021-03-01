@@ -42,7 +42,8 @@ void parse_command_line(int argc, char **argv, std::string &ibdFile, std::string
 
 
 Eigen::VectorXd readBimFile(const std::string &bimFile, 
-    std::map<std::string, std::map<int, double>*> &snpmap, FileOrGZ<FILE *> &logFile){
+    std::map<std::string, std::map<int, double>*> &snpmap, 
+    std::map<std::string, int> &id2index, FileOrGZ<FILE *> &logFile){
   FileOrGZ<FILE *> in;
   bool ret = in.open(bimFile.c_str(), "r");
   if (!ret){
@@ -73,7 +74,9 @@ Eigen::VectorXd readBimFile(const std::string &bimFile,
     // C++ container is sorted, so the following is fine
     double snp_start = it->second->begin()->second;
     double snp_end = (--it->second->end())->second;
-    chrLens[counter++] = snp_end - snp_start;
+    chrLens[counter] = snp_end - snp_start;
+    id2index.insert(std::make_pair(it->first, counter));
+    counter++;
   }
 
   logFile.printf("\ttotal genome length: %lfcM\n", chrLens.sum());
@@ -82,7 +85,7 @@ Eigen::VectorXd readBimFile(const std::string &bimFile,
 
 void readIBDFile(const std::string &ibdFile, 
   std::map<std::pair<unsigned long, unsigned long>, Pair*> &allsegs,
-  std::map<char*, unsigned long, cmp_str> &id2Vertex, int blockSize)
+  std::map<char*, unsigned long, cmp_str> &id2Vertex, const std::map<std::string, int> &id2index)
 {
   FileOrGZ<gzFile> in;
   bool ret = in.open(ibdFile.c_str(), "r");
@@ -91,15 +94,8 @@ void readIBDFile(const std::string &ibdFile,
     exit(1);
   }
   
+  int numChrom = id2index.size();
   unsigned long count = 0;
-
-  Pair *pairPool = new Pair[blockSize];
-  int pairIndex = 0;
-  ibdMapType *mapPool = new ibdMapType[2*blockSize];
-  int mapIndex = 0;
-  ibdSegments *segPool = new ibdSegments[10*blockSize];
-  int segIndex = 0;
-  
   while(in.getline() >= 0){
     char *id1_;
     char *id2_;
@@ -136,41 +132,20 @@ void readIBDFile(const std::string &ibdFile,
 
     std::pair<unsigned long, unsigned long> pair = make_pair_v(u, v);
     if (allsegs.find(pair) == allsegs.end()){
-      //Pair *p_ptr = new Pair();
-      Pair *p_ptr = pairPool + pairIndex;
-      if (++pairIndex == blockSize){
-        pairIndex = 0;
-        pairPool = new Pair[blockSize];
-      }
-      //p_ptr->ibd1_map = new ibdMapType();
-      //p_ptr->ibd2_map = new ibdMapType();
-      p_ptr->ibd1_map = mapPool + mapIndex;
-      if (++mapIndex == 2*blockSize){
-        mapIndex = 0;
-        mapPool = new ibdMapType[2*blockSize];
-      }
-      p_ptr->ibd2_map = mapPool + mapIndex;
-      if (++mapIndex == 2*blockSize){
-        mapIndex = 0;
-        mapPool = new ibdMapType[2*blockSize];
-      }
+      Pair *p_ptr = new Pair(numChrom);
       allsegs.insert(std::make_pair(pair, p_ptr));
     }
     
     Pair *p = allsegs[pair];
     bool isIBD1 = strcmp(ibd12_, "IBD1") == 0;
     double &ibd_tot = isIBD1 ? p->ibd1_tot : p->ibd2_tot;
-    ibdMapType &ibdmap = isIBD1 ? *(p->ibd1_map) : *(p->ibd2_map);
+    ibdSegments **ibdmap = isIBD1 ? p->ibd1_map : p->ibd2_map;
+    int index = id2index.find(chr)->second;
     ibd_tot += segLen;
-    if (ibdmap.find(chr) == ibdmap.end()){
-      ibdSegments *seg_ptr = segPool + segIndex;
-      if(++segIndex == 10*blockSize){
-        segPool = new ibdSegments[10*blockSize];
-        segIndex = 0;
-      }
-      ibdmap.insert(std::make_pair(chr, seg_ptr));
+    if (ibdmap[index] == nullptr){
+      ibdmap[index] = new ibdSegments();
     }
-    ibdmap[chr]->push_back(std::make_pair(start, end));
+    ibdmap[index]->push_back(std::make_pair(start, end));
   }
 
 }
@@ -178,9 +153,10 @@ void readIBDFile(const std::string &ibdFile,
 
 void readIBDFile_ex(const std::string &ibdFile, 
   std::map<std::pair<unsigned long, unsigned long>, Pair*> &allsegs,
-  std::map<std::string, unsigned long> &id2Vertex, const std::string &exSamples, FileOrGZ<FILE *> &logFile){
-  
-  // first read in samples to exclude
+  std::map<char*, unsigned long, cmp_str> &id2Vertex, const std::map<std::string, int> &id2index,
+  const std::string &exSamples, FileOrGZ<FILE *> &logFile)
+{
+    // first read in samples to exclude
   fprintf(stdout, "readIBDFile_ex\n");
   FileOrGZ<FILE *> in_ex;
   bool ret_ex = in_ex.open(exSamples.c_str(), "r");
@@ -203,7 +179,8 @@ void readIBDFile_ex(const std::string &ibdFile,
     fprintf(stderr, "cannot open %s\n", ibdFile.c_str());
     exit(1);
   }
-
+  
+  int numChrom = id2index.size();
   unsigned long count = 0;
   while(in.getline() >= 0){
     char *id1_;
@@ -218,52 +195,138 @@ void readIBDFile_ex(const std::string &ibdFile,
     ibd12_ = strtok_r(NULL, "\t", &saveptr);
     start = std::stod(strtok_r(NULL, "\t", &saveptr));
     end = std::stod(strtok_r(NULL, "\t", &saveptr));
+    if (ex.find(id1_) != ex.end() || ex.find(id2_) != ex.end()){continue;}
+    std::string chr = chr_;
+    double segLen = end - start;
 
-    std::string id1 = id1_;
-    std::string id2 = id2_;
-    if (ex.find(id1) != ex.end() || ex.find(id2) != ex.end()){continue;}
-    auto it1 = id2Vertex.find(id1);
-    auto it2 = id2Vertex.find(id2);
+    auto it1 = id2Vertex.find(id1_);
+    auto it2 = id2Vertex.find(id2_);
     unsigned long u, v;
     if (it1 == id2Vertex.end()){
       u = count++;
-      id2Vertex.insert(std::make_pair(id1, u));
+      char *id1Copy = new char[ strlen(id1_) + 1 ]; // +1 for '\0' THIS will cause memory leak; But does it matter?
+      strcpy(id1Copy, id1_); // id1Copy = id1
+      id2Vertex.insert(std::make_pair(id1Copy, u));
     }else{u = it1->second;}
 
     if (it2 == id2Vertex.end()){
       v = count++;
-      id2Vertex.insert(std::make_pair(id2, v));
+      char *id2Copy = new char[ strlen(id2_) + 1];
+      strcpy(id2Copy, id2_);
+      id2Vertex.insert(std::make_pair(id2Copy, v));
     }else{v = it2->second;}
 
-    std::string chr = chr_;
-    std::string ibd12 = ibd12_;
-    double segLen = end - start;
     std::pair<unsigned long, unsigned long> pair = make_pair_v(u, v);
     if (allsegs.find(pair) == allsegs.end()){
-      Pair *p_ptr = new Pair();
-      p_ptr->ibd1_map = new ibdMapType();
-      p_ptr->ibd2_map = new ibdMapType();
+      Pair *p_ptr = new Pair(numChrom);
       allsegs.insert(std::make_pair(pair, p_ptr));
     }
-
+    
     Pair *p = allsegs[pair];
-    if (ibd12 == "IBD1"){
-      p->ibd1_tot += segLen;
-      if (p->ibd1_map->find(chr) == p->ibd1_map->end()){
-        (*(p->ibd1_map)).insert(std::make_pair(chr, new std::vector<std::pair<double, double>>()));
-      }
-      (*(p->ibd1_map))[chr]->push_back(std::make_pair(start, end));
+    bool isIBD1 = strcmp(ibd12_, "IBD1") == 0;
+    double &ibd_tot = isIBD1 ? p->ibd1_tot : p->ibd2_tot;
+    ibdSegments **ibdmap = isIBD1 ? p->ibd1_map : p->ibd2_map;
+    int index = id2index.find(chr)->second;
+    ibd_tot += segLen;
+    if (ibdmap[index] == nullptr){
+      ibdmap[index] = new ibdSegments();
     }
-    else{
-      p->ibd2_tot += segLen;
-      if (p->ibd2_map->find(chr) == p->ibd2_map->end()){
-        (*(p->ibd2_map)).insert(std::make_pair(chr, new std::vector<std::pair<double, double>>()));
-      }
-      (*(p->ibd2_map))[chr]->push_back(std::make_pair(start, end));
-    }
+    ibdmap[index]->push_back(std::make_pair(start, end));
   }
 
 }
+
+
+
+
+// void readIBDFile_ex(const std::string &ibdFile, 
+//   std::map<std::pair<unsigned long, unsigned long>, Pair*> &allsegs,
+//   std::map<std::string, unsigned long> &id2Vertex, const std::string &exSamples, FileOrGZ<FILE *> &logFile){
+  
+//   // first read in samples to exclude
+//   fprintf(stdout, "readIBDFile_ex\n");
+//   FileOrGZ<FILE *> in_ex;
+//   bool ret_ex = in_ex.open(exSamples.c_str(), "r");
+//   if(!ret_ex){
+//     fprintf(stderr, "cannot open %s\n", exSamples.c_str());
+//     exit(1);
+//   }
+
+//   std::unordered_set<std::string> ex;
+//   while(in_ex.getline() >= 0){
+//     char id[50];
+//     sscanf(in_ex.buf, "%s", id);
+//     ex.insert(id);
+//   }
+//   logFile.printf("\texcluding %d samples from analysis\n", ex.size());
+  
+//   FileOrGZ<gzFile> in;
+//   bool ret = in.open(ibdFile.c_str(), "r");
+//   if (!ret){
+//     fprintf(stderr, "cannot open %s\n", ibdFile.c_str());
+//     exit(1);
+//   }
+
+//   unsigned long count = 0;
+//   while(in.getline() >= 0){
+//     char *id1_;
+//     char *id2_;
+//     char *chr_;
+//     char *ibd12_;
+//     double start, end;
+//     char *saveptr;
+//     id1_ = strtok_r(in.buf, "\t", &saveptr);
+//     id2_ = strtok_r(NULL, "\t", &saveptr);
+//     chr_ = strtok_r(NULL, "\t", &saveptr);
+//     ibd12_ = strtok_r(NULL, "\t", &saveptr);
+//     start = std::stod(strtok_r(NULL, "\t", &saveptr));
+//     end = std::stod(strtok_r(NULL, "\t", &saveptr));
+
+//     std::string id1 = id1_;
+//     std::string id2 = id2_;
+//     if (ex.find(id1) != ex.end() || ex.find(id2) != ex.end()){continue;}
+//     auto it1 = id2Vertex.find(id1);
+//     auto it2 = id2Vertex.find(id2);
+//     unsigned long u, v;
+//     if (it1 == id2Vertex.end()){
+//       u = count++;
+//       id2Vertex.insert(std::make_pair(id1, u));
+//     }else{u = it1->second;}
+
+//     if (it2 == id2Vertex.end()){
+//       v = count++;
+//       id2Vertex.insert(std::make_pair(id2, v));
+//     }else{v = it2->second;}
+
+//     std::string chr = chr_;
+//     std::string ibd12 = ibd12_;
+//     double segLen = end - start;
+//     std::pair<unsigned long, unsigned long> pair = make_pair_v(u, v);
+//     if (allsegs.find(pair) == allsegs.end()){
+//       Pair *p_ptr = new Pair();
+//       p_ptr->ibd1_map = new ibdMapType();
+//       p_ptr->ibd2_map = new ibdMapType();
+//       allsegs.insert(std::make_pair(pair, p_ptr));
+//     }
+
+//     Pair *p = allsegs[pair];
+//     if (ibd12 == "IBD1"){
+//       p->ibd1_tot += segLen;
+//       if (p->ibd1_map->find(chr) == p->ibd1_map->end()){
+//         (*(p->ibd1_map)).insert(std::make_pair(chr, new std::vector<std::pair<double, double>>()));
+//       }
+//       (*(p->ibd1_map))[chr]->push_back(std::make_pair(start, end));
+//     }
+//     else{
+//       p->ibd2_tot += segLen;
+//       if (p->ibd2_map->find(chr) == p->ibd2_map->end()){
+//         (*(p->ibd2_map)).insert(std::make_pair(chr, new std::vector<std::pair<double, double>>()));
+//       }
+//       (*(p->ibd2_map))[chr]->push_back(std::make_pair(start, end));
+//     }
+//   }
+
+// }
 
 double calc_bkg_sharing(const std::string &NeFile, const Eigen::VectorXd &chrLens, const double &minIBD){
   // read the Ne File first; Don't know G yet, so need to store in a vector first

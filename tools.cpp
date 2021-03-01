@@ -138,6 +138,13 @@ void readIBDFile(const std::string &ibdFile,
     
     Pair *p = allsegs[pair];
     bool isIBD1 = strcmp(ibd12_, "IBD1") == 0;
+
+    // set up ibd2 map only if necessary
+    if (!isIBD1 && p->ibd2_map == nullptr){
+      p->ibd2_map = new ibdSegments*[numChrom];
+      std::fill(p->ibd2_map, p->ibd2_map + numChrom, nullptr);
+    }
+
     double &ibd_tot = isIBD1 ? p->ibd1_tot : p->ibd2_tot;
     ibdSegments **ibdmap = isIBD1 ? p->ibd1_map : p->ibd2_map;
     int index = id2index.find(chr)->second;
@@ -224,6 +231,13 @@ void readIBDFile_ex(const std::string &ibdFile,
     
     Pair *p = allsegs[pair];
     bool isIBD1 = strcmp(ibd12_, "IBD1") == 0;
+
+    // set up ibd2 map only if necessary
+    if (!isIBD1 && p->ibd2_map == nullptr){
+      p->ibd2_map = new ibdSegments*[numChrom];
+      std::fill(p->ibd2_map, p->ibd2_map + numChrom, nullptr);
+    }
+
     double &ibd_tot = isIBD1 ? p->ibd1_tot : p->ibd2_tot;
     ibdSegments **ibdmap = isIBD1 ? p->ibd1_map : p->ibd2_map;
     int index = id2index.find(chr)->second;

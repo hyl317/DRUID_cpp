@@ -76,9 +76,10 @@ struct Pair {
       ibd2_tot = 0.0;
       kin = 0.0;
       ibd1_map = new ibdSegments*[numChrom];
-      ibd2_map = new ibdSegments*[numChrom];
+      ibd2_map = nullptr; // allocate memory for this onnly if necessary
+      //ibd2_map = new ibdSegments*[numChrom];
       std::fill(ibd1_map, ibd1_map + numChrom, nullptr);
-      std::fill(ibd2_map, ibd2_map + numChrom, nullptr);
+      //std::fill(ibd2_map, ibd2_map + numChrom, nullptr);
     }
 };
 

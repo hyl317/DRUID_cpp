@@ -1,24 +1,24 @@
 On host cbsubscb13.biohpc.cornell.edu
-Sun Feb 28 00:09:31 EST 2021
-settingn up allsegs_v takes 1.115325
-setting up FS edges takes 0.001514
-setting up Parent-offspring edges takes 0.003163
-setting up AV edges takes 2.562781
+Sun Feb 28 20:34:55 EST 2021
+settingn up allsegs_v takes 0.856112
+setting up FS edges takes 0.001568
+setting up Parent-offspring edges takes 0.003324
+setting up AV edges takes 2.566752
 	Command being timed: "./DRUID -i /fs/cbsubscb09/storage/yilei/simulate/SAMAFS/safs.seg --bim /fs/cbsubscb09/storage/yilei/simulate/SAMAFS/safs.bim --Ne /fs/cbsubscb09/storage/yilei/simulate/SAMAFS/safs.ibdne-ped2.ne -o safs --max 10"
-	User time (seconds): 33.58
-	System time (seconds): 2.12
+	User time (seconds): 33.32
+	System time (seconds): 1.39
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:35.80
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:34.84
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 2126860
+	Maximum resident set size (kbytes): 1595076
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 1
-	Minor (reclaiming a frame) page faults: 1315689
-	Voluntary context switches: 1438
-	Involuntary context switches: 116
+	Minor (reclaiming a frame) page faults: 985601
+	Voluntary context switches: 1715
+	Involuntary context switches: 94
 	Swaps: 0
 	File system inputs: 416
 	File system outputs: 100952

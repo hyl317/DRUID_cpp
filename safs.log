@@ -4,16 +4,16 @@ Reading bimFile: /fs/cbsubscb09/storage/yilei/simulate/SAMAFS/safs.bim
 	total genome length: 3535.218240cM
 Reading IBD segment file: /fs/cbsubscb09/storage/yilei/simulate/SAMAFS/safs.seg
 	Memory pool block size: 10000
-	Finished reading segments from 2475 samples for analysis, takes 16.021871s
+	Finished reading segments from 2475 samples for analysis, takes 15.551777s
 Correcting for recent demography...
 	Reading Ne File: /fs/cbsubscb09/storage/yilei/simulate/SAMAFS/safs.ibdne-ped2.ne
 	minimum IBD length detected: 2.000000
 	Expected background sharing: 13.129642
 Maximum Relatedness Reported: degree 10
 Identifying clusters of close relatives...
-Building graph done, takes 3.687065s
+Building graph done, takes 3.431123s
 Start the primary DRUID algorithm...
 	number of connected components: 305
-Anaylzing pairwise connected components done, takes 13.439546s
+Anaylzing pairwise connected components done, takes 13.521378s
 Writitng to output file: safs.DRUID
-Writing to output done, takes 1.242816s
+Writing to output done, takes 1.250424s

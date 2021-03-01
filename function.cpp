@@ -335,13 +335,13 @@ bool is_avunc(const Vertex fs1, const Vertex fs2, const Vertex avunc, const Pair
             // then take the complement of their union
             ibdSegments ibd1or2;
             if (full_sib_pair.ibd1_map[index] != nullptr
-                && full_sib_pair.ibd2_map[index] == nullptr){
+                && (full_sib_pair.ibd2_map == nullptr || full_sib_pair.ibd2_map[index] == nullptr)){
                 ibd1or2 = *(full_sib_pair.ibd1_map[index]);
             }else if (full_sib_pair.ibd1_map[index] == nullptr
-                && full_sib_pair.ibd2_map[index] != nullptr){
+                && full_sib_pair.ibd2_map != nullptr && full_sib_pair.ibd2_map[index] != nullptr){
                 ibd1or2 = *(full_sib_pair.ibd2_map[index]);
             }else if (full_sib_pair.ibd1_map[index] != nullptr
-                && full_sib_pair.ibd2_map[index] != nullptr){
+                && full_sib_pair.ibd2_map != nullptr && full_sib_pair.ibd2_map[index] != nullptr){
                 ibdSegments &ibd1 = *(full_sib_pair.ibd1_map[index]);
                 ibdSegments &ibd2 = *(full_sib_pair.ibd2_map[index]);
                 interval_union(ibd1, ibd2, ibd1or2);

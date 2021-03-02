@@ -152,7 +152,7 @@ void readIBDFile(const std::string &ibdFile,
     if (ibdmap[index] == nullptr){
       ibdmap[index] = new ibdSegments();
     }
-    ibdmap[index]->push_back(std::make_pair(start, end));
+    ibdmap[index]->emplace_back(start, end);
   }
 
 }

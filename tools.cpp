@@ -43,7 +43,7 @@ void parse_command_line(int argc, char **argv, std::string &ibdFile, std::string
 
 Eigen::VectorXd readBimFile(const std::string &bimFile, 
     std::map<std::string, std::map<int, double>*> &snpmap, 
-    std::map<std::string, int> &id2index, FileOrGZ<FILE *> &logFile){
+    chromMap &id2index, FileOrGZ<FILE *> &logFile){
   FileOrGZ<FILE *> in;
   bool ret = in.open(bimFile.c_str(), "r");
   if (!ret){
@@ -71,6 +71,10 @@ Eigen::VectorXd readBimFile(const std::string &bimFile,
   Eigen::VectorXd chrLens(numChr);
   int counter = 0;
   for (auto it = snpmap.begin(); it != snpmap.end(); it++){
+    if (counter == std::numeric_limits<uint8_t>::max()){
+      fprintf(stderr, "number of chromosomes exceeds the limit of uint8_t\n");
+      exit(1);
+    }
     // C++ container is sorted, so the following is fine
     double snp_start = it->second->begin()->second;
     double snp_end = (--it->second->end())->second;
@@ -85,7 +89,7 @@ Eigen::VectorXd readBimFile(const std::string &bimFile,
 
 void readIBDFile(const std::string &ibdFile, 
   std::map<std::pair<unsigned long, unsigned long>, Pair*> &allsegs,
-  std::map<char*, unsigned long, cmp_str> &id2Vertex, const std::map<std::string, int> &id2index)
+  std::map<char*, unsigned long, cmp_str> &id2Vertex, const chromMap &id2index)
 {
   FileOrGZ<gzFile> in;
   bool ret = in.open(ibdFile.c_str(), "r");
@@ -160,7 +164,7 @@ void readIBDFile(const std::string &ibdFile,
 
 void readIBDFile_ex(const std::string &ibdFile, 
   std::map<std::pair<unsigned long, unsigned long>, Pair*> &allsegs,
-  std::map<char*, unsigned long, cmp_str> &id2Vertex, const std::map<std::string, int> &id2index,
+  std::map<char*, unsigned long, cmp_str> &id2Vertex, const chromMap &id2index,
   const std::string &exSamples, FileOrGZ<FILE *> &logFile)
 {
     // first read in samples to exclude
@@ -245,7 +249,7 @@ void readIBDFile_ex(const std::string &ibdFile,
     if (ibdmap[index] == nullptr){
       ibdmap[index] = new ibdSegments();
     }
-    ibdmap[index]->push_back(std::make_pair(start, end));
+    ibdmap[index]->emplace_back(start, end);
   }
 
 }

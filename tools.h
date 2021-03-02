@@ -56,6 +56,7 @@ template<> int FileOrGZ<gzFile>::close();
 
 using ibdSegments = std::vector<std::pair<double, double>>;
 using ibdMapType = std::map<std::string, ibdSegments*>;
+using chromMap = std::map<std::string, uint8_t>;
 // struct Pair{
 //   double ibd1_tot = 0.0;
 //   double ibd2_tot = 0.0;
@@ -63,6 +64,12 @@ using ibdMapType = std::map<std::string, ibdSegments*>;
 //   ibdMapType *ibd1_map;
 //   ibdMapType *ibd2_map;
 // };
+
+struct segmenet{
+  double start;
+  double end;
+  uint8_t chrIndex;
+};
 
 struct Pair {
     double ibd1_tot;
@@ -77,9 +84,7 @@ struct Pair {
       kin = 0.0;
       ibd1_map = new ibdSegments*[numChrom];
       ibd2_map = nullptr; // allocate memory for this onnly if necessary
-      //ibd2_map = new ibdSegments*[numChrom];
       std::fill(ibd1_map, ibd1_map + numChrom, nullptr);
-      //std::fill(ibd2_map, ibd2_map + numChrom, nullptr);
     }
 };
 
@@ -99,15 +104,15 @@ void parse_command_line(int argc, char **argv, std::string &ibdFile, std::string
 
 Eigen::VectorXd readBimFile(const std::string &bimFile, 
   std::map<std::string, std::map<int, double>*> &snpmap, 
-  std::map<std::string, int> &id2index, FileOrGZ<FILE *> &logFile);
+  chromMap &id2index, FileOrGZ<FILE *> &logFile);
 
 void readIBDFile(const std::string &ibdFile, 
   std::map<std::pair<unsigned long, unsigned long>, Pair*> &allsegs,
-  std::map<char*, unsigned long, cmp_str> &id2Vertex, const std::map<std::string, int> &id2index);
+  std::map<char*, unsigned long, cmp_str> &id2Vertex, const chromMap &id2index);
 
 void readIBDFile_ex(const std::string &ibdFile, 
   std::map<std::pair<unsigned long, unsigned long>, Pair*> &allsegs,
-  std::map<char*, unsigned long, cmp_str> &id2Vertex, const std::map<std::string, int> &id2index,
+  std::map<char*, unsigned long, cmp_str> &id2Vertex, const chromMap &id2index,
   const std::string &exSamples, FileOrGZ<FILE *> &logFile);
 
 double calc_bkg_sharing(const std::string &NeFile, const Eigen::VectorXd &chrLens, const double &minIBD);

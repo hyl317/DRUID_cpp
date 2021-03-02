@@ -48,20 +48,20 @@ int getRelfromK(double K, int maxDeg);
 
 void build_graph(Pedigree &pedigree, PairIBD &allsegs, const std::map<std::string, std::map<int, double>*> &snpmap,
     std::map<std::pair<Vertex, Vertex>, int> &results, std::map<Vertex, Vertex> &twins, 
-    const std::map<std::string, int> &id2index, double tot_genome, double bkg_sharing, int maxDeg);
+    const chromMap &id2index, double tot_genome, double bkg_sharing, int maxDeg);
 
 bool is_avunc(const std::string &fs1, const std::string &fs2, const std::string &avunc, 
-        const PairIBD &allsegs, const std::map<std::string, int> &id2index,
+        const PairIBD &allsegs, const chromMap &id2index,
         const std::map<std::string, std::map<int, double>*> &snpmap);
 
 bool checkAvunc(const std::vector<Vertex> &full_sibs, const Vertex avunc, 
-    const PairIBD &allsegs, const std::map<std::string, int> &id2index, 
+    const PairIBD &allsegs, const chromMap &id2index, 
     const std::map<std::string, std::map<int, double>*> &snpmap);
 
 void run_druid(Pedigree &pedigree, const PairIBD &allsegs,
     const std::map<std::string, std::map<int, double>*> &snpmap,
     std::map<std::pair<Vertex, Vertex>, int> &results,
-    const std::map<std::string, int> &id2index,
+    const chromMap &id2index,
     FileOrGZ<FILE *> &logFile,
     double tot_genome, double bkg_sharing, int maxDeg);
 
@@ -89,17 +89,17 @@ bool isSingleton(const ConnInfo &con);
 void printConnInfo(const ConnInfo &con, const Pedigree &pedigree); // for debugging
 
 double UnionIbdOverTwoSets(const std::vector<Vertex> &set1, const std::vector<Vertex> &set2,
-    const std::map<std::string, int> &id2index, const PairIBD &allsegs); // return the total length of combined IBD
+    const chromMap &id2index, const PairIBD &allsegs); // return the total length of combined IBD
 
 int oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &visited,
     const PairIBD &allsegs, std::map<std::pair<Vertex, Vertex>, int> &results,
-    const Pedigree &pedigree, const std::map<std::string, int> &id2index, double bkg_sharing, double tot_genome, int max_deg);
+    const Pedigree &pedigree, const chromMap &id2index, double bkg_sharing, double tot_genome, int max_deg);
 
 std::pair<int, int> pedigreeVSpedigree(const ConnInfo &con1, const ConnInfo &con2,
     std::unordered_set<Vertex> &visited1, std::unordered_set<Vertex> &visited2,
     const PairIBD &allsegs, const std::map<std::string, std::map<int, double>*> &snpmap,
     std::map<std::pair<Vertex, Vertex>, int> &results,
-    const Pedigree &pedigree, const std::map<std::string, int> &id2index, double bkg_sharing, double tot_genome, int maxDeg);
+    const Pedigree &pedigree, const chromMap &id2index, double bkg_sharing, double tot_genome, int maxDeg);
 
 std::pair<bool, Vertex> polarizeUnpolarPC(Vertex v1, int d1, double k1, Vertex v2, int d2, double k2);
 
@@ -109,21 +109,21 @@ void PCpairVSone(Vertex d, const std::pair<Vertex, Vertex> &pc,
 int PCpairVSpedigree(const std::pair<Vertex, Vertex> &pc, const ConnInfo &con,
     std::unordered_set<Vertex> &visited, const PairIBD &allsegs,
     std::map<std::pair<Vertex, Vertex>, int> &results, const Pedigree &pedigree,
-    const std::map<std::string, int> &id2index, double bkg_sharing, double tot_genome, int maxDeg);
+    const chromMap &id2index, double bkg_sharing, double tot_genome, int maxDeg);
 
 void updateSibsetByTheirParent(int index_p, 
     const std::vector<Vertex> &fs, const std::vector<Vertex> &parents,
     const ConnInfo &con2,
     std::unordered_set<Vertex> &visited1, std::unordered_set<Vertex> &visited2,
     const PairIBD &allsegs, std::map<std::pair<Vertex, Vertex>, int> &results,
-    const Pedigree &pedigree, const std::map<std::string, int> &id2index, double bkg_sharing, double tot_genome, int maxDeg);
+    const Pedigree &pedigree, const chromMap &id2index, double bkg_sharing, double tot_genome, int maxDeg);
 // the abvoe function infers fs's relationship to con2 by using fs's parent.
 
 void updateSibsetByTheirGrandParent(int index_gp, int index_av,
     const ConnInfo &con1, const ConnInfo &con2,
     std::unordered_set<Vertex> &visited1, std::unordered_set<Vertex> &visited2,
     const PairIBD &allsegs, std::map<std::pair<Vertex, Vertex>, int> &results,
-    const Pedigree &pedigree, const std::map<std::string, int> &id2index, double bkg_sharing, double tot_genome, int maxDeg);
+    const Pedigree &pedigree, const chromMap &id2index, double bkg_sharing, double tot_genome, int maxDeg);
 // the abvoe function infers samples in con1's relationship to con2 by using con1's grandparent.
 
 
@@ -181,7 +181,7 @@ bool includeParent(Vertex p, double max_ks1s2, const std::vector<Vertex> &sibs, 
 
 double IBD0011(const std::vector<Vertex> &set1, const std::vector<Vertex> &set2,
     const std::map<std::string, std::map<int, double>*> &snpmap, 
-    const PairIBD &allsegs, const std::map<std::string, int> &id2index);
+    const PairIBD &allsegs, const chromMap &id2index);
 
 void grabChildren(Vertex p, std::vector<Vertex> &children, const Pedigree &pedigree);
 

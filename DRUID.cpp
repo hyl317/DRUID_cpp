@@ -31,7 +31,7 @@ int main(int argc, char **argv){
 
     logFile.printf("Reading bimFile: %s\n", bimFile.c_str());
     std::map<std::string, std::map<int, double>*> snpmap;
-    std::map<std::string, int> id2index;
+    chromMap id2index;
     Eigen::VectorXd chrLens = readBimFile(bimFile, snpmap, id2index, logFile);
 
     logFile.printf("Reading IBD segment file: %s\n", ibdFile.c_str());

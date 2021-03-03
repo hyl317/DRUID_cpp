@@ -9,7 +9,8 @@ int main(int argc, char **argv){
     if (argc <= 1){
         print_help();
     }
-
+    std::cout << sizeof(segment) << std::endl;
+    std::cout << sizeof(Pair) << std::endl;
     std::string ibdFile, bimFile, NeFile;
     std::string prefix;
     std::string exSamples;

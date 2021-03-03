@@ -105,17 +105,17 @@ void readIBDFile(const std::string &ibdFile,
     char *id2_;
     char *chr_;
     char *ibd12_;
-    double start, end;
+    float start, end;
     char *saveptr;
     id1_ = strtok_r(in.buf, "\t", &saveptr);
     id2_ = strtok_r(NULL, "\t", &saveptr);
     chr_ = strtok_r(NULL, "\t", &saveptr);
     ibd12_ = strtok_r(NULL, "\t", &saveptr);
-    start = std::stod(strtok_r(NULL, "\t", &saveptr));
-    end = std::stod(strtok_r(NULL, "\t", &saveptr));
+    start = std::stof(strtok_r(NULL, "\t", &saveptr));
+    end = std::stof(strtok_r(NULL, "\t", &saveptr));
 
     std::string chr = chr_;
-    double segLen = end - start;
+    float segLen = end - start;
 
     auto it1 = id2Vertex.find(id1_);
     auto it2 = id2Vertex.find(id2_);
@@ -136,7 +136,7 @@ void readIBDFile(const std::string &ibdFile,
 
     std::pair<unsigned long, unsigned long> pair = make_pair_v(u, v);
     if (allsegs.find(pair) == allsegs.end()){
-      Pair *p_ptr = new Pair(numChrom);
+      Pair *p_ptr = new Pair();
       allsegs.insert(std::make_pair(pair, p_ptr));
     }
     
@@ -144,19 +144,14 @@ void readIBDFile(const std::string &ibdFile,
     bool isIBD1 = strcmp(ibd12_, "IBD1") == 0;
 
     // set up ibd2 map only if necessary
-    if (!isIBD1 && p->ibd2_map == nullptr){
-      p->ibd2_map = new ibdSegments*[numChrom];
-      std::fill(p->ibd2_map, p->ibd2_map + numChrom, nullptr);
+    if (!isIBD1 && p->ibd2 == nullptr){
+      p->ibd2 = new std::vector<segment>();
     }
 
-    double &ibd_tot = isIBD1 ? p->ibd1_tot : p->ibd2_tot;
-    ibdSegments **ibdmap = isIBD1 ? p->ibd1_map : p->ibd2_map;
-    int index = id2index.find(chr)->second;
+    float &ibd_tot = isIBD1 ? p->ibd1_tot : p->ibd2_tot;
+    std::vector<segment> *ibdvec = isIBD1 ? p->ibd1 : p->ibd2;
     ibd_tot += segLen;
-    if (ibdmap[index] == nullptr){
-      ibdmap[index] = new ibdSegments();
-    }
-    ibdmap[index]->emplace_back(start, end);
+    ibdvec->emplace_back(start, end, id2index.find(chr)->second);
   }
 
 }
@@ -198,17 +193,17 @@ void readIBDFile_ex(const std::string &ibdFile,
     char *id2_;
     char *chr_;
     char *ibd12_;
-    double start, end;
+    float start, end;
     char *saveptr;
     id1_ = strtok_r(in.buf, "\t", &saveptr);
     id2_ = strtok_r(NULL, "\t", &saveptr);
     chr_ = strtok_r(NULL, "\t", &saveptr);
     ibd12_ = strtok_r(NULL, "\t", &saveptr);
-    start = std::stod(strtok_r(NULL, "\t", &saveptr));
-    end = std::stod(strtok_r(NULL, "\t", &saveptr));
+    start = std::stof(strtok_r(NULL, "\t", &saveptr));
+    end = std::stof(strtok_r(NULL, "\t", &saveptr));
     if (ex.find(id1_) != ex.end() || ex.find(id2_) != ex.end()){continue;}
     std::string chr = chr_;
-    double segLen = end - start;
+    float segLen = end - start;
 
     auto it1 = id2Vertex.find(id1_);
     auto it2 = id2Vertex.find(id2_);
@@ -229,7 +224,7 @@ void readIBDFile_ex(const std::string &ibdFile,
 
     std::pair<unsigned long, unsigned long> pair = make_pair_v(u, v);
     if (allsegs.find(pair) == allsegs.end()){
-      Pair *p_ptr = new Pair(numChrom);
+      Pair *p_ptr = new Pair();
       allsegs.insert(std::make_pair(pair, p_ptr));
     }
     
@@ -237,19 +232,14 @@ void readIBDFile_ex(const std::string &ibdFile,
     bool isIBD1 = strcmp(ibd12_, "IBD1") == 0;
 
     // set up ibd2 map only if necessary
-    if (!isIBD1 && p->ibd2_map == nullptr){
-      p->ibd2_map = new ibdSegments*[numChrom];
-      std::fill(p->ibd2_map, p->ibd2_map + numChrom, nullptr);
+    if (!isIBD1 && p->ibd2 == nullptr){
+      p->ibd2 = new std::vector<segment>();
     }
 
-    double &ibd_tot = isIBD1 ? p->ibd1_tot : p->ibd2_tot;
-    ibdSegments **ibdmap = isIBD1 ? p->ibd1_map : p->ibd2_map;
-    int index = id2index.find(chr)->second;
+    float &ibd_tot = isIBD1 ? p->ibd1_tot : p->ibd2_tot;
+    std::vector<segment> *ibdvec = isIBD1 ? p->ibd1 : p->ibd2;
     ibd_tot += segLen;
-    if (ibdmap[index] == nullptr){
-      ibdmap[index] = new ibdSegments();
-    }
-    ibdmap[index]->emplace_back(start, end);
+    ibdvec->emplace_back(start, end, id2index.find(chr)->second);
   }
 
 }

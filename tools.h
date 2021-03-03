@@ -65,28 +65,48 @@ using chromMap = std::map<std::string, uint8_t>;
 //   ibdMapType *ibd2_map;
 // };
 
-struct segmenet{
-  double start;
-  double end;
+struct segment{
+  float start;
+  float end;
   uint8_t chrIndex;
+
+  segment(double start_, double end_, uint8_t chrIndex_):
+    start(start_), end(end_), chrIndex(chrIndex_){}
 };
 
-struct Pair {
-    double ibd1_tot;
-    double ibd2_tot;
-    double kin;
-    ibdSegments **ibd1_map;
-    ibdSegments **ibd2_map;
+struct Pair{
+  float ibd1_tot;
+  float ibd2_tot;
+  float kin;
+  std::vector<segment> *ibd1;
+  std::vector<segment> *ibd2;
 
-    Pair(int numChrom){
-      ibd1_tot = 0.0;
-      ibd2_tot = 0.0;
-      kin = 0.0;
-      ibd1_map = new ibdSegments*[numChrom];
-      ibd2_map = nullptr; // allocate memory for this onnly if necessary
-      std::fill(ibd1_map, ibd1_map + numChrom, nullptr);
-    }
+  Pair(){
+    ibd1_tot = 0.0;
+    ibd2_tot = 0.0;
+    kin = 0.0;
+    ibd1 = new std::vector<segment>();
+    ibd2 = nullptr; // only allocate one if there is at least 1 ibd2 segment
+  }
+
 };
+
+// struct Pair {
+//     double ibd1_tot;
+//     double ibd2_tot;
+//     double kin;
+//     ibdSegments **ibd1_map;
+//     ibdSegments **ibd2_map;
+
+//     Pair(int numChrom){
+//       ibd1_tot = 0.0;
+//       ibd2_tot = 0.0;
+//       kin = 0.0;
+//       ibd1_map = new ibdSegments*[numChrom];
+//       ibd2_map = nullptr; // allocate memory for this onnly if necessary
+//       std::fill(ibd1_map, ibd1_map + numChrom, nullptr);
+//     }
+// };
 
 struct cmp_str
 {

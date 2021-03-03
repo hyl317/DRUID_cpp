@@ -305,24 +305,14 @@ void build_graph(Pedigree &pedigree, PairIBD &allsegs,
 
 }
 
-void setup_segments(const std::vector<segment> &segvec, ibdSegments **dest, uint8_t numChrom)
-{
-    // assume dest has space for numChrom of pointers
-    std::fill(dest, dest + numChrom, nullptr);
-    for(segment seg : segvec){
-        if(dest[seg.chrIndex] == nullptr){
-            dest[seg.chrIndex] = new ibdSegments();
-        }
-        dest[seg.chrIndex]->emplace_back(seg.start, seg.end);
-    }
-}
 
-void cleanup_segments(ibdSegments **dest, uint8_t numChrom)
-{
-    for(int i = 0; i < numChrom; i++){
-        if (dest[i] != nullptr){delete dest[i];}
-    }
-}
+
+// void cleanup_segments(ibdSegments **dest, uint8_t numChrom)
+// {
+//     for(int i = 0; i < numChrom; i++){
+//         if (dest[i] != nullptr){delete dest[i];}
+//     }
+// }
 
 bool is_avunc(const Vertex fs1, const Vertex fs2, const Vertex avunc, const PairIBD &allsegs, 
     const chromMap &id2index, const std::map<std::string, std::map<int, double>*> &snpmap)
@@ -339,13 +329,13 @@ bool is_avunc(const Vertex fs1, const Vertex fs2, const Vertex avunc, const Pair
 
     double ibd011_tot = 0.0;
     int numChrom = id2index.size();
-    ibdSegments* sib1_avunc_pair_ibd1[numChrom];
+    ibdSegments sib1_avunc_pair_ibd1[numChrom];
     setup_segments(*(sib1_avunc_pair.ibd1), sib1_avunc_pair_ibd1, numChrom);
-    ibdSegments* sib2_avunc_pair_ibd1[numChrom];
+    ibdSegments sib2_avunc_pair_ibd1[numChrom];
     setup_segments(*(sib2_avunc_pair.ibd1), sib2_avunc_pair_ibd1, numChrom);
-    ibdSegments* full_sib_pair_ibd1[numChrom];
+    ibdSegments full_sib_pair_ibd1[numChrom];
     setup_segments(*(full_sib_pair.ibd1), full_sib_pair_ibd1, numChrom);
-    ibdSegments* full_sib_pair_ibd2[numChrom];
+    ibdSegments full_sib_pair_ibd2[numChrom];
     // should we check if full_sib_pair.ibd2 is nullptr?
     // in principle this is not necessary cuz full-sib pairs should have IBD2
     // but precaution?
@@ -357,23 +347,15 @@ bool is_avunc(const Vertex fs1, const Vertex fs2, const Vertex avunc, const Pair
         auto it1 = sib1_avunc_pair_ibd1[index];
         auto it2 = sib2_avunc_pair_ibd1[index];
         // if sib2 don't share any ibd1 region with the avunc on this chromosome, then there won't be any ibd110 region on this chromosome
-        if (it1 == nullptr || it2 == nullptr){continue;}
+        if (it1.empty() || it2.empty()){continue;}
         else{
             ibdSegments ibd11;
-            interval_intersection(*it1, *it2, ibd11);
+            interval_intersection(it1, it2, ibd11);
             // find ibd0 region in the full-sib pair
             // to find ibd0 region, first take the union of ibd1 and ibd2 region
             // then take the complement of their union
             ibdSegments ibd1or2;
-            if (full_sib_pair_ibd1[index] != nullptr && full_sib_pair_ibd2[index] == nullptr){
-                ibd1or2 = *(full_sib_pair_ibd1[index]);
-            }else if (full_sib_pair_ibd1[index] == nullptr && full_sib_pair_ibd2[index] != nullptr){
-                ibd1or2 = *(full_sib_pair_ibd2[index]);
-            }else if (full_sib_pair_ibd1[index] != nullptr && full_sib_pair_ibd2[index] != nullptr){
-                ibdSegments &ibd1 = *(full_sib_pair_ibd1[index]);
-                ibdSegments &ibd2 = *(full_sib_pair_ibd2[index]);
-                interval_union(ibd1, ibd2, ibd1or2);
-            }
+            interval_union(full_sib_pair_ibd1[index], full_sib_pair_ibd2[index], ibd1or2);
             
             ibdSegments ibd0;
             interval_complement(ibd1or2, ibd0, 
@@ -391,10 +373,6 @@ bool is_avunc(const Vertex fs1, const Vertex fs2, const Vertex avunc, const Pair
         }
     }
     return ibd011_tot >= AVUNC_011;
-    cleanup_segments(sib1_avunc_pair_ibd1, numChrom);
-    cleanup_segments(sib2_avunc_pair_ibd1, numChrom);
-    cleanup_segments(full_sib_pair_ibd1, numChrom);
-    cleanup_segments(full_sib_pair_ibd2, numChrom);
 }
 
 bool checkAvunc(const std::vector<Vertex> &full_sibs, const Vertex avunc, 
@@ -775,22 +753,21 @@ double UnionIbdOverTwoSets(const std::vector<Vertex> &set1, const std::vector<Ve
             if (p == allsegs.end()){continue;}
             else{
                 const Pair &pair = *(p->second);
-                ibdSegments* pairibd1[numChrom];
+                ibdSegments pairibd1[numChrom];
                 setup_segments(*(pair.ibd1), pairibd1, numChrom);
                 for(auto it = id2index.begin(); it != id2index.end(); it++){
                     int index = it->second;
-                    if (pairibd1[index] == nullptr){continue;}
+                    if (pairibd1[index].empty()){continue;}
                     std::string chrName = it->first;
                     if (currUnion.find(chrName) == currUnion.end()){
                         currUnion.insert(std::make_pair(chrName, new ibdSegments()));
                     }
                     ibdSegments *dest = new ibdSegments();
-                    interval_union(*(pairibd1[index]), *(currUnion.find(chrName)->second), *dest);
+                    interval_union(pairibd1[index], *(currUnion.find(chrName)->second), *dest);
                     ibdSegments *prev_ptr = currUnion.find(chrName)->second;
                     currUnion[chrName] = dest;
                     delete prev_ptr;
                 }
-                cleanup_segments(pairibd1, numChrom);
             }
         }
     }
@@ -1496,9 +1473,9 @@ void IBD0011_uniDirection(const std::vector<Vertex> &set1, const std::vector<Ver
             Vertex u2 = set1[j];
             std::pair<Vertex, Vertex> p = make_pair_v(u1, u2);
             auto pair_ptr = allsegs.find(p)->second;
-            ibdSegments* ibd1[numChrom];
+            ibdSegments ibd1[numChrom];
             setup_segments(*(pair_ptr->ibd1), ibd1, numChrom);
-            ibdSegments* ibd2[numChrom];
+            ibdSegments ibd2[numChrom];
             setup_segments(*(pair_ptr->ibd2), ibd2, numChrom);
             // first, find IBD0 region between u1 and u2
             // do this chromosome by chromosome
@@ -1506,25 +1483,23 @@ void IBD0011_uniDirection(const std::vector<Vertex> &set1, const std::vector<Ver
                 int index = it->second;
                 std::string chrName = it->first;
                 auto ibd0 = new ibdSegments();
-                bool isEmpty_ibd1 = ibd1[index] == nullptr;
-                bool isEmpty_ibd2 = ibd2[index] == nullptr;
+                bool isEmpty_ibd1 = ibd1[index].empty();
+                bool isEmpty_ibd2 = ibd2[index].empty();
                 double chr_s = snpmap.find(chrName)->second->begin()->second; 
                 double chr_e = (--snpmap.find(chrName)->second->end())->second;
                 if (!isEmpty_ibd1 && !isEmpty_ibd2){
                     ibdSegments ibdUnion;
-                    interval_union(*(ibd1[index]), *(ibd2[index]), ibdUnion);
+                    interval_union(ibd1[index], ibd2[index], ibdUnion);
                     interval_complement(ibdUnion, *ibd0, chr_s, chr_e);
                 }else if (!isEmpty_ibd1 && isEmpty_ibd2){
-                    interval_complement(*(ibd1[index]), *ibd0, chr_s, chr_e);
+                    interval_complement(ibd1[index], *ibd0, chr_s, chr_e);
                 }else if (isEmpty_ibd1 && !isEmpty_ibd2){
-                    interval_complement(*(ibd2[index]), *ibd0, chr_s, chr_e);
+                    interval_complement(ibd2[index], *ibd0, chr_s, chr_e);
                 }else{
                     ibd0->push_back(std::make_pair(chr_s, chr_e));
                 }
                 ibd0Map.insert(std::make_pair(chrName, ibd0));
             }
-            cleanup_segments(ibd1, numChrom);
-            cleanup_segments(ibd2, numChrom);
 
             for(int m = 0; m < numSib2; m++){
                 Vertex v1 = set2[m];
@@ -1534,17 +1509,17 @@ void IBD0011_uniDirection(const std::vector<Vertex> &set1, const std::vector<Ver
                     auto it1 = allsegs.find(make_pair_v(u1, v1));
                     auto it2 = allsegs.find(make_pair_v(u2, v2));
                     if (it1 == allsegs.end() || it2 == allsegs.end()){continue;}
-                    ibdSegments* pair1[numChrom];
-                    ibdSegments* pair2[numChrom];
+                    ibdSegments pair1[numChrom];
+                    ibdSegments pair2[numChrom];
                     setup_segments(*(it1->second->ibd1), pair1, numChrom);
                     setup_segments(*(it2->second->ibd1), pair2, numChrom);
                     for(auto it = id2index.begin(); it != id2index.end(); it++){
                         int index = it->second;
                         std::string chrName = it->first;
-                        if (pair1[index] == nullptr || pair2[index] == nullptr || ibd0Map.find(chrName) == ibd0Map.end()){continue;}
+                        if (pair1[index].empty() || pair2[index].empty() || ibd0Map.find(chrName) == ibd0Map.end()){continue;}
                         else{
                             ibdSegments ibd11;
-                            interval_intersection(*(pair1[index]), *(pair2[index]), ibd11);
+                            interval_intersection(pair1[index], pair2[index], ibd11);
                             if(dest.find(chrName) == dest.end()){
                                 dest.insert(std::make_pair(chrName, new ibdSegments));
                             }
@@ -1558,8 +1533,6 @@ void IBD0011_uniDirection(const std::vector<Vertex> &set1, const std::vector<Ver
                             delete prev_ptr; 
                         }
                     }
-                    cleanup_segments(pair1, numChrom);
-                    cleanup_segments(pair2, numChrom);
                 }
             }
             for(auto it = ibd0Map.begin(); it != ibd0Map.end(); it++){delete it->second;}

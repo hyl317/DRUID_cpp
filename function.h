@@ -226,4 +226,16 @@ bool isFS(Vertex u, const Pedigree &pedgiree);
 void write_output(const std::map<std::pair<Vertex, Vertex>, int> &results, 
     const std::string &prefix, const Pedigree &pedigree, const std::map<Vertex, Vertex> &twins);
 
+inline void setup_segments(const std::vector<segment> &segvec, ibdSegments *dest, uint8_t numChrom)
+{
+    // assume dest has space for numChrom of pointers
+    for(segment seg : segvec){
+        assert(seg.chrIndex < numChrom);
+        dest[seg.chrIndex].emplace_back(seg.start, seg.end);
+    }
+}
+
+
+
+
 #endif

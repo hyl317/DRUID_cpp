@@ -330,11 +330,11 @@ bool is_avunc(const Vertex fs1, const Vertex fs2, const Vertex avunc, const Pair
     double ibd011_tot = 0.0;
     int numChrom = id2index.size();
     ibdSegments sib1_avunc_pair_ibd1[numChrom];
-    setup_segments(*(sib1_avunc_pair.ibd1), sib1_avunc_pair_ibd1, numChrom);
+    setup_segments(sib1_avunc_pair.ibd1, sib1_avunc_pair_ibd1, numChrom);
     ibdSegments sib2_avunc_pair_ibd1[numChrom];
-    setup_segments(*(sib2_avunc_pair.ibd1), sib2_avunc_pair_ibd1, numChrom);
+    setup_segments(sib2_avunc_pair.ibd1, sib2_avunc_pair_ibd1, numChrom);
     ibdSegments full_sib_pair_ibd1[numChrom];
-    setup_segments(*(full_sib_pair.ibd1), full_sib_pair_ibd1, numChrom);
+    setup_segments(full_sib_pair.ibd1, full_sib_pair_ibd1, numChrom);
     ibdSegments full_sib_pair_ibd2[numChrom];
     // should we check if full_sib_pair.ibd2 is nullptr?
     // in principle this is not necessary cuz full-sib pairs should have IBD2
@@ -754,7 +754,7 @@ double UnionIbdOverTwoSets(const std::vector<Vertex> &set1, const std::vector<Ve
             else{
                 const Pair &pair = *(p->second);
                 ibdSegments pairibd1[numChrom];
-                setup_segments(*(pair.ibd1), pairibd1, numChrom);
+                setup_segments(pair.ibd1, pairibd1, numChrom);
                 for(auto it = id2index.begin(); it != id2index.end(); it++){
                     int index = it->second;
                     if (pairibd1[index].empty()){continue;}
@@ -1474,7 +1474,7 @@ void IBD0011_uniDirection(const std::vector<Vertex> &set1, const std::vector<Ver
             std::pair<Vertex, Vertex> p = make_pair_v(u1, u2);
             auto pair_ptr = allsegs.find(p)->second;
             ibdSegments ibd1[numChrom];
-            setup_segments(*(pair_ptr->ibd1), ibd1, numChrom);
+            setup_segments(pair_ptr->ibd1, ibd1, numChrom);
             ibdSegments ibd2[numChrom];
             setup_segments(*(pair_ptr->ibd2), ibd2, numChrom);
             // first, find IBD0 region between u1 and u2
@@ -1511,8 +1511,8 @@ void IBD0011_uniDirection(const std::vector<Vertex> &set1, const std::vector<Ver
                     if (it1 == allsegs.end() || it2 == allsegs.end()){continue;}
                     ibdSegments pair1[numChrom];
                     ibdSegments pair2[numChrom];
-                    setup_segments(*(it1->second->ibd1), pair1, numChrom);
-                    setup_segments(*(it2->second->ibd1), pair2, numChrom);
+                    setup_segments(it1->second->ibd1, pair1, numChrom);
+                    setup_segments(it2->second->ibd1, pair2, numChrom);
                     for(auto it = id2index.begin(); it != id2index.end(); it++){
                         int index = it->second;
                         std::string chrName = it->first;

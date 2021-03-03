@@ -149,9 +149,9 @@ void readIBDFile(const std::string &ibdFile,
     }
 
     float &ibd_tot = isIBD1 ? p->ibd1_tot : p->ibd2_tot;
-    std::vector<segment> *ibdvec = isIBD1 ? p->ibd1 : p->ibd2;
+    std::vector<segment> &ibdvec = isIBD1 ? p->ibd1 : *(p->ibd2);
     ibd_tot += segLen;
-    ibdvec->emplace_back(start, end, id2index.find(chr)->second);
+    ibdvec.emplace_back(start, end, id2index.find(chr)->second);
   }
 
 }
@@ -237,9 +237,9 @@ void readIBDFile_ex(const std::string &ibdFile,
     }
 
     float &ibd_tot = isIBD1 ? p->ibd1_tot : p->ibd2_tot;
-    std::vector<segment> *ibdvec = isIBD1 ? p->ibd1 : p->ibd2;
+    std::vector<segment> &ibdvec = isIBD1 ? p->ibd1 : *(p->ibd2);
     ibd_tot += segLen;
-    ibdvec->emplace_back(start, end, id2index.find(chr)->second);
+    ibdvec.emplace_back(start, end, id2index.find(chr)->second);
   }
 
 }

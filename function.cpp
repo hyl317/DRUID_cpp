@@ -29,17 +29,14 @@ void build_graph(Pedigree &pedigree, PairIBD &allsegs,
         Vertex u, v;
         boost::tie(u, v) = it->first;
         Pair &p = *(it->second);
-        double ibd1 = p.ibd1_tot;
-        double ibd2 = p.ibd2_tot;
-        double K = std::max((ibd1/4.0 + ibd2/2.0 - bkg_sharing/4.0)/tot_genome, 0.0);
-        p.kin = K;
-        int deg = getRelfromK(K, maxDeg);
+        p.kin = std::max((p.ibd1_tot/4.0 + p.ibd2_tot/2.0 - bkg_sharing/4.0)/tot_genome, 0.0);
+        int deg = getRelfromK(p.kin, maxDeg);
         setDeg(u, v, deg, results);
         // store first and second degree pairs' sample names for later use
         if (deg == 1 || deg == 2){
             bool isFS = true;
             if (deg == 1){
-                if (ibd2/tot_genome >= FULL_SIB_MIN_IBD2){
+                if (p.ibd2_tot/tot_genome >= FULL_SIB_MIN_IBD2){
                     boost::add_edge(u, v, pedigree);
                     pedigree[boost::edge(u, v, pedigree).first].rel = FS;
                 }else{
@@ -49,7 +46,7 @@ void build_graph(Pedigree &pedigree, PairIBD &allsegs,
             }else if(deg == 2){
                 // check for possibility of DC, if so, no need to consider this pair for AV
                 // therefore no need to add them to second_deg
-                if (ibd2/tot_genome >= DC_MIN_IBD2){continue;}
+                if (p.ibd2_tot/tot_genome >= DC_MIN_IBD2){continue;}
             }
 
             auto &map = deg == 1? fs_degs : second_degs;

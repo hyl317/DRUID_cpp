@@ -142,16 +142,9 @@ void readIBDFile(const std::string &ibdFile,
     
     Pair *p = allsegs[pair];
     bool isIBD1 = strcmp(ibd12_, "IBD1") == 0;
-
-    // set up ibd2 map only if necessary
-    if (!isIBD1 && p->ibd2 == nullptr){
-      p->ibd2 = new std::vector<segment>();
-    }
-
     float &ibd_tot = isIBD1 ? p->ibd1_tot : p->ibd2_tot;
-    std::vector<segment> &ibdvec = isIBD1 ? p->ibd1 : *(p->ibd2);
     ibd_tot += segLen;
-    ibdvec.emplace_back(start, end, id2index.find(chr)->second);
+    p->ibd.emplace_back(start, end, id2index.find(chr)->second);
   }
 
 }
@@ -230,16 +223,9 @@ void readIBDFile_ex(const std::string &ibdFile,
     
     Pair *p = allsegs[pair];
     bool isIBD1 = strcmp(ibd12_, "IBD1") == 0;
-
-    // set up ibd2 map only if necessary
-    if (!isIBD1 && p->ibd2 == nullptr){
-      p->ibd2 = new std::vector<segment>();
-    }
-
     float &ibd_tot = isIBD1 ? p->ibd1_tot : p->ibd2_tot;
-    std::vector<segment> &ibdvec = isIBD1 ? p->ibd1 : *(p->ibd2);
     ibd_tot += segLen;
-    ibdvec.emplace_back(start, end, id2index.find(chr)->second);
+    p->ibd.emplace_back(start, end, id2index.find(chr)->second);
   }
 
 }

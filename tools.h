@@ -78,15 +78,15 @@ struct Pair{
   float ibd1_tot;
   float ibd2_tot;
   float kin;
-  std::vector<segment> ibd1;
-  std::vector<segment> *ibd2;
+  std::vector<segment> ibd;
+  //std::vector<segment> *ibd2;
 
   Pair(){
     ibd1_tot = 0.0;
     ibd2_tot = 0.0;
     kin = 0.0;
     //ibd1 = new std::vector<segment>();
-    ibd2 = nullptr; // only allocate one if there is at least 1 ibd2 segment
+    //ibd2 = nullptr; // only allocate one if there is at least 1 ibd2 segment
   }
 
 };

@@ -412,13 +412,17 @@ void run_druid(Pedigree &pedigree, const PairIBD &allsegs,
     //return;
 
     // test
+    // int count = 0;
     // for(int i = 0; i < num_components; i++){
     //    ConnInfo con;
     //    Vertex u = (*comp_map[i])[0];
-    //    fprintf(stdout, "focal ind: %s\n", vertex_property_map[u].c_str());
     //    grabCloseRelatives_o(u, con, pedigree);
-    //    if(!isSingleton(con)){printConnInfo(con, pedigree);}
+    //    if(isSingleton(con)){
+    //        count++;
+    //        std::cout << vertex_property_map[u] << std::endl;
+    //     }
     // }
+    // std::cout << "number of singleton samples: " << count << std::endl;
     // return;
     //end of test
 

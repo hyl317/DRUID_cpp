@@ -9,6 +9,9 @@ int main(int argc, char **argv){
     if (argc <= 1){
         print_help();
     }
+
+    std::cout << "size of a pair struct: " << sizeof(Pair) << std::endl;
+    std::cout << "size of a segment struct" << sizeof(segment) << std::endl;
     
     std::string ibdFile, bimFile, NeFile;
     std::string prefix;

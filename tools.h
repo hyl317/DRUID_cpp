@@ -57,14 +57,8 @@ template<> int FileOrGZ<gzFile>::close();
 using ibdSegments = std::vector<std::pair<double, double>>;
 using ibdMapType = std::map<std::string, ibdSegments*>;
 using chromMap = std::map<std::string, uint8_t>;
-// struct Pair{
-//   double ibd1_tot = 0.0;
-//   double ibd2_tot = 0.0;
-//   double kin = 0.0;
-//   ibdMapType *ibd1_map;
-//   ibdMapType *ibd2_map;
-// };
 
+// each segment is struct is 12 bytes
 struct segment{
   float start;
   float end;
@@ -74,39 +68,20 @@ struct segment{
     start(start_), end(end_), chrIndex(chrIndex_){}
 };
 
+// each pair struct is 40 bytes
 struct Pair{
   float ibd1_tot;
   float ibd2_tot;
   float kin;
   std::vector<segment> ibd;
-  //std::vector<segment> *ibd2;
 
   Pair(){
     ibd1_tot = 0.0;
     ibd2_tot = 0.0;
     kin = 0.0;
-    //ibd1 = new std::vector<segment>();
-    //ibd2 = nullptr; // only allocate one if there is at least 1 ibd2 segment
   }
 
 };
-
-// struct Pair {
-//     double ibd1_tot;
-//     double ibd2_tot;
-//     double kin;
-//     ibdSegments **ibd1_map;
-//     ibdSegments **ibd2_map;
-
-//     Pair(int numChrom){
-//       ibd1_tot = 0.0;
-//       ibd2_tot = 0.0;
-//       kin = 0.0;
-//       ibd1_map = new ibdSegments*[numChrom];
-//       ibd2_map = nullptr; // allocate memory for this onnly if necessary
-//       std::fill(ibd1_map, ibd1_map + numChrom, nullptr);
-//     }
-// };
 
 struct cmp_str
 {
@@ -119,8 +94,8 @@ struct cmp_str
 
 void print_help();
 
-void parse_command_line(int argc, char **argv, std::string &ibdFile, std::string &bimFile, std::string &NeFile,
-        std::string &exSamples, std::string &prefix, int &maxDeg, int &threads, double &minIBD, int &blockSize);
+void parse_command_line(int argc, char **argv, std::string &segFile, std::string &ibd12, std::string &bimFile, std::string &NeFile,
+        std::string &exSamples, std::string &prefix, int &maxDeg, int &threads, double &minIBD);
 
 Eigen::VectorXd readBimFile(const std::string &bimFile, 
   std::map<std::string, std::map<int, double>*> &snpmap, 
@@ -128,12 +103,14 @@ Eigen::VectorXd readBimFile(const std::string &bimFile,
 
 void readIBDFile(const std::string &ibdFile, 
   std::map<std::pair<unsigned long, unsigned long>, Pair*> &allsegs,
-  std::map<char*, unsigned long, cmp_str> &id2Vertex, const chromMap &id2index);
+  const std::set<unsigned long> &hasCloseRels,
+  const std::map<char*, unsigned long, cmp_str> &id2Vertex, const chromMap &id2index);
 
 void readIBDFile_ex(const std::string &ibdFile, 
   std::map<std::pair<unsigned long, unsigned long>, Pair*> &allsegs,
+  const std::set<unsigned long> &hasCloseRels,
   std::map<char*, unsigned long, cmp_str> &id2Vertex, const chromMap &id2index,
-  const std::string &exSamples, FileOrGZ<FILE *> &logFile);
+  const std::set<std::string> &ex);
 
 double calc_bkg_sharing(const std::string &NeFile, const Eigen::VectorXd &chrLens, const double &minIBD);
 void cumsum_eigen_colvector(const Eigen::VectorXd &source, Eigen::VectorXd &dest);

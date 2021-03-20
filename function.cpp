@@ -17,56 +17,15 @@ int getRelfromK(double K, int maxDeg){
 
 void build_graph(Pedigree &pedigree, PairIBD &allsegs, 
     const std::map<std::string, std::map<int, double>*> &snpmap,
-    std::map<std::pair<Vertex, Vertex>, int> &results, std::map<Vertex, Vertex> &twins,
-    const chromMap &id2index, double tot_genome, double bkg_sharing, int maxDeg)
+    std::map<std::pair<Vertex, Vertex>, int> &results, 
+    const std::map<Vertex, Vertex> &twins,
+    std::set<std::pair<Vertex, Vertex>> pcs,
+    std::map<Vertex, std::shared_ptr<std::unordered_set<Vertex>>> fs_degs,
+    std::map<Vertex, std::shared_ptr<std::unordered_set<Vertex>>> second_degs,
+    const chromMap &id2index)
 {   
     auto vertex_property_map = boost::get(&sample::id, pedigree);
-    auto t1 = std::chrono::high_resolution_clock::now();
-    std::set<std::pair<Vertex, Vertex>> pcs;
-    std::map<Vertex, std::shared_ptr<std::unordered_set<Vertex>>> fs_degs;
-    std::map<Vertex, std::shared_ptr<std::unordered_set<Vertex>>> second_degs;
-    for(auto it = allsegs.begin(); it != allsegs.end(); it++){
-        Vertex u, v;
-        boost::tie(u, v) = it->first;
-        Pair &p = *(it->second);
-        p.kin = std::max((p.ibd1_tot/4.0 + p.ibd2_tot/2.0 - bkg_sharing/4.0)/tot_genome, 0.0);
-        int deg = getRelfromK(p.kin, maxDeg);
-        setDeg(u, v, deg, results);
-        // store first and second degree pairs' sample names for later use
-        if (deg == 1 || deg == 2){
-            bool isFS = true;
-            if (deg == 1){
-                if (p.ibd2_tot/tot_genome >= FULL_SIB_MIN_IBD2){
-                    boost::add_edge(u, v, pedigree);
-                    pedigree[boost::edge(u, v, pedigree).first].rel = FS;
-                }else{
-                    isFS = false;
-                    pcs.insert(std::make_pair(u, v));
-                }
-            }else if(deg == 2){
-                // check for possibility of DC, if so, no need to consider this pair for AV
-                // therefore no need to add them to second_deg
-                if (p.ibd2_tot/tot_genome >= DC_MIN_IBD2){continue;}
-            }
 
-            auto &map = deg == 1? fs_degs : second_degs;
-            if (isFS || deg == 2){
-                if(map.find(u) == map.end()){
-                    map[u] = std::unique_ptr<std::unordered_set<Vertex>>(new std::unordered_set<Vertex>());
-                }
-                map[u]->insert(v);
-                if(map.find(v) == map.end()){
-                    map[v] = std::unique_ptr<std::unordered_set<Vertex>>(new std::unordered_set<Vertex>());
-                }
-                map[v]->insert(u);
-            }
-        }else if (deg == 0){twins.insert(std::make_pair(u, v));}
-    }
-    auto t2 = std::chrono::high_resolution_clock::now();
-    auto d = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
-    fprintf(stdout, "settingn up allsegs_v takes %lf\n", d/1e6);
-
-    t1 = std::chrono::high_resolution_clock::now();
     // add missing full-sib edges (and break incorrect ones)
     std::vector<int> components(boost::num_vertices(pedigree));
     int num_components = boost::connected_components(pedigree, &components[0]);
@@ -127,11 +86,7 @@ void build_graph(Pedigree &pedigree, PairIBD &allsegs,
             }
         }
     }
-    t2 = std::chrono::high_resolution_clock::now();
-    d = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
-    fprintf(stdout, "setting up FS edges takes %lf\n", d/1e6);
 
-    t1 = std::chrono::high_resolution_clock::now();
     // add PC edges
     for(auto pc: pcs){
         boost::add_edge(pc.first, pc.second, pedigree);
@@ -226,12 +181,8 @@ void build_graph(Pedigree &pedigree, PairIBD &allsegs,
         // }
         assert(!(v1IsParent && v2IsParent));
     }
-    t2 = std::chrono::high_resolution_clock::now();
-    d = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
-    fprintf(stdout, "setting up Parent-offspring edges takes %lf\n", d/1e6);
 
     // construct second-degree edges
-    t1 = std::chrono::high_resolution_clock::now();
     std::unordered_set<Vertex> checked_sibs;
     for(auto it = second_degs.begin(); it != second_degs.end(); it++){
         // here we assume that it->first is the younger generation and test if it forms AV relationship with its putative sescond relaatives
@@ -280,9 +231,6 @@ void build_graph(Pedigree &pedigree, PairIBD &allsegs,
         }
 
     }
-    t2 = std::chrono::high_resolution_clock::now();
-    d = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
-    fprintf(stdout, "setting up AV edges takes %lf\n", d/1e6);
 
     // remove all edges coming out of one of the twins
     // don't want to remove its vertex cuz otherwise it would mess up with vertex index of all others
@@ -301,15 +249,6 @@ void build_graph(Pedigree &pedigree, PairIBD &allsegs,
     }
 
 }
-
-
-
-// void cleanup_segments(ibdSegments **dest, uint8_t numChrom)
-// {
-//     for(int i = 0; i < numChrom; i++){
-//         if (dest[i] != nullptr){delete dest[i];}
-//     }
-// }
 
 bool is_avunc(const Vertex fs1, const Vertex fs2, const Vertex avunc, const PairIBD &allsegs, 
     const chromMap &id2index, const std::map<std::string, std::map<int, double>*> &snpmap)
@@ -417,9 +356,8 @@ void run_druid(Pedigree &pedigree, const PairIBD &allsegs,
     //    ConnInfo con;
     //    Vertex u = (*comp_map[i])[0];
     //    grabCloseRelatives_o(u, con, pedigree);
-    //    if(isSingleton(con)){
-    //        count++;
-    //        std::cout << vertex_property_map[u] << std::endl;
+    //    if(!isSingleton(con)){
+    //        printConnInfo(con, pedigree);
     //     }
     // }
     // std::cout << "number of singleton samples: " << count << std::endl;
@@ -1987,4 +1925,138 @@ void propagateAlongPedigree(const ConnInfo &con1, const ConnInfo &con2, int av1,
         }
     }
 
+}
+
+
+void readInput(const std::string &ibd12, const std::string &segFile, const std::string &exSamples,
+    Pedigree &pedigree, std::map<std::pair<unsigned long, unsigned long>, Pair*> &allsegs,
+    std::map<char*, unsigned long, cmp_str> &id2Vertex, const chromMap &id2index, 
+    std::map<Vertex, Vertex> &twins, std::map<std::pair<Vertex, Vertex>, int> &results,
+    const std::map<std::string, std::map<int, double>*> &snpmap,
+    double bkg_sharing, double tot_genome, int maxDeg,
+    FileOrGZ<FILE *> &logFile)
+{   
+    std::set<std::string> ex;
+    if (exSamples.length() > 0){
+        FileOrGZ<FILE *> in_ex;
+        bool ret_ex = in_ex.open(exSamples.c_str(), "r");
+        if(!ret_ex){
+            fprintf(stderr, "cannot open %s\n", exSamples.c_str());
+            exit(1);
+        }
+    
+        while(in_ex.getline() >= 0){
+            char id[50];
+            sscanf(in_ex.buf, "%s", id);
+            ex.insert(id);
+        }
+        logFile.printf("\texcluding %d samples from analysis\n", ex.size());
+        in_ex.close();
+    }
+
+    // read IBD12 file first
+    FileOrGZ<gzFile> in;
+    bool ret = in.open(ibd12.c_str(), "r");
+    if (!ret){
+        fprintf(stderr, "cannot open %s\n", ibd12.c_str());
+        exit(1);
+    }
+    
+    logFile.printf("Reading ibd12 file: %s\n", ibd12.c_str());
+    std::set<std::pair<Vertex, Vertex>> pcs;
+    std::map<Vertex, std::shared_ptr<std::unordered_set<Vertex>>> fs_degs;
+    std::map<Vertex, std::shared_ptr<std::unordered_set<Vertex>>> second_degs;
+    std::set<Vertex> hasCloseRels;
+    unsigned long count = 0;
+    while(in.getline() >= 0){
+        char *id1_;
+        char *id2_;
+        double ibd1, ibd2;
+        char *saveptr;
+        id1_ = strtok_r(in.buf, "\t", &saveptr);
+        id2_ = strtok_r(NULL, "\t", &saveptr);
+        ibd1 = std::stod(strtok_r(NULL, "\t", &saveptr));
+        ibd2 = std::stod(strtok_r(NULL, "\t", &saveptr));
+        if (ex.find(id1_) != ex.end() || ex.find(id2_) != ex.end()){continue;}
+        auto it1 = id2Vertex.find(id1_);
+        auto it2 = id2Vertex.find(id2_);
+        unsigned long u, v;
+        if (it1 == id2Vertex.end()){
+            u = count++;
+            char *id1Copy = new char[ strlen(id1_) + 1 ]; // +1 for '\0' THIS will cause memory leak; But does it matter?
+            strcpy(id1Copy, id1_); // id1Copy = id1
+            id2Vertex.insert(std::make_pair(id1Copy, u));
+            boost::add_vertex(pedigree);
+            pedigree[u].id = id1_;
+        }else{u = it1->second;}
+
+        if (it2 == id2Vertex.end()){
+            v = count++;
+            char *id2Copy = new char[ strlen(id2_) + 1];
+            strcpy(id2Copy, id2_);
+            id2Vertex.insert(std::make_pair(id2Copy, v));
+            boost::add_vertex(pedigree);
+            pedigree[v].id = id2_;
+        }else{v = it2->second;}
+
+        double kin = std::max((ibd1/4.0 + ibd2/2.0) - bkg_sharing/(4.0*tot_genome), 0.0);
+        int deg = getRelfromK(kin, maxDeg);
+        setDeg(u, v, deg, results);
+
+        if (deg == 1 || deg == 2){
+            hasCloseRels.insert(u);
+            hasCloseRels.insert(v);
+            bool isFS = true;
+            if (deg == 1){
+                if (ibd2 >= FULL_SIB_MIN_IBD2){
+                    boost::add_edge(u, v, pedigree);
+                    pedigree[boost::edge(u, v, pedigree).first].rel = FS;
+                }else{
+                    isFS = false;
+                    pcs.insert(std::make_pair(u, v));
+                }
+            }else if(deg == 2){
+                // check for possibility of DC, if so, no need to consider this pair for AV
+                // therefore no need to add them to second_deg
+                if (ibd2 >= DC_MIN_IBD2){continue;}
+            }
+
+            auto &map = deg == 1? fs_degs : second_degs;
+            if (isFS || deg == 2){
+                if(map.find(u) == map.end()){
+                    map[u] = std::unique_ptr<std::unordered_set<Vertex>>(new std::unordered_set<Vertex>());
+                }
+                map[u]->insert(v);
+                if(map.find(v) == map.end()){
+                    map[v] = std::unique_ptr<std::unordered_set<Vertex>>(new std::unordered_set<Vertex>());
+                }
+                map[v]->insert(u);
+            }
+        }else if (deg == 0){twins.insert(std::make_pair(u, v));}
+
+    }
+
+    in.close(); // close ibd12 file
+
+    // now read segments file
+    logFile.printf("Reading segments file: %s\n", segFile.c_str());
+    if (exSamples.length() == 0){
+        readIBDFile(segFile, allsegs, hasCloseRels, id2Vertex, id2index);
+    }else{
+        logFile.printf("\tExcluding %d samples from further analysis", ex.size());
+        readIBDFile_ex(segFile, allsegs, hasCloseRels, id2Vertex, id2index, ex);
+    }
+
+
+    // now update each pair's kinship
+    for(auto it = allsegs.begin(); it != allsegs.end(); it++){
+        Pair *p = it->second;
+        p->kin = std::max(0.0, (p->ibd1_tot/4.0 + p->ibd2_tot/2.0 - bkg_sharing/4.0)/tot_genome);
+    }
+
+    // now build graphs
+    build_graph(pedigree, allsegs, snpmap, results, twins, pcs, fs_degs, second_degs, id2index);
+
+  
+    
 }

@@ -2,6 +2,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --mem=8000
+#SBATCH --exclude=cbsubscb[16-17]
 #SBATCH --partition=short
 #SBATCH --job-name=DRUID.cpp
 #SBATCH --output=druid.out.%j
@@ -18,13 +19,13 @@ if [ ! -d /fs/cbsubscb09/storage/yilei/simulate/chrom ]; then
 fi
 
 # command to run test on SAMFAS dataset
-prefix="/fs/cbsubscb09/storage/yilei/simulate/SAMAFS"
-/usr/bin/time -v ./DRUID -i $prefix/safs.seg --bim $prefix/safs.bim --Ne $prefix/safs.ibdne-ped2.ne -o safs --max 10 
+#prefix="/fs/cbsubscb09/storage/yilei/simulate/SAMAFS"
+#/usr/bin/time -v ./DRUID --seg $prefix/safs.seg  --ibd12 $prefix/safs.ibd12 --bim $prefix/safs.bim --Ne $prefix/safs.ibdne-ped2.ne -o safs --max 10 
 
 
 # command to run on my simulated dataset using ukb (pedigree strucutre is the same as described in the DRUID paper)
-#prefix="/fs/cbsubscb09/storage/yilei/simulate/DRUID_cpp"
-#./DRUID -i $prefix/ped.seg --bim $prefix/ped.bim -o test --max 10
+prefix="/fs/cbsubscb09/storage/yilei/simulate/DRUID_cpp"
+./DRUID --seg $prefix/ped.seg --ibd12 $prefix/ped.ibd12 --bim $prefix/ped.bim -o test --max 10
 
 # command to run on simulated pedigree to test unpolarized PC pairs
 # files are in the same directory as the above

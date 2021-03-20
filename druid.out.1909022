@@ -1,0 +1,46 @@
+On host cbsubscb10.biohpc.cornell.edu
+Fri Mar 19 07:55:07 EDT 2021
+ped1_D10_1_g6-b2-i1	ped1_D3_1_g3-b6-i1
+ped1_D10_1_g6-b2-i1	ped1_D6_1_g4-b2-i1
+ped1_D10_1_g6-b2-i1	ped1_D6_1_g4-b2-i1
+ped1_D10_1_g6-b2-i1	ped1_D6_1_g4-b2-i1
+ped1_D10_1_g6-b2-i1	ped1_D6_1_g4-b2-i1
+ped1_D10_1_g6-b2-i1	ped1_D7_1_g5-b6-i1
+ped1_D10_1_g6-b2-i1	ped1_D9_1_g6-b6-i1
+ped1_D10_1_g6-b2-i1	ped3_D10_1_g6-b4-i1
+ped1_D10_1_g6-b2-i1	ped3_D4_1_g3-b4-i1
+ped1_D10_1_g6-b2-i1	ped3_D4_1_g3-b4-i1
+ped1_D10_1_g6-b2-i1	ped3_D7_1_g5-b6-i1
+ped1_D10_1_g6-b2-i1	ped3_D7_1_g5-b6-i1
+ped1_D3_1_g3-b6-i1	ped1_D4_1_g3-b2-i1
+ped1_D3_1_g3-b6-i1	ped1_D5_1_g4-b6-i1
+ped1_D3_1_g3-b6-i1	ped1_D8_1_g5-b2-i1
+ped1_D3_1_g3-b6-i1	ped3_D5_1_g4-b6-i1
+ped1_D4_1_g3-b2-i1	ped1_D8_1_g5-b2-i1
+ped1_D4_1_g3-b2-i1	ped1_D9_1_g6-b6-i1
+ped1_D4_1_g3-b2-i1	ped3_D5_1_g4-b6-i1
+ped1_D4_1_g3-b2-i1	ped3_D9_1_g6-b6-i1
+ped1_D5_1_g4-b6-i1	ped3_D5_1_g4-b6-i1
+ped1_D5_1_g4-b6-i1	ped3_D9_1_g6-b6-i1
+ped1_D6_1_g4-b2-i1	ped3_D4_1_g3-b4-i1
+ped1_D6_1_g4-b2-i1	ped3_D6_1_g4-b4-i1
+ped1_D6_1_g4-b2-i1	ped3_D7_1_g5-b6-i1
+ped1_D7_1_g5-b6-i1	ped3_D4_1_g3-b4-i1
+ped1_D7_1_g5-b6-i1	ped3_D9_1_g6-b6-i1
+ped1_D8_1_g5-b2-i1	ped3_D5_1_g4-b6-i1
+ped1_D8_1_g5-b2-i1	ped3_D5_1_g4-b6-i1
+ped1_D8_1_g5-b2-i1	ped3_D7_1_g5-b6-i1
+ped1_D9_1_g6-b6-i1	ped3_D5_1_g4-b6-i1
+ped1_D9_1_g6-b6-i1	ped3_D5_1_g4-b6-i1
+ped1_D9_1_g6-b6-i1	ped3_D6_1_g4-b4-i1
+ped1_D9_1_g6-b6-i1	ped3_D6_1_g4-b4-i1
+ped3_D10_1_g6-b4-i1	ped3_D9_1_g6-b6-i1
+ped3_D4_1_g3-b4-i1	ped3_D5_1_g4-b6-i1
+ped3_D4_1_g3-b4-i1	ped3_D8_1_g5-b4-i1
+ped3_D4_1_g3-b4-i1	ped3_D8_1_g5-b4-i1
+ped3_D4_1_g3-b4-i1	ped3_D9_1_g6-b6-i1
+ped3_D6_1_g4-b4-i1	ped3_D7_1_g5-b6-i1
+ped3_D6_1_g4-b4-i1	ped3_D7_1_g5-b6-i1
+ped3_D6_1_g4-b4-i1	ped3_D8_1_g5-b4-i1
+ped3_D7_1_g5-b6-i1	ped3_D8_1_g5-b4-i1
+number of pairs: 15813

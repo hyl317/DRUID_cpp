@@ -46,9 +46,14 @@ using PairIBD = std::map<std::pair<Vertex, Vertex>, Pair*>;
 
 int getRelfromK(double K, int maxDeg);
 
-void build_graph(Pedigree &pedigree, PairIBD &allsegs, const std::map<std::string, std::map<int, double>*> &snpmap,
-    std::map<std::pair<Vertex, Vertex>, int> &results, std::map<Vertex, Vertex> &twins, 
-    const chromMap &id2index, double tot_genome, double bkg_sharing, int maxDeg);
+void build_graph(Pedigree &pedigree, PairIBD &allsegs, 
+    const std::map<std::string, std::map<int, double>*> &snpmap,
+    std::map<std::pair<Vertex, Vertex>, int> &results, 
+    const std::map<Vertex, Vertex> &twins,
+    std::set<std::pair<Vertex, Vertex>> pcs,
+    std::map<Vertex, std::shared_ptr<std::unordered_set<Vertex>>> fs_degs,
+    std::map<Vertex, std::shared_ptr<std::unordered_set<Vertex>>> second_degs,
+    const chromMap &id2index);
 
 bool is_avunc(const std::string &fs1, const std::string &fs2, const std::string &avunc, 
         const PairIBD &allsegs, const chromMap &id2index,
@@ -235,7 +240,13 @@ inline void setup_segments(const std::vector<segment> &segvec, ibdSegments *dest
     }
 }
 
-
+void readInput(const std::string &ibd12, const std::string &segFile, const std::string &exSamples,
+    Pedigree &pedigree, std::map<std::pair<unsigned long, unsigned long>, Pair*> &allsegs,
+    std::map<char*, unsigned long, cmp_str> &id2Vertex, const chromMap &id2index, 
+    std::map<Vertex, Vertex> &twins, std::map<std::pair<Vertex, Vertex>, int> &results,
+    const std::map<std::string, std::map<int, double>*> &snpmap,
+    double bkg_sharing, double tot_genome, int maxDeg,
+    FileOrGZ<FILE *> &logFile);
 
 
 #endif

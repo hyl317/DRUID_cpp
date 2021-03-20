@@ -9,18 +9,14 @@ int main(int argc, char **argv){
     if (argc <= 1){
         print_help();
     }
-
-    std::cout << "size of a pair struct: " << sizeof(Pair) << std::endl;
-    std::cout << "size of a segment struct" << sizeof(segment) << std::endl;
     
-    std::string ibdFile, bimFile, NeFile;
+    std::string segFile, ibd12, bimFile, NeFile;
     std::string prefix;
     std::string exSamples;
     int maxDeg = 11;
     int threads = 1;
     double minIBD = 2.0;
-    int blockSize = 10000;
-    parse_command_line(argc, argv, ibdFile, bimFile, NeFile, exSamples, prefix, maxDeg, threads, minIBD, blockSize);
+    parse_command_line(argc, argv, segFile, ibd12, bimFile, NeFile, exSamples, prefix, maxDeg, threads, minIBD);
 
     std::string logFileName = prefix + ".log";
     FileOrGZ<FILE *> logFile;
@@ -37,25 +33,6 @@ int main(int argc, char **argv){
     chromMap id2index;
     Eigen::VectorXd chrLens = readBimFile(bimFile, snpmap, id2index, logFile);
 
-    logFile.printf("Reading IBD segment file: %s\n", ibdFile.c_str());
-    logFile.printf("\tMemory pool block size: %d\n", blockSize);
-    auto t1 = std::chrono::high_resolution_clock::now();
-    PairIBD allsegs;
-    std::map<char *, Vertex, cmp_str> id2Vertex;
-    if (exSamples.length() == 0){
-        readIBDFile(ibdFile, allsegs, id2Vertex, id2index);
-    }else{
-        // exclude some samples
-        readIBDFile_ex(ibdFile, allsegs, id2Vertex, id2index, exSamples, logFile);
-    }
-    int numSample = id2Vertex.size();
-    auto t2 = std::chrono::high_resolution_clock::now();
-    auto d = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
-    logFile.printf("\tFinished reading segments from %d samples for analysis, takes %lfs\n", numSample, d/1e6);
-
-    //fprintf(stdout, "total number pairs: %lu\n", allsegs.size());
-    //return 0;
-
     double bkg_sharing = 0.0;
     if (NeFile.length() > 0){
         logFile.printf("Correcting for recent demography...\n");
@@ -69,22 +46,25 @@ int main(int argc, char **argv){
         logFile.printf("\tExpected background sharing: %lf\n", bkg_sharing);
     }
 
-    logFile.printf("Maximum Relatedness Reported: degree %d\n", maxDeg);
-    logFile.printf("Identifying clusters of close relatives...\n");
-    t1 = std::chrono::high_resolution_clock::now();
-    // make a graph and add vertices properties to it
-    Pedigree pedigree = Pedigree(numSample);
-    for(auto it = id2Vertex.begin(); it != id2Vertex.end(); it++){
-        pedigree[it->second].id = it->first;
-    }
 
-    // add edges between close relatives
+    auto t1 = std::chrono::high_resolution_clock::now();
+    Pedigree pedigree;
+    PairIBD allsegs;
+    std::map<char *, Vertex, cmp_str> id2Vertex;
     std::map<std::pair<Vertex, Vertex>, int> results;
     std::map<Vertex, Vertex> twins;
-    build_graph(pedigree, allsegs, snpmap, results, twins, id2index, chrLens.sum(), bkg_sharing, maxDeg);
-    t2 = std::chrono::high_resolution_clock::now();
-    d = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
-    logFile.printf("Building graph done, takes %lfs\n", d/1e6);
+    // read input
+    readInput(ibd12, segFile, exSamples, pedigree, allsegs, id2Vertex, id2index, 
+        twins, results, snpmap, bkg_sharing, chrLens.sum(), maxDeg, logFile);
+    int numSample = id2Vertex.size();
+    auto t2 = std::chrono::high_resolution_clock::now();
+    auto d = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+    logFile.printf("Finished reading inputs and building graph from %d samples for analysis, takes %lfs\n", numSample, d/1e6);
+    logFile.printf("Maximum Relatedness Reported: degree %d\n", maxDeg);
+    logFile.printf("Identifying clusters of close relatives...\n");
+
+    std::cout << "number of pairs: " << allsegs.size() << std::endl;
+
     t1 = std::chrono::high_resolution_clock::now();
     if (threads == 1){
         run_druid(pedigree, allsegs, snpmap, results, id2index, logFile, chrLens.sum(), bkg_sharing, maxDeg);

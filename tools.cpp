@@ -8,15 +8,15 @@ void print_help(){
   exit(0);
 }
 
-void parse_command_line(int argc, char **argv, std::string &ibdFile, std::string &bimFile, 
-    std::string &NeFile, std::string &exSamples, std::string &prefix, int &maxDeg, int &threads, double &minIBD, int &blockSize){
+void parse_command_line(int argc, char **argv, std::string &segFile, std::string &ibd12, std::string &bimFile, 
+    std::string &NeFile, std::string &exSamples, std::string &prefix, int &maxDeg, int &threads, double &minIBD){
     int i = 1;
     for(; i < argc; i++){
         char *token = argv[i];
         if (strcmp(token, "-h") == 0 || strcmp(token, "--help") == 0){
             print_help();
-        }else if (strcmp(token, "-i") == 0){
-            ibdFile = argv[++i];
+        }else if (strcmp(token, "--seg") == 0){
+            segFile = argv[++i];
         }else if (strcmp(token, "--bim") == 0){
             bimFile = argv[++i];
         }else if (strcmp(token, "--Ne") == 0){
@@ -31,8 +31,8 @@ void parse_command_line(int argc, char **argv, std::string &ibdFile, std::string
             exSamples = argv[++i];
         }else if (strcmp(token, "-t") == 0){
             threads = std::stoi(argv[++i]);
-        }else if (strcmp(token, "-b") == 0){
-            blockSize = std::stoi(argv[++i]);
+        }else if (strcmp(token, "--ibd12") == 0){
+            ibd12 = argv[++i];
         }else{
             fprintf(stderr, "unrecognized token %s\n", token);
             print_help();
@@ -89,7 +89,8 @@ Eigen::VectorXd readBimFile(const std::string &bimFile,
 
 void readIBDFile(const std::string &ibdFile, 
   std::map<std::pair<unsigned long, unsigned long>, Pair*> &allsegs,
-  std::map<char*, unsigned long, cmp_str> &id2Vertex, const chromMap &id2index)
+  const std::set<unsigned long> &hasCloseRels,
+  const std::map<char*, unsigned long, cmp_str> &id2Vertex, const chromMap &id2index)
 {
   FileOrGZ<gzFile> in;
   bool ret = in.open(ibdFile.c_str(), "r");
@@ -98,8 +99,6 @@ void readIBDFile(const std::string &ibdFile,
     exit(1);
   }
   
-  int numChrom = id2index.size();
-  unsigned long count = 0;
   while(in.getline() >= 0){
     char *id1_;
     char *id2_;
@@ -120,19 +119,18 @@ void readIBDFile(const std::string &ibdFile,
     auto it1 = id2Vertex.find(id1_);
     auto it2 = id2Vertex.find(id2_);
     unsigned long u, v;
-    if (it1 == id2Vertex.end()){
-      u = count++;
-      char *id1Copy = new char[ strlen(id1_) + 1 ]; // +1 for '\0' THIS will cause memory leak; But does it matter?
-      strcpy(id1Copy, id1_); // id1Copy = id1
-      id2Vertex.insert(std::make_pair(id1Copy, u));
-    }else{u = it1->second;}
+    assert(it1 != id2Vertex.end());
+    assert(it2 != id2Vertex.end());
+    u = it1->second;
+    v = it2->second;
 
-    if (it2 == id2Vertex.end()){
-      v = count++;
-      char *id2Copy = new char[ strlen(id2_) + 1];
-      strcpy(id2Copy, id2_);
-      id2Vertex.insert(std::make_pair(id2Copy, v));
-    }else{v = it2->second;}
+    if (hasCloseRels.find(u) == hasCloseRels.end() 
+      && hasCloseRels.find(v) == hasCloseRels.end())
+      {
+        //std::cout << id1_ << "\t" << id2_ << std::endl;
+        continue;
+      
+      }
 
     std::pair<unsigned long, unsigned long> pair = make_pair_v(u, v);
     if (allsegs.find(pair) == allsegs.end()){
@@ -152,26 +150,10 @@ void readIBDFile(const std::string &ibdFile,
 
 void readIBDFile_ex(const std::string &ibdFile, 
   std::map<std::pair<unsigned long, unsigned long>, Pair*> &allsegs,
+  const std::set<unsigned long> &hasCloseRels,
   std::map<char*, unsigned long, cmp_str> &id2Vertex, const chromMap &id2index,
-  const std::string &exSamples, FileOrGZ<FILE *> &logFile)
-{
-    // first read in samples to exclude
-  fprintf(stdout, "readIBDFile_ex\n");
-  FileOrGZ<FILE *> in_ex;
-  bool ret_ex = in_ex.open(exSamples.c_str(), "r");
-  if(!ret_ex){
-    fprintf(stderr, "cannot open %s\n", exSamples.c_str());
-    exit(1);
-  }
-
-  std::unordered_set<std::string> ex;
-  while(in_ex.getline() >= 0){
-    char id[50];
-    sscanf(in_ex.buf, "%s", id);
-    ex.insert(id);
-  }
-  logFile.printf("\texcluding %d samples from analysis\n", ex.size());
-  
+  const std::set<std::string> &ex)
+{ 
   FileOrGZ<gzFile> in;
   bool ret = in.open(ibdFile.c_str(), "r");
   if (!ret){
@@ -179,8 +161,6 @@ void readIBDFile_ex(const std::string &ibdFile,
     exit(1);
   }
   
-  int numChrom = id2index.size();
-  unsigned long count = 0;
   while(in.getline() >= 0){
     char *id1_;
     char *id2_;
@@ -201,19 +181,14 @@ void readIBDFile_ex(const std::string &ibdFile,
     auto it1 = id2Vertex.find(id1_);
     auto it2 = id2Vertex.find(id2_);
     unsigned long u, v;
-    if (it1 == id2Vertex.end()){
-      u = count++;
-      char *id1Copy = new char[ strlen(id1_) + 1 ]; // +1 for '\0' THIS will cause memory leak; But does it matter?
-      strcpy(id1Copy, id1_); // id1Copy = id1
-      id2Vertex.insert(std::make_pair(id1Copy, u));
-    }else{u = it1->second;}
+    assert(it1 != id2Vertex.end());
+    assert(it2 != id2Vertex.end());
+    u = it1->second;
+    v = it2->second;
 
-    if (it2 == id2Vertex.end()){
-      v = count++;
-      char *id2Copy = new char[ strlen(id2_) + 1];
-      strcpy(id2Copy, id2_);
-      id2Vertex.insert(std::make_pair(id2Copy, v));
-    }else{v = it2->second;}
+    if (hasCloseRels.find(u) == hasCloseRels.end() 
+      && hasCloseRels.find(v) == hasCloseRels.end())
+      {continue;}
 
     std::pair<unsigned long, unsigned long> pair = make_pair_v(u, v);
     if (allsegs.find(pair) == allsegs.end()){

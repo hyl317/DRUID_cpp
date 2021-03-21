@@ -1963,6 +1963,7 @@ void readInput(const std::string &ibd12, const std::string &segFile, const std::
     }
     
     logFile.printf("Reading ibd12 file: %s\n", ibd12.c_str());
+    auto t1 = std::chrono::high_resolution_clock::now();
     std::set<std::pair<Vertex, Vertex>> pcs;
     std::map<Vertex, std::shared_ptr<std::unordered_set<Vertex>>> fs_degs;
     std::map<Vertex, std::shared_ptr<std::unordered_set<Vertex>>> second_degs;
@@ -2037,15 +2038,23 @@ void readInput(const std::string &ibd12, const std::string &segFile, const std::
     }
 
     in.close(); // close ibd12 file
+    auto t2 = std::chrono::high_resolution_clock::now();
+    auto d = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+    logFile.printf("\treading ibd12 file takes %lfs\n", d/1e6);
 
     // now read segments file
     logFile.printf("Reading segments file: %s\n", segFile.c_str());
+    t1 = std::chrono::high_resolution_clock::now();
     if (exSamples.length() == 0){
         readIBDFile(segFile, allsegs, hasCloseRels, id2Vertex, id2index);
     }else{
         logFile.printf("\tExcluding %d samples from further analysis", ex.size());
         readIBDFile_ex(segFile, allsegs, hasCloseRels, id2Vertex, id2index, ex);
     }
+    t2 = std::chrono::high_resolution_clock::now();
+    d = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+    logFile.printf("\treading seg file takes %lfs\n", d/1e6);
+
 
 
     // now update each pair's kinship
@@ -2056,7 +2065,4 @@ void readInput(const std::string &ibd12, const std::string &segFile, const std::
 
     // now build graphs
     build_graph(pedigree, allsegs, snpmap, results, twins, pcs, fs_degs, second_degs, id2index);
-
-  
-    
 }

@@ -1205,6 +1205,7 @@ std::pair<int, int> pedigreeVSpedigree(const ConnInfo &con1, const ConnInfo &con
     double bkg = calc_bkg_sharing(numAV1, numSib1, numAV2, numSib2, bkg_sharing);
     double unioned = UnionIbdOverTwoSets(set1, set2, id2index, allsegs);
     double k1 = (unioned - bkg)/(tot_genome*Tg1*Tg2);
+    //double k1 = unioned/(tot_genome*Tg1*Tg2) - bkg/tot_genome;
     int deg = getRelfromK(std::max(0.0, k1/4.0), maxDeg);
     if (deg >= 0 && deg <= 3){
         // need to account for IBD2 in the grandparent/parent generation

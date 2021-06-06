@@ -2,7 +2,7 @@
 #include <chrono>
 #include "tools.h"
 #include "function.h"
-//#include "function_t.h"
+#include "function_t.h"
 
 int main(int argc, char **argv){
 
@@ -70,6 +70,7 @@ int main(int argc, char **argv){
         run_druid(pedigree, allsegs, snpmap, results, id2index, logFile, chrLens.sum(), bkg_sharing, maxDeg);
     }else{
         // TODO
+        run_druid_t(pedigree, allsegs, snpmap, results, id2index, threads, logFile, chrLens.sum(), bkg_sharing, maxDeg);
     }
     t2 = std::chrono::high_resolution_clock::now();
     d = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();

@@ -38,7 +38,7 @@ void run_druid_t(Pedigree &pedigree, const PairIBD &allsegs,
 
     std::vector<std::thread> vecThreads;
     for(int i = 0; i < numThread; i++){
-        std::thread t(processPairs, i, numThread, std::ref(pedigree), std::ref(comp_map), std::ref(allsegs), std::ref(snpmap), std::ref(id2index), std::ref(*updated_results[i]), tot_genome, bkg_sharing, maxDeg);
+        std::thread t(processPairs, i, numThread, std::ref(pedigree), std::ref(comp_map), std::ref(allsegs), std::ref(snpmap), std::ref(id2index), std::ref(results), std::ref(*updated_results[i]), tot_genome, bkg_sharing, maxDeg);
         vecThreads.push_back(std::move(t));
     }
 
@@ -58,8 +58,10 @@ void run_druid_t(Pedigree &pedigree, const PairIBD &allsegs,
 void processPairs(int thread_index, int numThread,  const Pedigree &pedigree,
     const std::map<int, std::shared_ptr<std::vector<Vertex>>> &comp_map, const PairIBD &allsegs,
     const std::map<std::string, std::map<int, double>*> &snpmap, const chromMap &id2index,
+    const std::map<std::pair<Vertex, Vertex>, int> &results_old,
     std::map<std::pair<Vertex, Vertex>, int> &results, double tot_genome, double bkg_sharing, int maxDeg)
 {   
+    results.insert(results_old.begin(), results_old.end());
     int num_components = comp_map.size();
     int offset = thread_index == 0 ? numThread : thread_index;
     for(int i = 0; i < num_components; i++){

@@ -152,11 +152,18 @@ inline void setDeg(Vertex u, Vertex v, int deg, std::map<std::pair<Vertex, Verte
     else{results[make_pair_v(u, v)] = deg;}
 }
 
-inline int getDeg(Vertex u, Vertex v, const std::map<std::pair<Vertex, Vertex>, int> &results)
+// inline int getDeg(Vertex u, Vertex v, const std::map<std::pair<Vertex, Vertex>, int> &results)
+// {
+//     auto it = results.find(make_pair_v(u, v));
+//     if (it == results.end()){return -1;}
+//     else{return it->second;}
+// }
+
+inline int getDeg(Vertex u, Vertex v, const PairIBD &allsegs, int maxDeg)
 {
-    auto it = results.find(make_pair_v(u, v));
-    if (it == results.end()){return -1;}
-    else{return it->second;}
+    auto it = allsegs.find(make_pair_v(u, v));
+    if (it == allsegs.end()){return -1;}
+    else{return getRelfromK(it->second->kin, maxDeg);}
 }
 
 double averageKinship(Vertex u, const std::vector<Vertex> &set, 
@@ -192,11 +199,11 @@ void grabChildren(Vertex p, std::vector<Vertex> &children, const Pedigree &pedig
 
 void propagate(Vertex u, Vertex v, std::unordered_set<Vertex> &visited1, 
     std::unordered_set<Vertex> &visited2, int maxDeg, const Pedigree &pedigree, 
-    std::map<std::pair<Vertex, Vertex>, int> &results);
+    const PairIBD &allsegs, std::map<std::pair<Vertex, Vertex>, int> &results);
 
 void propagateAlongPedigree(const ConnInfo &con1, const ConnInfo &con2, int av1, int av2,
     std::unordered_set<Vertex> &visited1, std::unordered_set<Vertex> &visited2,
-    const Pedigree &pedigree, std::map<std::pair<Vertex, Vertex>, int> &results, int maxDeg);
+    const Pedigree &pedigree, const PairIBD &allsegs, std::map<std::pair<Vertex, Vertex>, int> &results, int maxDeg);
 
 inline double getTg(int numAV, int numSib){
     if(numAV == 0){return 1.0 - pow(0.5, numSib);}

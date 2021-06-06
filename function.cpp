@@ -414,7 +414,7 @@ void run_druid(Pedigree &pedigree, const PairIBD &allsegs,
                             visited1.insert(w1);
                             av2 = PCpairVSpedigree(pc, con2, visited2, allsegs, results, pedigree, id2index, bkg_sharing, tot_genome, maxDeg);
                         }
-                        propagateAlongPedigree(con1, con2, -1, av2, visited1, visited2, pedigree, results, maxDeg);
+                        propagateAlongPedigree(con1, con2, -1, av2, visited1, visited2, pedigree, allsegs, results, maxDeg);
                     }else if(!isSingleton1 && isSingleton2){
                         int av1 = -1;
                         visited2.insert(v);
@@ -424,12 +424,12 @@ void run_druid(Pedigree &pedigree, const PairIBD &allsegs,
                             auto pc = std::make_pair(v, w2);
                             av1 = PCpairVSpedigree(pc, con1, visited1, allsegs, results, pedigree, id2index, bkg_sharing, tot_genome, maxDeg);
                         }
-                        propagateAlongPedigree(con1, con2, av1, -1, visited1, visited2, pedigree, results, maxDeg);
+                        propagateAlongPedigree(con1, con2, av1, -1, visited1, visited2, pedigree, allsegs, results, maxDeg);
                     }else{
                         //printConnInfo(con1, pedigree);
                         //printConnInfo(con2, pedigree);
                         std::pair<int, int> aunts = pedigreeVSpedigree(con1, con2, visited1, visited2, allsegs, snpmap, results, pedigree, id2index, bkg_sharing, tot_genome, maxDeg);
-                        propagateAlongPedigree(con1, con2, aunts.first, aunts.second, visited1, visited2, pedigree, results, maxDeg);
+                        propagateAlongPedigree(con1, con2, aunts.first, aunts.second, visited1, visited2, pedigree, allsegs, results, maxDeg);
                     }
 
                 }
@@ -882,7 +882,7 @@ int oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &vis
             for(Vertex p : con.p){
                 if(isFS2Everyone(p, av2use, pedigree)){
                     //results[make_pair_v(p, u)] = results[make_pair_v(av2use[0], u)];
-                    setDeg(p, u, getDeg(av2use[0], u, results), results);
+                    setDeg(p, u, getDeg(av2use[0], u, allsegs, maxDeg), results);
                     visited.insert(p);
                 }
             }
@@ -1050,7 +1050,7 @@ void updateSibsetByTheirParent(int index,
     if (!con2.gp1.empty()){
         for(Vertex gp : con2.gp1){
             //int base_deg = results[make_pair_v(p2use, gp)];
-            int base_deg = getDeg(p2use, gp, results);
+            int base_deg = getDeg(p2use, gp, allsegs, maxDeg);
             int reset_deg = resetRelationship(base_deg, 1, maxDeg);
             setRelationshipBetweenOneSampleAndSet(gp, fs, results, reset_deg);
         }
@@ -1059,7 +1059,7 @@ void updateSibsetByTheirParent(int index,
     if (!con2.gp2.empty()){
         for(Vertex gp : con2.gp2){
             //int base_deg = results[make_pair_v(p2use, gp)];
-            int base_deg = getDeg(p2use, gp, results);
+            int base_deg = getDeg(p2use, gp, allsegs, maxDeg);
             int reset_deg = resetRelationship(base_deg, 1, maxDeg);
             setRelationshipBetweenOneSampleAndSet(gp, fs, results, reset_deg);
         }
@@ -1068,7 +1068,7 @@ void updateSibsetByTheirParent(int index,
     if (!con2.av1.empty()){
         for(Vertex av : con2.av1){
             //int base_deg = results[make_pair_v(p2use, av)];
-            int base_deg = getDeg(p2use, av, results);
+            int base_deg = getDeg(p2use, av, allsegs, maxDeg);
             int reset_deg = resetRelationship(base_deg, 1, maxDeg);
             setRelationshipBetweenOneSampleAndSet(av, fs, results, reset_deg);
         }
@@ -1077,7 +1077,7 @@ void updateSibsetByTheirParent(int index,
     if (!con2.av2.empty()){
         for(Vertex av : con2.av2){
             //int base_deg = results[make_pair_v(p2use, av)];
-            int base_deg = getDeg(p2use, av, results);
+            int base_deg = getDeg(p2use, av, allsegs, maxDeg);
             int reset_deg = resetRelationship(base_deg, 1, maxDeg);
             setRelationshipBetweenOneSampleAndSet(av, fs, results, reset_deg);
         }
@@ -1086,7 +1086,7 @@ void updateSibsetByTheirParent(int index,
     if (!con2.p.empty()){
         for(Vertex p : con2.p){
             //int base_deg = results[make_pair_v(p2use, p)];
-            int base_deg = getDeg(p2use, p, results);
+            int base_deg = getDeg(p2use, p, allsegs, maxDeg);
             int reset_deg = resetRelationship(base_deg, 1, maxDeg);
             setRelationshipBetweenOneSampleAndSet(p, fs, results, reset_deg);
         }
@@ -1094,7 +1094,7 @@ void updateSibsetByTheirParent(int index,
 
     for(Vertex sib2 : con2.fs){
         //int base_deg = results[make_pair_v(p2use, sib2)];
-        int base_deg = getDeg(p2use, sib2, results);
+        int base_deg = getDeg(p2use, sib2, allsegs, maxDeg);
         int reset_deg = resetRelationship(base_deg, 1, maxDeg);
         setRelationshipBetweenOneSampleAndSet(sib2, fs, results, reset_deg);
     }
@@ -1310,7 +1310,7 @@ void updateSibsetByTheirGrandParent(int index_gp, int index_av,
     if (!con2.gp1.empty()){
         for(Vertex gp : con2.gp1){
             //int base_deg = results[make_pair_v(gp2use, gp)];
-            int base_deg = getDeg(gp2use, gp, results);
+            int base_deg = getDeg(gp2use, gp, allsegs, maxDeg);
             int deg2av = resetRelationship(base_deg, 1, maxDeg);
             setRelationshipBetweenOneSampleAndSet(gp, avset2use, results, deg2av);
             if (useP){
@@ -1324,7 +1324,7 @@ void updateSibsetByTheirGrandParent(int index_gp, int index_av,
     if (!con2.gp2.empty()){
         for(Vertex gp : con2.gp2){
             //int base_deg = results[make_pair_v(gp2use, gp)];
-            int base_deg = getDeg(gp2use, gp, results);
+            int base_deg = getDeg(gp2use, gp, allsegs, maxDeg);
             int deg2av = resetRelationship(base_deg, 1, maxDeg);
             setRelationshipBetweenOneSampleAndSet(gp, avset2use, results, deg2av);
             if (useP){
@@ -1338,7 +1338,7 @@ void updateSibsetByTheirGrandParent(int index_gp, int index_av,
     if (!con2.av1.empty()){
         for(Vertex av : con2.av1){
             //int base_deg = results[make_pair_v(gp2use, av)];
-            int base_deg = getDeg(gp2use, av, results);
+            int base_deg = getDeg(gp2use, av, allsegs, maxDeg);
             int deg2av = resetRelationship(base_deg, 1, maxDeg);
             setRelationshipBetweenOneSampleAndSet(av, avset2use, results, deg2av);
             if (useP){
@@ -1352,7 +1352,7 @@ void updateSibsetByTheirGrandParent(int index_gp, int index_av,
     if (!con2.av2.empty()){
         for(Vertex av : con2.av2){
             //int base_deg = results[make_pair_v(gp2use, av)];
-            int base_deg = getDeg(gp2use, av, results);
+            int base_deg = getDeg(gp2use, av, allsegs, maxDeg);
             int deg2av = resetRelationship(base_deg, 1, maxDeg);
             setRelationshipBetweenOneSampleAndSet(av, avset2use, results, deg2av);
             if (useP){
@@ -1366,7 +1366,7 @@ void updateSibsetByTheirGrandParent(int index_gp, int index_av,
     if (!con2.p.empty()){
         for(Vertex _p : con2.p){
             //int base_deg = results[make_pair_v(gp2use, _p)];
-            int base_deg = getDeg(gp2use, _p, results);
+            int base_deg = getDeg(gp2use, _p, allsegs, maxDeg);
             int deg2av = resetRelationship(base_deg, 1, maxDeg);
             setRelationshipBetweenOneSampleAndSet(_p, avset2use, results, deg2av);
             if (useP){
@@ -1379,7 +1379,7 @@ void updateSibsetByTheirGrandParent(int index_gp, int index_av,
 
     for(Vertex sib2 : con2.fs){
         //int base_deg = results[make_pair_v(gp2use, sib2)];
-        int base_deg = getDeg(gp2use, sib2, results);
+        int base_deg = getDeg(gp2use, sib2, allsegs, maxDeg);
         int deg2av = resetRelationship(base_deg, 1, maxDeg);
         setRelationshipBetweenOneSampleAndSet(sib2, avset2use, results, deg2av);
         if (useP){
@@ -1698,7 +1698,7 @@ void PCpairVSone(Vertex d, const std::pair<Vertex, Vertex> &pc, const PairIBD &a
         Vertex p = tuple.second;
         Vertex c = p == pc.first ? pc.second : pc.first;
         //results[make_pair_v(c, d)] = resetRelationship(results[make_pair_v(p, d)], 1, maxDeg);
-        setDeg(c, d, resetRelationship(getDeg(p, d, results), 1, maxDeg), results);
+        setDeg(c, d, resetRelationship(getDeg(p, d, allsegs, maxDeg), 1, maxDeg), results);
     }
 
 }
@@ -1765,8 +1765,8 @@ int PCpairVSpedigree(const std::pair<Vertex, Vertex> &pc, const ConnInfo &con,
         if (p2use != -1){
             Vertex p = con.p[p2use];
             visited.insert(p);
-            d1 = getDeg(pc.first, p, results);
-            d2 = getDeg(pc.second, p, results);
+            d1 = getDeg(pc.first, p, allsegs, maxDeg);
+            d2 = getDeg(pc.second, p, allsegs, maxDeg);
             auto it2 = allsegs.find(make_pair_v(pc.first, p));
             k1 = it2 == allsegs.end()? 0.0 : it2->second->kin;
             it2 = allsegs.find(make_pair_v(pc.second, p));
@@ -1811,8 +1811,8 @@ int PCpairVSpedigree(const std::pair<Vertex, Vertex> &pc, const ConnInfo &con,
         if (index_gp != -1){
             Vertex gp = gp2check[index_gp];
             visited.insert(gp);
-            d1 = getDeg(pc.first, gp, results);
-            d2 = getDeg(pc.second, gp, results);
+            d1 = getDeg(pc.first, gp, allsegs, maxDeg);
+            d2 = getDeg(pc.second, gp, allsegs, maxDeg);
             auto it2 = allsegs.find(make_pair_v(pc.first, gp));
             k1 = it2 == allsegs.end()? 0.0 : it2->second->kin;
             it2 = allsegs.find(make_pair_v(pc.second, gp));
@@ -1878,9 +1878,9 @@ void grabChildren(Vertex p, std::vector<Vertex> &children, const Pedigree &pedig
 
 void propagate(Vertex u, Vertex v, std::unordered_set<Vertex> &visited1, 
     std::unordered_set<Vertex> &visited2, int maxDeg, const Pedigree &pedigree, 
-    std::map<std::pair<Vertex, Vertex>, int> &results)
+    const PairIBD &allsegs, std::map<std::pair<Vertex, Vertex>, int> &results)
 {
-    int baseDeg = getDeg(u, v, results);
+    int baseDeg = getDeg(u, v, allsegs, maxDeg);
     // set relationship between u and v's descendents given that u,v are baseDeg degrees related
     //if (baseDeg >= maxDeg){return;} Don't return here because I want to add all u,v's descendants to visited1, visited2
     std::vector<Vertex> children_u;
@@ -1892,7 +1892,7 @@ void propagate(Vertex u, Vertex v, std::unordered_set<Vertex> &visited1,
     setRelationshipBetweenTwoSets(children_u, children_v, results, resetRelationship(baseDeg, 2, maxDeg));
     for(Vertex child_u : children_u){
         for(Vertex child_v : children_v){
-            propagate(child_u, child_v, visited1, visited2, maxDeg, pedigree, results);
+            propagate(child_u, child_v, visited1, visited2, maxDeg, pedigree, allsegs, results);
             visited1.insert(child_u);
             visited2.insert(child_v);
         }
@@ -1902,7 +1902,7 @@ void propagate(Vertex u, Vertex v, std::unordered_set<Vertex> &visited1,
 
 void propagateAlongPedigree(const ConnInfo &con1, const ConnInfo &con2, int av1, int av2,
     std::unordered_set<Vertex> &visited1, std::unordered_set<Vertex> &visited2,
-    const Pedigree &pedigree, std::map<std::pair<Vertex, Vertex>, int> &results, int maxDeg)
+    const Pedigree &pedigree, const PairIBD &allsegs, std::map<std::pair<Vertex, Vertex>, int> &results, int maxDeg)
 {   
     // no need to check con1.p and con2.p because their descendants are just con1.fs, con2.fs
     // and no need to check the gp generation since their descendants are just the AVs 
@@ -1922,7 +1922,7 @@ void propagateAlongPedigree(const ConnInfo &con1, const ConnInfo &con2, int av1,
 
     for(Vertex u : set1){
         for(Vertex v : set2){
-            propagate(u, v, visited1, visited2, maxDeg, pedigree, results);
+            propagate(u, v, visited1, visited2, maxDeg, pedigree, allsegs, results);
         }
     }
 

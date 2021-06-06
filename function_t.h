@@ -11,7 +11,6 @@ void run_druid_t(Pedigree &pedigree, const PairIBD &allsegs,
 void processPairs(int thread_index, int numThread,  const Pedigree &pedigree,
     const std::map<int, std::shared_ptr<std::vector<Vertex>>> &comp_map, const PairIBD &allsegs,
     const std::map<std::string, std::map<int, double>*> &snpmap, const chromMap &id2index,
-    const std::map<std::pair<Vertex, Vertex>, int> &results_old,
     std::map<std::pair<Vertex, Vertex>, int> &results, double tot_genome, double bkg_sharing, int maxDeg);
 
 #endif

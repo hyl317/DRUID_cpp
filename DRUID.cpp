@@ -16,7 +16,8 @@ int main(int argc, char **argv){
     int maxDeg = 11;
     int threads = 1;
     double minIBD = 2.0;
-    parse_command_line(argc, argv, segFile, ibd12, bimFile, NeFile, exSamples, prefix, maxDeg, threads, minIBD);
+    double bkg_sharing = 0.0;
+    parse_command_line(argc, argv, segFile, ibd12, bimFile, NeFile, exSamples, prefix, maxDeg, threads, minIBD, bkg_sharing);
 
     std::string logFileName = prefix + ".log";
     FileOrGZ<FILE *> logFile;
@@ -33,7 +34,6 @@ int main(int argc, char **argv){
     chromMap id2index;
     Eigen::VectorXd chrLens = readBimFile(bimFile, snpmap, id2index, logFile);
 
-    double bkg_sharing = 0.0;
     if (NeFile.length() > 0){
         logFile.printf("Correcting for recent demography...\n");
         logFile.printf("\tReading Ne File: %s\n", NeFile.c_str());
@@ -45,7 +45,6 @@ int main(int argc, char **argv){
         bkg_sharing = calc_bkg_sharing(NeFile, chrLens, minIBD);
         logFile.printf("\tExpected background sharing: %lf\n", bkg_sharing);
     }
-
 
     auto t1 = std::chrono::high_resolution_clock::now();
     Pedigree pedigree;

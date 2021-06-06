@@ -95,7 +95,7 @@ struct cmp_str
 void print_help();
 
 void parse_command_line(int argc, char **argv, std::string &segFile, std::string &ibd12, std::string &bimFile, std::string &NeFile,
-        std::string &exSamples, std::string &prefix, int &maxDeg, int &threads, double &minIBD);
+        std::string &exSamples, std::string &prefix, int &maxDeg, int &threads, double &minIBD, double &bkg_sharing);
 
 Eigen::VectorXd readBimFile(const std::string &bimFile, 
   std::map<std::string, std::map<int, double>*> &snpmap, 

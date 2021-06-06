@@ -6,6 +6,7 @@
 #include "function.h"
 #include "constants.h"
 #include <boost/graph/connected_components.hpp>
+#include <boost/progress.hpp>
 
 
 int getRelfromK(double K, int maxDeg){
@@ -324,8 +325,8 @@ void run_druid(Pedigree &pedigree, const PairIBD &allsegs,
 {   
     logFile.printf("Start the primary DRUID algorithm...\n");
     std::vector<int> components(boost::num_vertices(pedigree));
-    int num_components = boost::connected_components(pedigree, &components[0]);
-    logFile.printf("\tnumber of connected components: %d\n", num_components);
+    unsigned long num_components = boost::connected_components(pedigree, &components[0]);
+    logFile.printf("\tnumber of connected components: %lu\n", num_components);
 
     std::map<int, std::shared_ptr<std::vector<Vertex>>> comp_map;
     boost::graph_traits<Pedigree>::vertex_iterator vi, vi_end;
@@ -364,6 +365,10 @@ void run_druid(Pedigree &pedigree, const PairIBD &allsegs,
     // return;
     //end of test
 
+
+
+    boost::progress_display show_progress(num_components*(num_components-1)/2);
+    int count = 0;
     for(int i = 0; i < num_components; i++){
         for(int j = i+1; j < num_components; j++){
             std::unordered_set<Vertex> visited1;
@@ -434,6 +439,11 @@ void run_druid(Pedigree &pedigree, const PairIBD &allsegs,
 
                 }
                 //fprintf(stdout, "--------------------------e---------------------------------\n");
+            }
+            count++;
+            count %= 1000;
+            if (count == 0){
+                show_progress += 1000;
             }
         }
     }

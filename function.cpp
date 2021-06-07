@@ -369,9 +369,11 @@ void run_druid(Pedigree &pedigree, const PairIBD &allsegs,
     //end of test
 
 
-
-    boost::progress_display show_progress(num_components*(num_components-1)/2);
+    unsigned long tot = num_components*(num_components-1)/2;
+    unsigned long bandit = 0.01*tot;
     int count = 0;
+    float prog = 0.0;
+    int barwidth = 100;
     for(int i = 0; i < num_components; i++){
         for(int j = i+1; j < num_components; j++){
             std::unordered_set<Vertex> visited1;
@@ -444,9 +446,18 @@ void run_druid(Pedigree &pedigree, const PairIBD &allsegs,
                 //fprintf(stdout, "--------------------------e---------------------------------\n");
             }
             count++;
-            count %= 1000;
+            count %= bandit;
             if (count == 0){
-                show_progress += 1000;
+                prog += 0.01;
+                int pos = barwidth*prog;
+                fprintf(logFile, "[");
+                for (int i = 0; i < barwidth; i++){
+                    if (i < pos){fprintf(logFile, "=");}
+                    else if (i == pos){fprintf(logFile, ">");}
+                    else{fprintf(logFile, " ");}
+                }
+                fprintf(logFile, "] %d %\n", int(100*prog));
+                fflush(logFile);
             }
         }
     }

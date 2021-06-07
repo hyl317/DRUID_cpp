@@ -46,7 +46,7 @@ void parse_command_line(int argc, char **argv, std::string &segFile, std::string
 
 Eigen::VectorXd readBimFile(const std::string &bimFile, 
     std::map<std::string, std::map<int, double>*> &snpmap, 
-    chromMap &id2index, FileOrGZ<FILE *> &logFile){
+    chromMap &id2index, FILE *logFile){
   FileOrGZ<FILE *> in;
   bool ret = in.open(bimFile.c_str(), "r");
   if (!ret){
@@ -69,7 +69,7 @@ Eigen::VectorXd readBimFile(const std::string &bimFile,
   }
 
   // log some basic info about chromosomes
-  logFile.printf("\tNumber of chromosomes: %d\n", snpmap.size());
+  fprintf(logFile, "\tNumber of chromosomes: %d\n", snpmap.size());
   int numChr = snpmap.size();
   Eigen::VectorXd chrLens(numChr);
   int counter = 0;
@@ -86,7 +86,7 @@ Eigen::VectorXd readBimFile(const std::string &bimFile,
     counter++;
   }
 
-  logFile.printf("\ttotal genome length: %lfcM\n", chrLens.sum());
+  fprintf(logFile, "\ttotal genome length: %lfcM\n", chrLens.sum());
   return chrLens;
 }
 

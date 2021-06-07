@@ -321,12 +321,15 @@ bool checkAvunc(const std::vector<Vertex> &full_sibs, const Vertex avunc,
 void run_druid(Pedigree &pedigree, const PairIBD &allsegs,
     const std::map<std::string, std::map<int, double>*> &snpmap,
     std::map<std::pair<Vertex, Vertex>, int> &results, const chromMap &id2index,
-    FileOrGZ<FILE *> &logFile, double tot_genome, double bkg_sharing, int maxDeg)
+    FILE *logFile, double tot_genome, double bkg_sharing, int maxDeg)
 {   
-    logFile.printf("Start the primary DRUID algorithm...\n");
+    fprintf(logFile, "Start the primary DRUID algorithm...\n");
+    fflush(logFile);
     std::vector<int> components(boost::num_vertices(pedigree));
     unsigned long num_components = boost::connected_components(pedigree, &components[0]);
-    logFile.printf("\tnumber of connected components: %lu\n", num_components);
+    fprintf(logFile, "\tnumber of connected components: %lu\n", num_components);
+    fflush(logFile);
+
 
     std::map<int, std::shared_ptr<std::vector<Vertex>>> comp_map;
     boost::graph_traits<Pedigree>::vertex_iterator vi, vi_end;
@@ -1945,7 +1948,7 @@ void readInput(const std::string &ibd12, const std::string &segFile, const std::
     std::map<Vertex, Vertex> &twins, std::map<std::pair<Vertex, Vertex>, int> &results,
     const std::map<std::string, std::map<int, double>*> &snpmap,
     double bkg_sharing, double tot_genome, int maxDeg,
-    FileOrGZ<FILE *> &logFile)
+    FILE *logFile)
 {   
     std::set<std::string> ex;
     if (exSamples.length() > 0){
@@ -1961,7 +1964,8 @@ void readInput(const std::string &ibd12, const std::string &segFile, const std::
             sscanf(in_ex.buf, "%s", id);
             ex.insert(id);
         }
-        logFile.printf("\texcluding %d samples from analysis\n", ex.size());
+        fprintf(logFile, "\texcluding %d samples from analysis\n", ex.size());
+        fflush(logFile);
         in_ex.close();
     }
 
@@ -1973,7 +1977,8 @@ void readInput(const std::string &ibd12, const std::string &segFile, const std::
         exit(1);
     }
     
-    logFile.printf("Reading ibd12 file: %s\n", ibd12.c_str());
+    fprintf(logFile, "Reading ibd12 file: %s\n", ibd12.c_str());
+    fflush(logFile);
     auto t1 = std::chrono::high_resolution_clock::now();
     std::set<std::pair<Vertex, Vertex>> pcs;
     std::map<Vertex, std::shared_ptr<std::unordered_set<Vertex>>> fs_degs;
@@ -2051,21 +2056,22 @@ void readInput(const std::string &ibd12, const std::string &segFile, const std::
     in.close(); // close ibd12 file
     auto t2 = std::chrono::high_resolution_clock::now();
     auto d = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
-    logFile.printf("\treading ibd12 file takes %lfs\n", d/1e6);
+    fprintf(logFile, "\treading ibd12 file takes %lfs\n", d/1e6);
 
     // now read segments file
-    logFile.printf("Reading segments file: %s\n", segFile.c_str());
+    fprintf(logFile, "Reading segments file: %s\n", segFile.c_str());
+    fflush(logFile);
     t1 = std::chrono::high_resolution_clock::now();
     if (exSamples.length() == 0){
         readIBDFile(segFile, allsegs, hasCloseRels, id2Vertex, id2index);
     }else{
-        logFile.printf("\tExcluding %d samples from further analysis", ex.size());
+        fprintf(logFile, "\tExcluding %d samples from further analysis", ex.size());
         readIBDFile_ex(segFile, allsegs, hasCloseRels, id2Vertex, id2index, ex);
     }
     t2 = std::chrono::high_resolution_clock::now();
     d = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
-    logFile.printf("\treading seg file takes %lfs\n", d/1e6);
-
+    fprintf(logFile, "\treading seg file takes %lfs\n", d/1e6);
+    fflush(logFile);
 
 
     // now update each pair's kinship

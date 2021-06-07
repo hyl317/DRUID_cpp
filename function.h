@@ -66,8 +66,7 @@ bool checkAvunc(const std::vector<Vertex> &full_sibs, const Vertex avunc,
 void run_druid(Pedigree &pedigree, const PairIBD &allsegs,
     const std::map<std::string, std::map<int, double>*> &snpmap,
     std::map<std::pair<Vertex, Vertex>, int> &results,
-    const chromMap &id2index,
-    FileOrGZ<FILE *> &logFile,
+    const chromMap &id2index, FILE *logFile,
     double tot_genome, double bkg_sharing, int maxDeg);
 
 struct ConnInfo{
@@ -252,8 +251,7 @@ void readInput(const std::string &ibd12, const std::string &segFile, const std::
     std::map<char*, unsigned long, cmp_str> &id2Vertex, const chromMap &id2index, 
     std::map<Vertex, Vertex> &twins, std::map<std::pair<Vertex, Vertex>, int> &results,
     const std::map<std::string, std::map<int, double>*> &snpmap,
-    double bkg_sharing, double tot_genome, int maxDeg,
-    FileOrGZ<FILE *> &logFile);
+    double bkg_sharing, double tot_genome, int maxDeg, FILE *logFile);
 
 
 #endif

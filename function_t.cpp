@@ -6,12 +6,12 @@
 void run_druid_t(Pedigree &pedigree, const PairIBD &allsegs,
     const std::map<std::string, std::map<int, double>*> &snpmap,
     std::map<std::pair<Vertex, Vertex>, int> &results, const chromMap &id2index,
-    int numThread, FileOrGZ<FILE *> &logFile, double tot_genome, double bkg_sharing, int maxDeg)
+    int numThread, FILE *logFile, double tot_genome, double bkg_sharing, int maxDeg)
 {
-    logFile.printf("Start the primary DRUID algorithm with %d threads...\n", numThread);
+    fprintf(logFile, "Start the primary DRUID algorithm with %d threads...\n", numThread);
     std::vector<int> components(boost::num_vertices(pedigree));
     int num_components = boost::connected_components(pedigree, &components[0]);
-    logFile.printf("\tnumber of connected components: %d\n", num_components);
+    fprintf(logFile, "\tnumber of connected components: %d\n", num_components);
 
     std::map<int, std::shared_ptr<std::vector<Vertex>>> comp_map;
     boost::graph_traits<Pedigree>::vertex_iterator vi, vi_end;

@@ -99,7 +99,7 @@ void parse_command_line(int argc, char **argv, std::string &segFile, std::string
 
 Eigen::VectorXd readBimFile(const std::string &bimFile, 
   std::map<std::string, std::map<int, double>*> &snpmap, 
-  chromMap &id2index, FileOrGZ<FILE *> &logFile);
+  chromMap &id2index, FILE *logFile);
 
 void readIBDFile(const std::string &ibdFile, 
   std::map<std::pair<unsigned long, unsigned long>, Pair*> &allsegs,

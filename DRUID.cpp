@@ -20,32 +20,33 @@ int main(int argc, char **argv){
     parse_command_line(argc, argv, segFile, ibd12, bimFile, NeFile, exSamples, prefix, maxDeg, threads, minIBD, bkg_sharing);
 
     std::string logFileName = prefix + ".log";
-    FileOrGZ<FILE *> logFile;
-    bool ret = logFile.open(logFileName.c_str(), "w");
-    if(!ret){
+    FILE *logFile;
+    logFile = fopen(logFileName.c_str(), "w");
+    if(logFile == nullptr){
         fprintf(stderr, "cannot open %s for writing output\n", logFileName.c_str());
         return 1;
     }
 
-    logFile.printf("Running DRUID...\n");
+    fprintf(logFile, "Running DRUID...\n");
 
-    logFile.printf("Reading bimFile: %s\n", bimFile.c_str());
+    fprintf(logFile, "Reading bimFile: %s\n", bimFile.c_str());
     std::map<std::string, std::map<int, double>*> snpmap;
     chromMap id2index;
     Eigen::VectorXd chrLens = readBimFile(bimFile, snpmap, id2index, logFile);
 
     if (NeFile.length() > 0){
-        logFile.printf("Correcting for recent demography...\n");
-        logFile.printf("\tReading Ne File: %s\n", NeFile.c_str());
-        if (minIBD != 0.0){logFile.printf("\tminimum IBD length detected: %lf\n", minIBD);}
+        fprintf(logFile, "Correcting for recent demography...\n");
+        fprintf(logFile, "\tReading Ne File: %s\n", NeFile.c_str());
+        if (minIBD != 0.0){fprintf(logFile, "\tminimum IBD length detected: %lf\n", minIBD);}
         else{
-            logFile.printf("\tMinimum IBD length not provided. Use default value 2.0cM.\n");
+            fprintf(logFile, "\tMinimum IBD length not provided. Use default value 2.0cM.\n");
             minIBD = 2.0;
         }
         bkg_sharing = calc_bkg_sharing(NeFile, chrLens, minIBD);
-        logFile.printf("\tExpected background sharing: %lf\n", bkg_sharing);
+        fprintf(logFile, "\tExpected background sharing: %lf\n", bkg_sharing);
     }
 
+    fflush(logFile);
     auto t1 = std::chrono::high_resolution_clock::now();
     Pedigree pedigree;
     PairIBD allsegs;
@@ -58,11 +59,10 @@ int main(int argc, char **argv){
     int numSample = id2Vertex.size();
     auto t2 = std::chrono::high_resolution_clock::now();
     auto d = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
-    logFile.printf("Finished reading inputs and building graph from %d samples for analysis, takes %lfs\n", numSample, d/1e6);
-    logFile.printf("Maximum Relatedness Reported: degree %d\n", maxDeg);
-    logFile.printf("Identifying clusters of close relatives...\n");
-
-    std::cout << "number of pairs: " << allsegs.size() << std::endl;
+    fprintf(logFile, "Finished reading inputs and building graph from %d samples for analysis, takes %lfs\n", numSample, d/1e6);
+    fprintf(logFile, "Maximum Relatedness Reported: degree %d\n", maxDeg);
+    fprintf(logFile, "Identifying clusters of close relatives...\n");
+    fflush(logFile);
 
     t1 = std::chrono::high_resolution_clock::now();
     if (threads == 1){
@@ -73,7 +73,7 @@ int main(int argc, char **argv){
     }
     t2 = std::chrono::high_resolution_clock::now();
     d = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
-    logFile.printf("Anaylzing pairwise connected components done, takes %lfs\n", d/1e6);
+    fprintf(logFile, "Anaylzing pairwise connected components done, takes %lfs\n", d/1e6);
     
     // testing IBD0011
     // std::vector<Vertex> set1;
@@ -143,12 +143,13 @@ int main(int argc, char **argv){
 
 
     // writing output, finishing up
-    logFile.printf("Writitng to output file: %s\n", std::string(prefix + ".DRUID").c_str());
+    fprintf(logFile, "Writitng to output file: %s\n", std::string(prefix + ".DRUID").c_str());
+    fflush(logFile);
     t1 = std::chrono::high_resolution_clock::now();
     write_output(results, prefix, pedigree, twins);
     t2 = std::chrono::high_resolution_clock::now();
     d = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
-    logFile.printf("Writing to output done, takes %lfs\n", d/1e6);
+    fprintf(logFile, "Writing to output done, takes %lfs\n", d/1e6);
 
     // clean up
     for(auto it = snpmap.begin(); it != snpmap.end(); it++){
@@ -167,7 +168,7 @@ int main(int argc, char **argv){
 	//     delete p->ibd2_map;
     //     delete p;
     // }
-    logFile.close();
+    fclose(logFile);
 
 
     return 0;

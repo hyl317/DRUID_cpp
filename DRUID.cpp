@@ -44,6 +44,8 @@ int main(int argc, char **argv){
         }
         bkg_sharing = calc_bkg_sharing(NeFile, chrLens, minIBD);
         fprintf(logFile, "\tExpected background sharing: %lf\n", bkg_sharing);
+    }else{
+        fprintf(logFile, "Using background sharing value: %lf\n", bkg_sharing);
     }
 
     fflush(logFile);

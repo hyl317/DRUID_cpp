@@ -24,8 +24,6 @@ void build_graph(Pedigree &pedigree, PairIBD &allsegs,
     std::map<Vertex, std::shared_ptr<std::unordered_set<Vertex>>> second_degs,
     const chromMap &id2index)
 {   
-    auto vertex_property_map = boost::get(&sample::id, pedigree);
-
     // add missing full-sib edges (and break incorrect ones)
     std::vector<int> components(boost::num_vertices(pedigree));
     int num_components = boost::connected_components(pedigree, &components[0]);
@@ -456,6 +454,7 @@ void run_druid(Pedigree &pedigree, const PairIBD &allsegs,
                     else{fprintf(logFile, " ");}
                 }
                 fprintf(logFile, "] %d %\n", int(100*prog));
+                fprintf(logFile, "size of result map: %d\n", results.size());
                 fflush(logFile);
             }
         }

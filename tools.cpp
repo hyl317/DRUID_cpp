@@ -67,6 +67,7 @@ Eigen::VectorXd readBimFile(const std::string &bimFile,
       snpmap[chr_str]->insert(std::pair<int, double>(bp_pos, genetic_pos));
     }
   }
+  in.close();
 
   // log some basic info about chromosomes
   fprintf(logFile, "\tNumber of chromosomes: %d\n", snpmap.size());
@@ -147,6 +148,7 @@ void readIBDFile(const std::string &ibdFile,
     ibd_tot += segLen;
     p->ibd.emplace_back(start, end, id2index.find(chr)->second);
   }
+  in.close();
 
 }
 
@@ -205,6 +207,7 @@ void readIBDFile_ex(const std::string &ibdFile,
     ibd_tot += segLen;
     p->ibd.emplace_back(start, end, id2index.find(chr)->second);
   }
+  in.close();
 
 }
 

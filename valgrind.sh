@@ -23,4 +23,4 @@ fi
 
 # command to run on my simulated dataset using ukb
 prefix="/fs/cbsubscb09/storage/yilei/simulate/DRUID_cpp"
-valgrind --track-origins=yes --leak-check=yes ./DRUID -i $prefix/ped.seg --bim $prefix/ped.bim -o test --max 10 
+valgrind --track-origins=yes --leak-check=yes ./DRUID --seg $prefix/ped.seg --ibd12 $prefix/ped.ibd12 --bim $prefix/ped.bim -o test --max 10 

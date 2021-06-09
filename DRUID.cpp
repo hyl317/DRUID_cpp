@@ -158,18 +158,9 @@ int main(int argc, char **argv){
         delete it->second;
     }
 
-    // for(auto it = allsegs.begin(); it != allsegs.end(); it++){
-    //     Pair *p = it->second;
-    //     for (auto it2 = p->ibd1_map->begin(); it2 != p->ibd1_map->end(); it2++){
-    //         delete it2->second;
-    //     }
-    //     for(auto it3 = p->ibd2_map->begin(); it3 != p->ibd2_map->end(); it3++){
-    //         delete it3->second;
-    //     }
-	//     delete p->ibd1_map;
-	//     delete p->ibd2_map;
-    //     delete p;
-    // }
+    for(auto it = allsegs.begin(); it != allsegs.end(); it++){
+        delete it->second;
+    }
     fclose(logFile);
 
 

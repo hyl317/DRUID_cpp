@@ -151,13 +151,6 @@ inline void setDeg(Vertex u, Vertex v, int deg, std::map<std::pair<Vertex, Verte
     else{results[make_pair_v(u, v)] = deg;}
 }
 
-// inline int getDeg(Vertex u, Vertex v, const std::map<std::pair<Vertex, Vertex>, int> &results)
-// {
-//     auto it = results.find(make_pair_v(u, v));
-//     if (it == results.end()){return -1;}
-//     else{return it->second;}
-// }
-
 inline int getDeg(Vertex u, Vertex v, const PairIBD &allsegs, int maxDeg)
 {
     auto it = allsegs.find(make_pair_v(u, v));

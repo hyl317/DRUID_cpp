@@ -1706,14 +1706,12 @@ void PCpairVSone(Vertex d, const std::pair<Vertex, Vertex> &pc, const PairIBD &a
     std::map<std::pair<Vertex, Vertex>, int> &results, int maxDeg)
 {
     // deal with an unpolarized PC pair with a single putative distant relative
-    auto it1 = results.find(make_pair_v(pc.first, d));
-    int d1 = it1 == results.end() ? -1 : it1->second;
-    it1 = results.find(make_pair_v(pc.second, d));
-    int d2 = it1 == results.end() ? -1 : it1->second;
     auto it2 = allsegs.find(make_pair_v(pc.first, d));
     double k1 = it2 == allsegs.end() ? 0.0 : it2->second->kin;
     it2 = allsegs.find(make_pair_v(pc.second, d));
     double k2 = it2 == allsegs.end() ? 0.0 : it2->second->kin;
+    int d1 = getRelfromK(k1, maxDeg);
+    int d2 = getRelfromK(k2, maxDeg);
     std::pair<bool, Vertex> tuple = polarizeUnpolarPC(pc.first, d1, k1, pc.second, d2, k2);
 
     if (tuple.first){

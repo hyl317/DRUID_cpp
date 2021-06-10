@@ -338,7 +338,6 @@ void run_druid(Pedigree &pedigree, const PairIBD &allsegs,
         comp_map[comp_index]->push_back(*vi);
     }
 
-    auto vertex_property_map = boost::get(&sample::id, pedigree);
     for(int i = 0; i < num_components; i++){
         auto ordered = std::shared_ptr<std::vector<Vertex>>(new std::vector<Vertex>());
         preorder(*(comp_map.find(i)->second), pedigree, *ordered);
@@ -454,7 +453,7 @@ void run_druid(Pedigree &pedigree, const PairIBD &allsegs,
                     else{fprintf(logFile, " ");}
                 }
                 fprintf(logFile, "] %d %\n", int(100*prog));
-                fprintf(logFile, "size of result map: %llu\n", results.size());
+                //fprintf(logFile, "size of result map: %llu\n", results.size());
                 fflush(logFile);
             }
         }
@@ -552,7 +551,6 @@ bool isFS2Everyone(const Vertex &u, const std::vector<Vertex> &fs, const Pedigre
 
 void grabCloseRelatives_o(const Vertex u, ConnInfo &con, const Pedigree &pedigree)
 {
-    auto vertex_property_map = boost::get(&sample::id, pedigree);
     std::vector<Vertex> children;
     std::vector<Vertex> fs;
     std::vector<Vertex> av;
@@ -883,7 +881,7 @@ int oneVSpedigree(Vertex u, const ConnInfo &con, std::unordered_set<Vertex> &vis
                 int numAV = av2use.size();
                 int numSibs = con.fs.size();
                 double Tg = getTg(numAV, numSibs);
-                double k1 = (UnionIbdOverTwoSets(set1, set2, id2index, allsegs) - calc_bkg_sharing(numAV, numSibs, tot_genome))/(Tg*tot_genome);
+                double k1 = (UnionIbdOverTwoSets(set1, set2, id2index, allsegs) - calc_bkg_sharing(numAV, numSibs, bkg_sharing))/(Tg*tot_genome);
                 double K = std::max(0.0, k1/4.0);
                 int deg_gp = getRelfromK(K, maxDeg);
                 int deg_av = resetRelationship(deg_gp, 1, maxDeg);

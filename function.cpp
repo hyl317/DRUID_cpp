@@ -454,7 +454,7 @@ void run_druid(Pedigree &pedigree, const PairIBD &allsegs,
                     else{fprintf(logFile, " ");}
                 }
                 fprintf(logFile, "] %d %\n", int(100*prog));
-                fprintf(logFile, "size of result map: %d\n", results.size());
+                fprintf(logFile, "size of result map: %llu\n", results.size());
                 fflush(logFile);
             }
         }

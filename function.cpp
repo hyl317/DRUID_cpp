@@ -86,6 +86,7 @@ void build_graph(Pedigree &pedigree, PairIBD &allsegs,
     }
 
     // add PC edges
+    auto vertex_property_map = boost::get(&sample::id, pedigree);
     for(auto pc: pcs){
         boost::add_edge(pc.first, pc.second, pedigree);
         pedigree[boost::edge(pc.first, pc.second, pedigree).first].rel = PC;
@@ -96,11 +97,16 @@ void build_graph(Pedigree &pedigree, PairIBD &allsegs,
     for(auto pc : pcs){
         Vertex v1 = pc.first;
         Vertex v2 = pc.second;
-        //std::cout << "polarizing v1 and v2: " << vertex_property_map[v1] << "\t" << vertex_property_map[v2] << std::endl;
+        //std::cout << "checking " << vertex_property_map[v1] << " and " << vertex_property_map[v2] << ": " << boost::edge(v1, v2, pedigree).second << std::endl;
+
         // if neither v1 nor v2 has any full-sibs, we can't do anything
         if (fs_degs.find(v1) == fs_degs.end() && fs_degs.find(v2) == fs_degs.end()){continue;}
+        // some pairs may have been identified as false pc pairs, so no need to test them anymore
+        if (!boost::edge(v1, v2, pedigree).second){continue;}
+
         bool v2IsParent = false;
         bool v1IsParent = false;
+        bool falsePositive = false;
         if (fs_degs.find(v1) != fs_degs.end()){
             // iterate over v1's full-sib pair to check if they form a parent-child pair with v2
             // if so, then v2 must be the parent
@@ -110,7 +116,6 @@ void build_graph(Pedigree &pedigree, PairIBD &allsegs,
                 //std::cout << "check v1's full-sib: " << vertex_property_map[fs] << " is connected? "<< isConnected << std::endl;
                 if (isConnected){
                     Edge e = boost::edge(fs, v2, pedigree).first;
-                    //std::cout << pedigree[e].rel << std::endl;
                     if (pedigree[e].rel == PC){counter_formPCwithv2++;}
                 }
             }
@@ -131,29 +136,31 @@ void build_graph(Pedigree &pedigree, PairIBD &allsegs,
                 }
             }else if(!v2IsParent && counter_formPCwithv2 > 0){
                 // get rid of false positive parent edge
+                //std::cout << "remove false positive parent edge: " << vertex_property_map[v1] << " and " << vertex_property_map[v2] << std::endl;
                 boost::remove_edge(v1, v2, pedigree);
                 for (auto fs : *fs_degs[v1]){
                     if (boost::edge(fs, v2, pedigree).second){boost::remove_edge(fs, v2, pedigree);}
                 }
+                falsePositive = true;
             }
         }
 
-        if (fs_degs.find(v2) != fs_degs.end()){
+        if (!falsePositive && fs_degs.find(v2) != fs_degs.end()){
             // iterate over v2's full-sib pair to check if they form a parent-child pair with v1
             // if so, then v1 must be the parent
+            //std::cout << vertex_property_map[v2] << " has full-sibs" << std::endl;
             int counter_formPCwithv1 = 0;
             for(auto fs : *fs_degs[v2]){
                 bool isConnected = boost::edge(fs, v1, pedigree).second;
-                //std::cout << "check v2's full-sib: " << vertex_property_map[fs] << " is connected? "<< isConnected << std::endl;
                 if (isConnected){
                     Edge e = boost::edge(fs, v1, pedigree).first;
-                    //std::cout << pedigree[e].rel << std::endl;
                     if (pedigree[e].rel == PC){counter_formPCwithv1++;}
                 }
             }
             v1IsParent = counter_formPCwithv1 > 0.5*fs_degs[v2]->size();
             // now assign v1 as the parent of all full-sibs of v2
             if (v1IsParent){
+                //std::cout << boost::edge(v1, v2, pedigree).second << std::endl;
                 pedigree[boost::edge(v1, v2, pedigree).first].older = v1;
                 pedigree[boost::edge(v1, v2, pedigree).first].polarized = true;
                 for (auto fs : *fs_degs[v2]){
